@@ -120,19 +120,24 @@ vale só na sessão do shell em que foi definida:
 export OLLAMA_API_KEY=<chave>
 ```
 
-`uv run` executa um comando no ambiente do projeto sem ativação prévia. A sincronização do
-`.venv/` ocorre antes da execução, quando `pyproject.toml` ou `uv.lock` mudaram:
+Os comandos do pacote rodam de duas formas, e as seções seguintes assumem uma das duas. A
+primeira é o prefixo `uv run`, que executa no ambiente do projeto sem ativação prévia e
+sincroniza o `.venv/` antes da execução quando `pyproject.toml` ou `uv.lock` mudaram:
 
 ```bash
 uv run python -m travel_mas catalogo
 uv run pytest
 ```
 
-A ativação do ambiente põe `python` e `travel-mas` no `PATH` da sessão. Os comandos das
-seções seguintes dispensam o prefixo `uv run` a partir daí:
+A segunda é a ativação do `.venv/`, que põe `python`, `pytest` e `travel-mas` no `PATH` e
+dispensa o prefixo. A ativação vale na sessão de terminal em que foi feita, e `deactivate` a
+desfaz. Sem ela, `python -m travel_mas` termina em `command not found: python`, já que o macOS
+traz `python3` no `PATH` e não `python`:
 
 ```bash
 source .venv/bin/activate
+python -m travel_mas catalogo
+travel-mas catalogo
 ```
 
 Sem instalar o pacote, `python main.py <comando>` acrescenta `src/` ao caminho de importação.
