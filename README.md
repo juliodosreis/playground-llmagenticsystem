@@ -79,19 +79,63 @@ do grafo.
 
 ## 3. Instalação
 
+O `uv` gerencia o interpretador, o ambiente e as dependências. O instalador está em
+[docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/):
+
 ```bash
-conda activate agents
-pip install -e ".[dev]"
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+`uv sync` lê `pyproject.toml` e `uv.lock`, cria `.venv/` na raiz do repositório e instala as
+dependências, o pacote em modo editável e o grupo `dev`, com `pytest`, `ruff` e a CLI do
+LangGraph. `.python-version` fixa o interpretador em 3.12, que o `uv` baixa quando não está na
+máquina:
+
+```bash
+uv sync
+```
+
+Chave de API: copie `.env.example` para `.env` e preencha `OLLAMA_API_KEY`, gerada em
+[ollama.com/settings/keys](https://ollama.com/settings/keys). O `.env` não é versionado, e o
+`.env.example` traz o nome de cada variável do ambiente:
+
+```bash
+cp .env.example .env
+```
+
+O provedor Google fica em um extra, fora do conjunto padrão, e pede a chave `GOOGLE_API_KEY`,
+gerada em [aistudio.google.com/apikey](https://aistudio.google.com/apikey). O Studio pede
+`LANGSMITH_API_KEY`, gerada em
+[smith.langchain.com/settings](https://smith.langchain.com/settings), e a CLI que o sobe está no
+grupo `dev`:
+
+```bash
+uv sync --extra google
+```
+
+Uma chave exportada no terminal antes da execução tem precedência sobre o valor do `.env`, e
+vale só na sessão do shell em que foi definida:
+
+```bash
+export OLLAMA_API_KEY=<chave>
+```
+
+`uv run` executa um comando no ambiente do projeto sem ativação prévia. A sincronização do
+`.venv/` ocorre antes da execução, quando `pyproject.toml` ou `uv.lock` mudaram:
+
+```bash
+uv run python -m travel_mas catalogo
+uv run pytest
+```
+
+A ativação do ambiente põe `python` e `travel-mas` no `PATH` da sessão. Os comandos das
+seções seguintes dispensam o prefixo `uv run` a partir daí:
+
+```bash
+source .venv/bin/activate
 ```
 
 Sem instalar o pacote, `python main.py <comando>` acrescenta `src/` ao caminho de importação.
-
-Chave de API: copie `.env.example` para `.env` e preencha `OLLAMA_API_KEY`, gerada em
-[ollama.com/settings/keys](https://ollama.com/settings/keys). O `.env` não é versionado. O
-provedor Google pede `pip install -e ".[google]"` e a chave `GOOGLE_API_KEY`, gerada em
-[aistudio.google.com/apikey](https://aistudio.google.com/apikey). O Studio roda com
-`pip install -e ".[studio]"` e pede `LANGSMITH_API_KEY`, gerada em
-[smith.langchain.com/settings](https://smith.langchain.com/settings).
 
 ## 4. Execução
 

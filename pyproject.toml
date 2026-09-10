@@ -3,7 +3,7 @@ name = "travel-mas"
 version = "0.1.0"
 description = "Playground do caso de reservas de viagem do curso de agentes com LLMs, em LangGraph"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4.0"
 license = { file = "LICENSE" }
 dependencies = [
     "langchain>=1.0",
@@ -14,11 +14,16 @@ dependencies = [
 
 [project.optional-dependencies]
 google = ["langchain-google-genai>=4.0"]
-dev = ["pytest>=8.0"]
-studio = ["langgraph-cli[inmem]>=0.1"]
 
 [project.scripts]
 travel-mas = "travel_mas.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.14.5",
+    "langgraph-cli[inmem]>=0.4",
+]
 
 [build-system]
 requires = ["hatchling"]

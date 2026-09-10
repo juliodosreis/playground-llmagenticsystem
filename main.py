@@ -1,7 +1,7 @@
 """Entrada do playground sem instalação: `python main.py demo`.
 
 Acrescenta `src/` ao caminho de importação e delega para `travel_mas.cli`. Com o pacote instalado
-(`pip install -e .`), `python -m travel_mas` e `travel-mas` fazem o mesmo.
+(`uv sync`), `python -m travel_mas` e `travel-mas` fazem o mesmo.
 """
 
 import sys
