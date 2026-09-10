@@ -196,27 +196,20 @@ as tentativas, o erro entra em `RunResult.error` e a suíte de cenários continu
 
 ## 7. Grafo
 
-```
-START -> chamar_modelo -> decidir_proximo_no
-                             |-- há pedidos e passos < max_steps -> executar_ferramentas
-                             |                                            |
-                             |                                            +-> chamar_modelo
-                             +-- caso contrário --------------------------------> END
+```mermaid
+graph TD
+    START([START]) --> modelo[chamar_modelo]
+    modelo --> rota{decidir_proximo_no}
+    rota -->|há pedidos e passos &lt; max_steps| ferramentas[executar_ferramentas]
+    rota -->|caso contrário| FIM([END])
+    ferramentas --> modelo
 ```
 
 O estado tem `messages`, com o reducer `add_messages`, e `passos`, escrito pelo nó do modelo e
 lido pela rota. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia. O nó
 de ferramentas é um `ToolNode`.
 
-## 8. Camadas não implementadas
-
-- multiagente: `agents/researcher/` com as buscas, `agents/booker/` com a escrita,
-  `agents/reviewer/` com leitura e cancelamento, e `agents/supervisor/`, que os chama como
-  ferramentas;
-- avaliação: `evaluation/` compara modelos entre si. Falta o estado final contra um golden state,
-  a trajetória contra uma referência e o juiz LLM sobre a mensagem final.
-
-## 9. Referências
+## 8. Referências
 
 - LangGraph: https://docs.langchain.com/oss/python/langgraph/overview
 - Ferramentas no LangChain: https://docs.langchain.com/oss/python/langchain/tools
