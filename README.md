@@ -5,12 +5,36 @@ ferramentas que escrevem no banco e uma CLI de cenários.
 
 ## 1. Ambiente
 
-O catálogo tem quatro voos e três hotéis, semeados em memória a cada execução. O estado mutável
-são as reservas em `bookings` e a coluna `flights.seats`.
+O banco tem três tabelas, criadas em memória a cada execução. `flights` e `hotels` são o
+catálogo, semeado com as linhas de `domain/catalog.py`, e `bookings` começa vazia:
 
-`create_booking` insere a reserva e decrementa o assento. `cancel_booking` marca a linha como
-`cancelled` e devolve o assento. Um item fora do catálogo, um voo sem assento livre ou um `kind`
-diferente de `flight` e `hotel` devolvem erro sem alterar o banco.
+| Tabela | Colunas |
+|---|---|
+| `flights` | `id`, `origin`, `destination`, `date`, `price`, `airline`, `seats` |
+| `hotels` | `id`, `city`, `name`, `stars`, `price_per_night` |
+| `bookings` | `id`, `user_id`, `kind`, `item_id`, `start_date`, `price`, `status` |
+
+| Voo | Trecho | Data | Preço (EUR) | Assentos | Companhia |
+|---|---|---|---|---|---|
+| `FL-101` | MAD-LIM | 2026-09-12 | 980 | 4 | Iberia |
+| `FL-102` | MAD-LIM | 2026-09-12 | 1240 | 9 | LATAM |
+| `FL-103` | MAD-LIM | 2026-09-13 | 760 | 2 | Air France |
+| `FL-201` | LIM-MAD | 2026-09-20 | 890 | 6 | Iberia |
+
+| Hotel | Cidade | Nome | Estrelas | Preço por noite (EUR) |
+|---|---|---|---|---|
+| `HT-1` | LIM | Miraflores Suites | 4 | 120 |
+| `HT-2` | LIM | Barranco Hostal | 2 | 45 |
+| `HT-3` | LIM | Surco Business | 3 | 58 |
+
+O estado mutável são as reservas em `bookings` e a coluna `flights.seats`. `create_booking`
+insere a reserva com `status` em `confirmed` e decrementa o assento, e `cancel_booking` marca a
+linha como `cancelled` e devolve o assento. As duas tabelas entram no snapshot que `state_hash`
+resume, e uma execução que não escreva deixa o hash do início.
+
+Um pedido que não se sustenta devolve erro sem alterar o banco: `flight_not_found` e
+`hotel_not_found` para um `item_id` fora do catálogo, `no_seats_available` para um voo sem
+assento livre, e `invalid_kind` para um `kind` diferente de `flight` e `hotel`.
 
 ## 2. Estrutura
 
@@ -179,17 +203,23 @@ cenários seguintes continuam.
 ## 7. Grafo
 
 ```mermaid
-graph TD
-    START([START]) --> modelo[chamar_modelo]
-    modelo --> rota{decidir_proximo_no}
-    rota -->|há pedidos e passos &lt; max_steps| ferramentas[executar_ferramentas]
-    rota -->|caso contrário| FIM([END])
-    ferramentas --> modelo
+graph TD;
+    __start__([__start__])
+    chamar_modelo(chamar_modelo)
+    executar_ferramentas(executar_ferramentas)
+    __end__([__end__])
+    __start__ --> chamar_modelo;
+    chamar_modelo -. fim .-> __end__;
+    chamar_modelo -. executar .-> executar_ferramentas;
+    executar_ferramentas --> chamar_modelo;
 ```
 
+As duas arestas tracejadas saem de `decidir_proximo_no`, que devolve `executar` enquanto a última
+mensagem trouxer pedido de chamada e `passos` estiver abaixo de `max_steps`, e `fim` nos demais
+casos. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia.
+
 O estado tem `messages`, com o reducer `add_messages`, e `passos`, escrito pelo nó do modelo e
-lido pela rota. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia. O nó
-de ferramentas é um `ToolNode`.
+lido pela rota. O nó de ferramentas é um `ToolNode`.
 
 ## 8. Referências
 
