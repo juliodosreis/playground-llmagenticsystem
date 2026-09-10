@@ -123,7 +123,7 @@ def compare_models(
     os demais.
 
     `build` recebe o workspace e o contexto de um spec. O padrão monta o agente de viagem sobre o
-    provedor do contexto; um teste passa um montador que devolve o modelo scriptado.
+    provedor do contexto.
     """
     agents = {}
     falhas: dict[str, str] = {}

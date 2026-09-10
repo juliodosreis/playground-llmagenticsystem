@@ -1,7 +1,7 @@
 # Agente de reservas de viagem
 
 Agente em LangGraph que busca e reserva voos e hotéis de um catálogo em SQLite. O pacote traz as
-ferramentas que escrevem no banco, uma CLI de cenários e a suíte de testes.
+ferramentas que escrevem no banco e uma CLI de cenários.
 
 ## 1. Ambiente
 
@@ -41,7 +41,6 @@ src/travel_mas/
         report.py       tabela do relatório
     scenarios.py        os pedidos de demonstração
     cli.py              comandos
-tests/                  domínio, ferramentas, grafo, provedores, comparação e CLI
 ```
 
 `agents/<nome>/tools.py` nomeia as ferramentas do agente, e `Toolbox.select()` troca cada nome
@@ -209,28 +208,7 @@ O estado tem `messages`, com o reducer `add_messages`, e `passos`, escrito pelo 
 lido pela rota. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia. O nó
 de ferramentas é um `ToolNode`.
 
-## 8. Testes
-
-```bash
-pytest
-```
-
-46 testes, nenhum deles chama um provedor. `tests/fakes.py` traz um modelo de chat que devolve
-respostas fixas, incluindo pedidos de chamada de ferramenta.
-
-| Arquivo | Testes | Cobertura |
-|---|---|---|
-| `test_domain.py` | 12 | regras de reserva, sequência de ids, `state_hash` e `diff_state` |
-| `test_graph.py` | 9 | laço de ferramentas, `max_steps`, isolamento, laço de eventos, reintento |
-| `test_runtime.py` | 7 | modelo padrão por provedor, parâmetros do Gemini 3, provedor recusado |
-| `test_tools.py` | 7 | registro das seis ferramentas, schema pela assinatura, trace e `reset()` |
-| `test_evaluation.py` | 7 | leitura do spec, estado igual e diferente, falha de montagem |
-| `test_cli.py` | 4 | comandos que dispensam chave de API |
-
-`test_runtime.py` monta o cliente do Google com uma chave falsa e lê os parâmetros do objeto, sem
-chamar a API.
-
-## 9. Camadas não implementadas
+## 8. Camadas não implementadas
 
 - multiagente: `agents/researcher/` com as buscas, `agents/booker/` com a escrita,
   `agents/reviewer/` com leitura e cancelamento, e `agents/supervisor/`, que os chama como
@@ -238,7 +216,7 @@ chamar a API.
 - avaliação: `evaluation/` compara modelos entre si. Falta o estado final contra um golden state,
   a trajetória contra uma referência e o juiz LLM sobre a mensagem final.
 
-## 10. Referências
+## 9. Referências
 
 - LangGraph: https://docs.langchain.com/oss/python/langgraph/overview
 - Ferramentas no LangChain: https://docs.langchain.com/oss/python/langchain/tools

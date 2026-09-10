@@ -122,7 +122,7 @@ def run_task(
     prompt: str,
     recursion_limit: int = 50,
 ) -> RunResult:
-    """Envoltório sincrônico de `arun_task`, para a CLI e para os testes.
+    """Envoltório sincrônico de `arun_task`, para a CLI.
 
     Em código que já roda dentro de um laço de eventos, como uma célula de notebook, chame
     `arun_task` com `await`.
