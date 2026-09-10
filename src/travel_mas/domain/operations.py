@@ -113,8 +113,7 @@ def cancel_booking(db: TravelDB, booking_id: str) -> str:
     return _dump({"booking_id": booking_id, "status": "cancelled"})
 
 
-# Registro nome -> operação, para quem precisa chamar uma operação pelo nome que aparece no
-# trace.
+# Registro nome -> operação, para chamar uma operação pelo nome que aparece no trace.
 OPERATIONS: dict[str, Operation] = {
     op.__name__: op
     for op in (

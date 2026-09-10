@@ -1,18 +1,24 @@
 # Agente de reservas de viagem
 
-Agente em LangGraph que busca e reserva voos e hotéis de um catálogo em SQLite. O pacote traz as
-ferramentas que escrevem no banco e uma CLI de cenários.
+O agente recebe um pedido de viagem em texto, com origem, destino, data e orçamento, e resolve
+esse pedido chamando ferramentas: procura voos e hotéis no catálogo, cria a reserva, lista as
+reservas de um usuário e cancela. O catálogo e as reservas ficam em um banco SQLite, e as
+ferramentas alteram esse banco, então uma reserva ocupa um assento do voo e um cancelamento o
+devolve. Cada execução parte de um banco limpo e imprime as chamadas que o modelo fez, o estado
+do banco no fim e a resposta ao pedido.
 
 ## 1. Ambiente
 
-O banco tem três tabelas, criadas em memória a cada execução. `flights` e `hotels` são o
-catálogo, semeado com as linhas de `domain/catalog.py`, e `bookings` começa vazia:
+O banco é criado em memória a cada execução, com três tabelas:
 
-| Tabela | Colunas |
-|---|---|
-| `flights` | `id`, `origin`, `destination`, `date`, `price`, `airline`, `seats` |
-| `hotels` | `id`, `city`, `name`, `stars`, `price_per_night` |
-| `bookings` | `id`, `user_id`, `kind`, `item_id`, `start_date`, `price`, `status` |
+| Tabela | Representa | Colunas |
+|---|---|---|
+| `flights` | os voos à venda | `origin`, `destination`, `date`, `price`, `airline`, `seats` |
+| `hotels` | os hotéis à venda | `city`, `name`, `stars`, `price_per_night` |
+| `bookings` | as reservas | `user_id`, `kind`, `item_id`, `start_date`, `price`, `status` |
+
+`flights` e `hotels` são o catálogo, semeado com as linhas de `domain/catalog.py` e igual em toda
+execução. `bookings` começa vazia e recebe uma linha por reserva que o agente criar.
 
 | Voo | Trecho | Data | Preço (EUR) | Assentos | Companhia |
 |---|---|---|---|---|---|
@@ -27,14 +33,14 @@ catálogo, semeado com as linhas de `domain/catalog.py`, e `bookings` começa va
 | `HT-2` | LIM | Barranco Hostal | 2 | 45 |
 | `HT-3` | LIM | Surco Business | 3 | 58 |
 
-O estado mutável são as reservas em `bookings` e a coluna `flights.seats`. `create_booking`
-insere a reserva com `status` em `confirmed` e decrementa o assento, e `cancel_booking` marca a
-linha como `cancelled` e devolve o assento. As duas tabelas entram no snapshot que `state_hash`
-resume, e uma execução que não escreva deixa o hash do início.
+O agente altera as linhas de `bookings` e a coluna `flights.seats`. `create_booking` insere a
+reserva com `status` em `confirmed` e decrementa o assento, e `cancel_booking` marca a linha como
+`cancelled` e devolve o assento. As duas tabelas formam o snapshot que `state_hash` resume, e uma
+execução que não escreva deixa o hash do início.
 
-Um pedido que não se sustenta devolve erro sem alterar o banco: `flight_not_found` e
-`hotel_not_found` para um `item_id` fora do catálogo, `no_seats_available` para um voo sem
-assento livre, e `invalid_kind` para um `kind` diferente de `flight` e `hotel`.
+Quatro erros de reserva voltam sem alterar o banco: `flight_not_found` e `hotel_not_found` para
+um `item_id` fora do catálogo, `no_seats_available` para um voo sem assento livre, e
+`invalid_kind` para um `kind` diferente de `flight` e `hotel`.
 
 ## 2. Estrutura
 
@@ -109,8 +115,8 @@ Sem `--model` nem `TRAVEL_MODEL`, cada provedor usa o modelo de `DEFAULT_MODELS`
 no Ollama e `gemini-3.5-flash-lite` no Google. `gemini` é aceito como nome do provedor Google. Os
 parâmetros de amostragem que cada família aceita ficam em `runtime/models.py`.
 
-Cada execução parte de um banco limpo e imprime a trajetória de chamadas, a tabela `bookings`
-resultante, os assentos consumidos e a mensagem final.
+A saída traz a trajetória de chamadas, a tabela `bookings` resultante, os assentos consumidos e a
+mensagem final.
 
 ### 4.1 Cenários
 

@@ -59,5 +59,5 @@ HOTELS: tuple[Hotel, ...] = (
 # Tabelas que o agente pode modificar, e portanto as que compõem o estado observado.
 MUTABLE_TABLES: tuple[str, ...] = ("bookings", "flights")
 
-# Ids que existem de fato. Um item_id fora deste conjunto é invenção do modelo.
+# Ids do catálogo. Um item_id fora deste conjunto não corresponde a nenhum voo nem hotel.
 CATALOG_IDS: frozenset[str] = frozenset(f.id for f in FLIGHTS) | frozenset(h.id for h in HOTELS)

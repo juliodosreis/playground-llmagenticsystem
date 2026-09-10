@@ -17,7 +17,7 @@ from ..runtime import Workspace
 from .bookings import build_booking_tools
 from .search import build_catalog_tools
 
-# Grupos por efeito, para quem precisa declarar permissões em bloco.
+# Grupos por efeito, para declarar permissões em bloco.
 CATALOG_TOOLS = ("search_flights", "search_hotels")
 BOOKING_READ_TOOLS = ("get_booking", "list_bookings")
 BOOKING_WRITE_TOOLS = ("create_booking", "cancel_booking")

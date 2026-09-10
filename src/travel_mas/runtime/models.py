@@ -68,8 +68,8 @@ def load_chat_model(context: Context) -> BaseChatModel:
             )
 
         # A família Gemini 3 recusa temperature, top_p e top_k, e põe o nível de raciocínio no
-        # lugar do reasoning do Ollama. O cliente anula temperature nessa família por conta
-        # própria, mas só quando o parâmetro não foi declarado: passá-lo o mantém no pedido.
+        # lugar do reasoning do Ollama. O cliente anula temperature nessa família quando o
+        # parâmetro não foi declarado, e o mantém no pedido quando foi.
         if _is_gemini_3_or_later(context.model):
             amostragem = {"reasoning_effort": context.reasoning_effort}
         else:
