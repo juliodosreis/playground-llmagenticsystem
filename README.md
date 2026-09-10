@@ -16,7 +16,7 @@ diferente de `flight` e `hotel` devolvem erro sem alterar o banco.
 
 ```
 src/travel_mas/
-    domain/             catálogo, banco e regras de reserva, sem LangChain
+    domain/             catálogo, banco e regras de reserva
         catalog.py      esquema SQL, voos, hotéis, tabelas mutáveis
         database.py     TravelDB em memória, snapshot, hash e diff do estado
         operations.py   busca, criação, consulta e cancelamento
@@ -36,7 +36,7 @@ src/travel_mas/
             tools.py    as ferramentas que este agente recebe
             state.py    estado do grafo: messages e passos
             graph.py    laço de ferramentas como StateGraph
-    evaluation/         comparação de modelos, que nenhum agente importa
+    evaluation/         comparação de modelos
         compare.py      execução dos cenários por vários modelos
         report.py       tabela do relatório
     scenarios.py        os pedidos de demonstração
@@ -99,14 +99,6 @@ resultante, os assentos consumidos e a mensagem final.
 | 5 | `reserva-e-cancelamento` | reservar, listar e cancelar |
 | 6 | `consulta-vazia` | um usuário sem reservas |
 
-Os cenários 3 e 4 terminam sem escrita e por caminhos diferentes. A busca filtra o preço em SQL,
-então um teto abaixo de toda a oferta devolve lista vazia, igual a uma data sem voo. O prompt
-manda repetir a busca sem o teto: no cenário 3 a segunda busca também vem vazia, e no 4 devolve
-FL-101 e FL-102, o que permite responder que o mais barato custa 980 EUR e passa do orçamento.
-
-Os tempos, as trajetórias e os desvios observados nas execuções dos dois modelos estão em
-[MEDICOES.md](MEDICOES.md).
-
 ### 4.2 Comparação de modelos
 
 ```bash
@@ -144,9 +136,7 @@ O comando sobe a API em `http://127.0.0.1:2024` e imprime o endereço do Studio,
 local, e a interface é uma página servida pelo LangSmith, que pede conta e `LANGSMITH_API_KEY` no
 `.env`. Com `LANGSMITH_TRACING=false`, as execuções não são enviadas ao LangSmith.
 
-`langgraph.json` aponta para `make_graph`, que monta o grafo sobre um workspace novo. O servidor
-chama o montador no laço de eventos, e `Workspace()` abre SQLite de forma sincrônica, então
-`make_graph` é assíncrona e passa a montagem a um thread com `asyncio.to_thread`. A chamada ao
+`langgraph.json` aponta para `make_graph`, que monta o grafo sobre um workspace novo. A chamada ao
 montador se repete a cada requisição, e cada execução do Studio parte de um banco sem reservas.
 
 O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
@@ -181,18 +171,10 @@ já em execução, como uma célula de notebook, use `await arun_task(...)`.
 | `get_booking`, `list_bookings` | leem o estado mutável |
 | `cancel_booking` | marca `cancelled` e devolve o assento |
 
-A regra de cada uma fica em `domain/operations.py` e não importa LangChain. O pacote `tools/`
-fixa o banco da execução, grava a chamada no trace e agrupa as ferramentas em `CATALOG_TOOLS`,
-`BOOKING_READ_TOOLS` e `BOOKING_WRITE_TOOLS`.
-
 Um erro de execução volta como dado (`{"error": "flight_not_found"}`) e chega ao modelo como
-`ToolMessage`.
-
-O preço sai das ferramentas sem unidade, e o prompt declara que o catálogo está em EUR.
-
-`with_transient_retry` envolve o modelo já com as ferramentas ligadas e reintenta os erros
-passageiros do provedor, com `Context.retry_attempts` tentativas e espera exponencial. Esgotadas
-as tentativas, o erro entra em `RunResult.error` e a suíte de cenários continua.
+`ToolMessage`. Um erro passageiro do provedor consome até `Context.retry_attempts` tentativas, com
+espera exponencial entre elas; esgotadas as tentativas, o erro entra em `RunResult.error` e os
+cenários seguintes continuam.
 
 ## 7. Grafo
 
