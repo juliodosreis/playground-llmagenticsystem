@@ -31,12 +31,13 @@ def _is_gemini_3_or_later(model: str) -> bool:
 def load_chat_model(context: Context) -> BaseChatModel:
     """Instancia o cliente do provedor declarado no contexto.
 
-    O Ollama Cloud autentica por cabeçalho `Authorization`; um Ollama local dispensa a chave.
+    O Ollama Cloud autentica por cabeçalho `Authorization`; um Ollama local dispensa a chave. Os
+    dois clientes recebem `Context.request_timeout` como prazo de cada requisição.
     """
     if context.provider == "ollama":
         from langchain_ollama import ChatOllama
 
-        client_kwargs = {}
+        client_kwargs: dict = {"timeout": context.request_timeout}
         if not _is_local(context.base_url):
             key = os.environ.get("OLLAMA_API_KEY")
             if not key:
@@ -45,7 +46,7 @@ def load_chat_model(context: Context) -> BaseChatModel:
                     "https://ollama.com/settings/keys e defina a variável no arquivo .env ou no "
                     "ambiente. Para um Ollama local, aponte OLLAMA_BASE_URL para o host local."
                 )
-            client_kwargs = {"headers": {"Authorization": f"Bearer {key}"}}
+            client_kwargs["headers"] = {"Authorization": f"Bearer {key}"}
 
         return ChatOllama(
             model=context.model,
@@ -79,6 +80,7 @@ def load_chat_model(context: Context) -> BaseChatModel:
             model=context.model,
             google_api_key=key,
             max_output_tokens=context.max_tokens,
+            timeout=context.request_timeout,
             **amostragem,
         )
 

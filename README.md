@@ -7,6 +7,11 @@ ferramentas alteram esse banco, então uma reserva ocupa um assento do voo e um 
 devolve. Cada execução parte de um banco limpo e imprime as chamadas que o modelo fez, o estado
 do banco no fim e a resposta ao pedido.
 
+O grafo do agente segue uma de duas estratégias, com as mesmas ferramentas e os mesmos prompts de
+regra. Em `react`, o modelo escolhe a próxima chamada a cada turno. Em `plan-execute`, o modelo
+escreve a lista de passos antes da primeira chamada, e cada passo é executado em seguida, com uma
+revisão do plano quando uma busca volta vazia ou uma ferramenta devolve erro.
+
 ## 1. Ambiente
 
 O banco é criado em memória a cada execução, com três tabelas:
@@ -62,12 +67,15 @@ src/travel_mas/
         bookings.py     criação, consulta e cancelamento
     agents/             um pacote por agente
         travel/
-            prompts.py  prompt de sistema
+            prompts.py  prompt de sistema e prompts do Plan-and-Execute
             tools.py    as ferramentas que este agente recebe
-            state.py    estado do grafo: messages e passos
-            graph.py    laço de ferramentas como StateGraph
-    evaluation/         comparação de modelos
-        compare.py      execução dos cenários por vários modelos
+            state.py    estado de cada estratégia
+            graph.py    montagem do agente e escolha da estratégia
+            graphs/
+                react.py         laço de ferramentas como StateGraph
+                plan_execute.py  planejador, executor, replanejador e síntese
+    evaluation/         comparação de configurações
+        compare.py      execução dos cenários por modelo e estratégia
         report.py       tabela do relatório
     scenarios.py        os pedidos de demonstração
     cli.py              comandos
@@ -151,9 +159,12 @@ python -m travel_mas demo              # roda todos
 python -m travel_mas demo 2 3          # roda os cenários 2 e 3
 python -m travel_mas run "Reserve o voo MAD-LIM de 2026-09-12 por até 1000 EUR. Sou u-42."
 python -m travel_mas comparar --modelo ollama --modelo google   # dois modelos lado a lado
+python -m travel_mas --strategy plan-execute demo 2             # estratégia Plan-and-Execute
 ```
 
-Opções: `--provider ollama|google`, `--model <id>`, `--max-steps <n>`, `--json`.
+Opções: `--provider ollama|google`, `--model <id>`, `--strategy react|plan-execute`,
+`--max-steps <n>`, `--json`. As opções vêm antes do comando. Sem `--strategy`, vale a variável
+`TRAVEL_STRATEGY`, e sem a variável, `react`.
 
 ```bash
 python -m travel_mas --provider google demo 1          # gemini-3.5-flash-lite
@@ -165,7 +176,9 @@ no Ollama e `gemini-3.5-flash-lite` no Google. `gemini` é aceito como nome do p
 parâmetros de amostragem que cada família aceita ficam em `runtime/models.py`.
 
 A saída traz a trajetória de chamadas, a tabela `bookings` resultante, os assentos consumidos e a
-mensagem final.
+mensagem final. Na estratégia `plan-execute`, a saída começa pelo plano, com a marca
+`(revisto pelo replanejador)` quando o plano foi reescrito durante a execução, e traz depois da
+trajetória as chamadas que o executor recusou, quando houver.
 
 ### 4.1 Cenários
 
@@ -178,31 +191,44 @@ mensagem final.
 | 5 | `reserva-e-cancelamento` | reservar, listar e cancelar |
 | 6 | `consulta-vazia` | um usuário sem reservas |
 
-### 4.2 Comparação de modelos
+### 4.2 Comparação de configurações
+
+Uma configuração é um par de modelo e estratégia. `comparar` roda os cenários uma vez por
+configuração:
 
 ```bash
 python -m travel_mas comparar --modelo ollama --modelo google
 python -m travel_mas comparar --modelo ollama:gpt-oss:20b --modelo google 2 5
+python -m travel_mas comparar --estrategia react --estrategia plan-execute
+python -m travel_mas comparar --modelo ollama --modelo google \
+    --estrategia react --estrategia plan-execute
 ```
 
 `--modelo` aceita `provedor` ou `provedor:modelo`, e se repete uma vez por modelo. A divisão
 ocorre no primeiro dois-pontos, então `ollama:gpt-oss:20b` mantém o identificador inteiro. Sem
-modelo, vale o padrão do provedor. Dois specs que resolvem para o mesmo modelo são recusados.
+modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia. Sem
+`--modelo`, a comparação usa o modelo das opções globais, e sem `--estrategia`, a estratégia
+global.
 
-O relatório traz uma linha por cenário e uma coluna por modelo, com o tempo e o número de chamadas
-de ferramenta, e a coluna `estado`:
+Os modelos e as estratégias se combinam dois a dois. O rótulo de cada coluna nomeia o que varia: o
+modelo, a estratégia, ou `modelo/estratégia` quando os dois variam. A comparação pede ao menos duas
+configurações, e duas configurações com o mesmo rótulo são recusadas.
+
+O relatório traz uma linha por cenário e uma coluna por configuração, e a coluna `estado`. A célula
+traz o tempo, o número de chamadas de ferramenta executadas e o número de chamadas ao modelo, lido
+do campo `passos` do estado final. O total por configuração soma o tempo e as chamadas ao modelo:
 
 ```
-  cenário                    gpt-oss:120b  gemini-3.5-flash-lite  estado
-  -------------------------  ------------  ---------------------  ------
-  1. voo-orcamento           2.8s / 3      4.0s / 3               igual
-  2. voo-e-hotel             9.5s / 8      3.4s / 6               difere
+  cenário                    react         plan-execute  estado
+  -------------------------  ------------  ------------  ------
+  1. voo-orcamento           2.4s / 3 / 4  3.8s / 3 / 5  igual
+  2. voo-e-hotel             8.6s / 7 / 8  7.6s / 6 / 8  difere
 ```
 
-`estado` compara o `state_hash` do banco no fim de cada execução. Dois modelos com o mesmo hash
-deixaram o banco igual, por trajetórias que podem ter sido diferentes. Os cenários que divergem
-saem listados com o hash de cada modelo. Um modelo cujo grafo não monta, por chave de API ausente,
-ocupa a coluna com `erro` e os demais continuam.
+`estado` compara o `state_hash` do banco no fim de cada execução. Duas configurações com o mesmo
+hash deixaram o banco igual, por trajetórias que podem ter sido diferentes. Os cenários que
+divergem saem listados com o hash de cada configuração. Uma configuração cujo grafo não monta, por
+chave de API ausente, ocupa a coluna com `erro` e as demais continuam.
 
 ### 4.3 LangGraph Studio
 
@@ -215,8 +241,10 @@ O comando sobe a API em `http://127.0.0.1:2024` e imprime o endereço do Studio,
 local, e a interface é uma página servida pelo LangSmith, que pede conta e `LANGSMITH_API_KEY` no
 `.env`. Com `LANGSMITH_TRACING=false`, as execuções não são enviadas ao LangSmith.
 
-`langgraph.json` aponta para `make_graph`, que monta o grafo sobre um workspace novo. A chamada ao
-montador se repete a cada requisição, e cada execução do Studio parte de um banco sem reservas.
+`langgraph.json` declara dois grafos. `travel_agent` aponta para `make_graph`, com a estratégia de
+`TRAVEL_STRATEGY`, e `travel_agent_plan_execute` aponta para `make_plan_execute_graph`. Os dois
+montadores criam o grafo sobre um workspace novo. A chamada ao montador se repete a cada
+requisição, e cada execução do Studio parte de um banco sem reservas.
 
 O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
 Apagar o diretório com o servidor parado descarta o histórico de threads do Studio, e o arranque
@@ -237,7 +265,9 @@ limpo, e as ferramentas continuam ligadas ao mesmo objeto, então um grafo compi
 cenários sem herdar estado do anterior.
 
 `arun_task` devolve `RunResult`, com os dois snapshots, o trace, a mensagem final, o tempo em
-segundos e o campo `error` preenchido quando o agente levanta exceção. `run_task` é o envoltório
+segundos e o campo `error` preenchido quando o agente levanta exceção. `RunResult.values` traz os
+demais campos do estado final do grafo, como `passos` nas duas estratégias e `plano` em
+`plan-execute`, e `--json` os imprime. `run_task` é o envoltório
 sincrônico, e as execuções de um processo compartilham um laço de eventos só. Dentro de um laço
 já em execução, como uma célula de notebook, use `await arun_task(...)`.
 
@@ -253,9 +283,12 @@ já em execução, como uma célula de notebook, use `await arun_task(...)`.
 Um erro de execução volta como dado (`{"error": "flight_not_found"}`) e chega ao modelo como
 `ToolMessage`. Um erro passageiro do provedor consome até `Context.retry_attempts` tentativas, com
 espera exponencial entre elas; esgotadas as tentativas, o erro entra em `RunResult.error` e os
-cenários seguintes continuam.
+cenários seguintes continuam. Cada requisição ao provedor espera até `Context.request_timeout`
+segundos, 120 por padrão, e o prazo esgotado conta como erro passageiro.
 
 ## 7. Grafo
+
+### 7.1 ReAct
 
 ```mermaid
 graph TD;
@@ -274,7 +307,68 @@ mensagem trouxer pedido de chamada e `passos` estiver abaixo de `max_steps`, e `
 casos. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia.
 
 O estado tem `messages`, com o reducer `add_messages`, e `passos`, escrito pelo nó do modelo e
-lido pela rota. O nó de ferramentas é um `ToolNode`.
+lido pela rota. O nó de ferramentas é um `ToolNode`. `passos` conta as chamadas de um pedido: o nó
+do modelo o recomeça quando a última mensagem é do usuário, e numa thread do Studio cada pedido
+parte do contador zerado.
+
+### 7.2 Plan-and-Execute
+
+```mermaid
+graph TD;
+    __start__([__start__])
+    planejar(planejar)
+    executar(executar)
+    replanejar(replanejar)
+    concluir(concluir)
+    __end__([__end__])
+    __start__ --> planejar;
+    planejar -.-> executar;
+    planejar -.-> concluir;
+    executar -.-> executar;
+    executar -.-> replanejar;
+    executar -.-> concluir;
+    replanejar -.-> executar;
+    replanejar -.-> concluir;
+    concluir --> __end__;
+```
+
+| Nó | Chamada ao modelo | Escreve |
+|---|---|---|
+| `planejar` | esquema `Plano`, com as ferramentas no prompt | `plano` |
+| `executar` | ferramentas ligadas, sobre o primeiro passo pendente | `evidencias`, `desvio` |
+| `replanejar` | esquema `Replano`, com evidências e passos pendentes | `plano` |
+| `concluir` | sem ferramentas, com o pedido e as evidências | a mensagem final |
+
+Cada `Passo` do esquema tem dois campos, `ferramenta` e `descricao`, e o estado guarda o passo como
+o texto `ferramenta: descricao`. O identificador no início do prefixo libera ao executor uma
+ferramenta, e só ela é ligada ao modelo naquela chamada. Um nome citado na descrição não libera a
+ferramenta citada. Um prefixo fora das ferramentas do agente não chama o modelo: a evidência do
+passo é `{"error": "step_without_tool"}`, e a rota desvia ao replanejador.
+
+O passo executa uma chamada. Um pedido a outra ferramenta volta como
+`{"error": "tool_not_in_step"}`, e o segundo pedido da mesma resposta volta como
+`{"error": "one_call_per_step"}`, os dois sem executar. O pedido recusado fica fora da trajetória,
+que registra as chamadas executadas sobre o banco, e entra no campo `recusadas` do estado.
+
+A evidência de um passo é o retorno das ferramentas que o executor chamou, ou o texto da resposta
+quando nenhuma foi chamada. `desvio` fica verdadeiro quando uma busca de catálogo devolve lista
+vazia ou um retorno traz o campo `error`. Depois de `executar`, a rota vai a `replanejar` na
+primeira vez que `desvio` aparece. O replanejador troca os passos pendentes e mantém os
+executados, e a lista vazia encerra o plano.
+
+`passos` conta as chamadas ao modelo, como no laço ReAct. A rota manda o próximo passo ao executor,
+ou o desvio ao replanejador, enquanto `passos` estiver abaixo de `max_steps`, e `concluir` roda
+depois disso, com uma chamada a mais. O planejador e o replanejador preenchem o esquema pelo método
+`function_calling`. Uma resposta sem o esquema, ou com campos fora dele, se repete até 3 vezes
+antes de o erro entrar em `RunResult.error`.
+
+O planejador, o executor e a síntese recebem o pedido atual precedido dos turnos anteriores da
+conversa. Um turno anterior é uma mensagem do usuário e a última resposta do agente antes da
+mensagem seguinte, e numa thread do Studio o segundo pedido chega ao planejador com o primeiro
+turno.
+
+O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`, `evidencias`,
+`recusadas`, `desvio` e `replanejado`.
 
 ## 8. Referências
 
