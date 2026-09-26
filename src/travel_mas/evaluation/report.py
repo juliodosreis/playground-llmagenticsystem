@@ -1,7 +1,8 @@
 """Relatório de uma comparação, em texto.
 
-A tabela traz uma linha por cenário e uma coluna por modelo, com o tempo e o número de chamadas de
-ferramenta. A coluna `estado` diz se os modelos terminaram com o mesmo hash de banco.
+A tabela traz uma linha por cenário e uma coluna por configuração, com o tempo, o número de
+chamadas de ferramenta e o número de chamadas ao modelo. A coluna `estado` diz se as configurações
+terminaram com o mesmo hash de banco.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ from .compare import Comparison
 
 
 def comparison_rows(comparison: Comparison) -> list[dict[str, str]]:
-    """Uma linha por cenário, com uma coluna por modelo e a coluna do estado final."""
+    """Uma linha por cenário, com uma coluna por configuração e a coluna do estado final."""
     rows = []
     for scenario in comparison.scenarios:
         row = {"cenário": f"{scenario.key}. {scenario.name}"}
@@ -23,17 +24,21 @@ def comparison_rows(comparison: Comparison) -> list[dict[str, str]]:
 
 
 def format_comparison(comparison: Comparison) -> str:
-    """Tabela dos cenários seguida do total por modelo."""
-    linhas = [format_rows(comparison_rows(comparison), empty="  (nenhum cenário)")]
+    """Tabela dos cenários seguida do total por configuração."""
+    linhas = [
+        "  célula: tempo / chamadas de ferramenta / chamadas ao modelo\n",
+        format_rows(comparison_rows(comparison), empty="  (nenhum cenário)"),
+    ]
 
     total = len(comparison.scenarios)
     linhas.append(f"\nESTADO FINAL IGUAL EM {comparison.agreed()} DE {total} CENÁRIOS")
 
-    linhas.append("\nTOTAL POR MODELO")
+    linhas.append("\nTOTAL POR CONFIGURAÇÃO")
     resumo = [
         {
-            "modelo": label,
+            "configuração": label,
             "tempo": f"{comparison.total_seconds(label)}s",
+            "chamadas ao modelo": str(comparison.total_model_calls(label)),
             "erros": str(comparison.errors(label)),
         }
         for label in comparison.labels

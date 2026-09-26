@@ -1,7 +1,8 @@
 """Harness de execução: roda o agente sobre um ambiente limpo e captura o que ele deixou.
 
 `arun_task` devolve três registros de uma execução: o par de snapshots do banco antes e depois, o
-trace de chamadas de ferramenta e a mensagem final ao usuário.
+trace de chamadas de ferramenta e a mensagem final ao usuário. Os demais campos do estado final do
+grafo, como o plano da estratégia Plan-and-Execute, ficam em `RunResult.values`.
 
 Uma exceção do agente preenche o campo `error` do resultado em vez de propagar, então uma sequência
 de cenários continua depois de uma falha.
@@ -39,6 +40,8 @@ class RunResult:
     trace: list[ToolCall]
     final: str
     messages: Sequence[BaseMessage] = field(default_factory=list)
+    values: dict[str, Any] = field(default_factory=dict)
+    """Campos do estado final além de `messages`, com os nomes que o grafo declara."""
     error: str | None = None
     seconds: float = 0.0
 
@@ -57,6 +60,7 @@ class RunResult:
                 {"name": c.name, "args": dict(c.args), "result": c.result} for c in self.trace
             ],
             "final": self.final,
+            "values": self.values,
             "error": self.error,
             "seconds": self.seconds,
         }
@@ -76,6 +80,7 @@ async def arun_task(
     error: str | None = None
     final = ""
     messages: Sequence[BaseMessage] = []
+    values: dict[str, Any] = {}
 
     try:
         result = await agent.ainvoke(
@@ -83,6 +88,7 @@ async def arun_task(
             {"recursion_limit": recursion_limit},
         )
         messages = result["messages"]
+        values = {key: value for key, value in result.items() if key != "messages"}
         final = last_text(messages)
     except Exception as exc:  # um crash é um resultado da execução, registrado como tal
         error = f"{type(exc).__name__}: {exc}"
@@ -94,6 +100,7 @@ async def arun_task(
         trace=copy.copy(workspace.trace),
         final=final,
         messages=messages,
+        values=values,
         error=error,
         seconds=round(time.time() - started, 1),
     )

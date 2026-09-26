@@ -1,37 +1,28 @@
-"""Topologia do agente: o laço de ferramentas escrito como grafo do LangGraph.
+"""Montagem do agente: resolve workspace, modelo e ferramentas, e escolhe a estratégia do grafo.
 
-    START -> chamar_modelo -> decidir_proximo_no
-                                 |-- há pedidos e passos < limite -> executar_ferramentas
-                                 |                                        |
-                                 |                                        +-> chamar_modelo
-                                 +-- caso contrário --------------------------> END
+`Context.strategy` nomeia a estratégia, e `graphs.STRATEGIES` traz o montador de cada uma:
 
-`chamar_modelo` acrescenta o prompt de sistema ao histórico e chama o modelo com as ferramentas
-ligadas. `executar_ferramentas` roda os pedidos da última mensagem e devolve uma `ToolMessage` por
-pedido. A rota lê a última mensagem e o contador de passos.
+- `react`: o laço de ferramentas, em que o modelo decide a próxima chamada a cada turno;
+- `plan-execute`: um plano escrito antes da primeira chamada, executado passo a passo, com um
+  desvio ao replanejador quando uma busca volta vazia ou uma ferramenta devolve erro.
 
-O nó do modelo é assíncrono, então o grafo se invoca por `ainvoke`. Uma ferramenta sincrônica roda
-nesse grafo sem alteração, e o caminho aceita ferramenta assíncrona, como a de um servidor MCP.
+As duas estratégias recebem as mesmas ferramentas, declaradas em `tools.py`, e escrevem a mensagem
+final em `messages`. O harness roda qualquer uma das duas sem distinção.
 
-O nó de ferramentas é um `ToolNode`, que devolve o erro da ferramenta como `ToolMessage`. A falha
-entra no histórico e o modelo a recebe na chamada seguinte.
+Os nós do modelo são assíncronos, então o grafo se invoca por `ainvoke`. Uma ferramenta sincrônica
+roda nesse grafo sem alteração, e o caminho aceita ferramenta assíncrona, como a de um servidor MCP.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import SystemMessage
 from langchain_core.tools import BaseTool
-from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import ToolNode
 
-from ...runtime import Context, Workspace, load_chat_model, with_transient_retry
-from .prompts import SYSTEM_PROMPT
-from .state import TravelState
+from ...runtime import Context, Workspace, load_chat_model
+from .graphs import STRATEGIES
 from .tools import build_agent_tools
 
 
@@ -41,49 +32,26 @@ def build_graph(
     model: BaseChatModel | None = None,
     tools: list[BaseTool] | None = None,
 ) -> CompiledStateGraph:
-    """Compila o agente sobre um workspace.
+    """Compila o agente sobre um workspace, com a estratégia de `context.strategy`.
 
     O workspace é o banco desta execução. As ferramentas fecham sobre ele, então trocar o banco
-    entre execuções é chamar `Workspace.reset()`, sem reconstruir o grafo.
+    entre execuções é chamar `Workspace.reset()`, sem reconstruir o grafo. Uma estratégia fora de
+    `STRATEGIES` levanta `ValueError` antes da carga do modelo.
     """
-    workspace = workspace if workspace is not None else Workspace()
     context = context or Context()
+    montador = STRATEGIES.get(context.strategy)
+    if montador is None:
+        conhecidas = ", ".join(STRATEGIES)
+        raise ValueError(f"estratégia desconhecida: {context.strategy!r}. Use {conhecidas}.")
+
+    workspace = workspace if workspace is not None else Workspace()
     model = model if model is not None else load_chat_model(context)
     tools = tools if tools is not None else build_agent_tools(workspace)
-
-    model_with_tools = with_transient_retry(model.bind_tools(tools), context.retry_attempts)
-    limite = context.max_steps
-
-    async def chamar_modelo(state: TravelState) -> dict:
-        """Chama o modelo com o prompt de sistema e o histórico, e conta o passo."""
-        historico = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
-        resposta = await model_with_tools.ainvoke(historico)
-        return {"messages": [resposta], "passos": state.get("passos", 0) + 1}
-
-    def decidir_proximo_no(state: TravelState) -> Literal["executar", "fim"]:
-        """Continua enquanto houver pedido de chamada e o limite de passos não for atingido."""
-        ultima = state["messages"][-1]
-        if getattr(ultima, "tool_calls", None) and state.get("passos", 0) < limite:
-            return "executar"
-        return "fim"
-
-    builder = StateGraph(TravelState)
-    builder.add_node("chamar_modelo", chamar_modelo)
-    builder.add_node("executar_ferramentas", ToolNode(tools))
-
-    builder.add_edge(START, "chamar_modelo")
-    builder.add_conditional_edges(
-        "chamar_modelo",
-        decidir_proximo_no,
-        {"executar": "executar_ferramentas", "fim": END},
-    )
-    builder.add_edge("executar_ferramentas", "chamar_modelo")
-
-    return builder.compile(name="travel-agent")
+    return montador(model, tools, context)
 
 
 async def make_graph() -> CompiledStateGraph:
-    """Grafo para o LangGraph Studio, sobre um workspace novo.
+    """Grafo para o LangGraph Studio, sobre um workspace novo, com a estratégia do ambiente.
 
     O banco fica no processo do servidor: as reservas de uma sessão do Studio continuam visíveis na
     seguinte. `runtime.run_task` parte de um banco limpo a cada execução.
@@ -93,3 +61,8 @@ async def make_graph() -> CompiledStateGraph:
     `--allow-blocking`.
     """
     return await asyncio.to_thread(build_graph)
+
+
+async def make_plan_execute_graph() -> CompiledStateGraph:
+    """Grafo Plan-and-Execute para o LangGraph Studio, montado como `make_graph`."""
+    return await asyncio.to_thread(build_graph, None, Context(strategy="plan-execute"))
