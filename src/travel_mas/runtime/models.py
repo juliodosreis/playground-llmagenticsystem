@@ -33,6 +33,12 @@ def load_chat_model(context: Context) -> BaseChatModel:
 
     O Ollama Cloud autentica por cabeçalho `Authorization`; um Ollama local dispensa a chave. Os
     dois clientes recebem `Context.request_timeout` como prazo de cada requisição.
+
+    No Ollama, `reasoning` recebe o nível de `Context.reasoning_effort`. O `gpt-oss` ignora
+    `think=false` e gera o raciocínio em toda chamada. Com o nível, o cliente guarda o raciocínio
+    em `additional_kwargs["reasoning_content"]` e o devolve no campo `thinking` da mensagem na
+    chamada seguinte do laço de ferramentas. Um modelo do Ollama sem a capacidade `thinking` recusa
+    o nível com `400 "<modelo>" does not support thinking`.
     """
     if context.provider == "ollama":
         from langchain_ollama import ChatOllama
@@ -52,7 +58,7 @@ def load_chat_model(context: Context) -> BaseChatModel:
             model=context.model,
             base_url=context.base_url,
             client_kwargs=client_kwargs,
-            reasoning=False,
+            reasoning=context.reasoning_effort,
             temperature=context.temperature,
             num_predict=context.max_tokens,
         )
