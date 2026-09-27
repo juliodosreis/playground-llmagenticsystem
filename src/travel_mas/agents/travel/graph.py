@@ -12,6 +12,10 @@ final em `messages`. O harness roda qualquer uma das duas sem distinção.
 `Context.tool_source` nomeia a fonte das ferramentas: `local` ou `mcp`. As duas fontes publicam os
 mesmos nomes e schemas, e as estratégias não as distinguem.
 
+`Context.procedure` nomeia a origem do procedimento: `prompt`, com o fluxo de reserva no prompt de
+sistema, ou `skills`, com o fluxo lido pela ferramenta `read_skill`. No laço ReAct, `read_skill` é
+uma ferramenta como as outras. No Plan-and-Execute, a leitura antecede o planejador.
+
 Os nós do modelo são assíncronos, então o grafo se invoca por `ainvoke`. Uma ferramenta sincrônica
 roda nesse grafo sem alteração, e a ferramenta assíncrona do cliente MCP roda pelo mesmo caminho.
 """
@@ -24,16 +28,16 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 from langgraph.graph.state import CompiledStateGraph
 
-from ...runtime import Context, Workspace, load_chat_model
+from ...runtime import PROCEDURES, Context, Workspace, load_chat_model
 from ...tools import TOOL_SOURCES
 from .graphs import STRATEGIES, StrategyBuilder
 from .tools import abuild_agent_tools, build_agent_tools
 
 
 def resolve_strategy(context: Context) -> StrategyBuilder:
-    """O montador da estratégia do contexto, depois de validar a estratégia e a fonte.
+    """O montador da estratégia do contexto, depois de validar estratégia, fonte e procedimento.
 
-    Um nome fora de `STRATEGIES` ou de `TOOL_SOURCES` levanta `ValueError`.
+    Um nome fora de `STRATEGIES`, de `TOOL_SOURCES` ou de `PROCEDURES` levanta `ValueError`.
     """
     montador = STRATEGIES.get(context.strategy)
     if montador is None:
@@ -44,6 +48,9 @@ def resolve_strategy(context: Context) -> StrategyBuilder:
         raise ValueError(
             f"fonte de ferramentas desconhecida: {context.tool_source!r}. Use {conhecidas}."
         )
+    if context.procedure not in PROCEDURES:
+        conhecidos = ", ".join(PROCEDURES)
+        raise ValueError(f"procedimento desconhecido: {context.procedure!r}. Use {conhecidos}.")
     return montador
 
 
@@ -57,8 +64,8 @@ def build_graph(
 
     O workspace é o banco desta execução. As ferramentas fecham sobre ele, então trocar o banco
     entre execuções é chamar `Workspace.reset()`, sem reconstruir o grafo. Com a fonte `mcp`, o
-    servidor também fica ligado a esse workspace. Uma estratégia ou uma fonte desconhecida levanta
-    `ValueError` antes da carga do modelo.
+    servidor também fica ligado a esse workspace. Uma estratégia, uma fonte ou um procedimento
+    desconhecido levanta `ValueError` antes da carga do modelo.
 
     Sem `tools`, a fonte `mcp` lê o catálogo do servidor em um laço de eventos próprio. Dentro de
     um laço em execução, `build_graph` levanta `RuntimeError`, e o chamador usa `abuild_graph`.
@@ -68,7 +75,8 @@ def build_graph(
 
     workspace = workspace if workspace is not None else Workspace()
     model = model if model is not None else load_chat_model(context)
-    tools = tools if tools is not None else build_agent_tools(workspace, context.tool_source)
+    if tools is None:
+        tools = build_agent_tools(workspace, context.tool_source, context.procedure)
     return montador(model, tools, context)
 
 
@@ -88,16 +96,16 @@ async def abuild_graph(
     if workspace is None:
         workspace = await asyncio.to_thread(Workspace)
     if tools is None:
-        tools = await abuild_agent_tools(workspace, context.tool_source)
+        tools = await abuild_agent_tools(workspace, context.tool_source, context.procedure)
     return await asyncio.to_thread(build_graph, workspace, context, model, tools)
 
 
 async def make_graph() -> CompiledStateGraph:
-    """Grafo para o LangGraph Studio, com a estratégia e a fonte de ferramentas do ambiente.
+    """Grafo para o LangGraph Studio, com a estratégia, a fonte e o procedimento do ambiente.
 
-    O grafo roda sobre um workspace novo, e o banco fica no processo do servidor: as reservas de
-    uma sessão do Studio continuam visíveis na seguinte. `runtime.run_task` parte de um banco limpo
-    a cada execução.
+    O servidor chama esta função a cada execução, e o grafo roda sobre um workspace novo: cada
+    execução parte de um banco sem reservas, também dentro da mesma thread. O checkpointer do
+    servidor guarda as mensagens da thread, e não o banco.
 
     O servidor do Studio chama esta função no laço de eventos. `abuild_graph` roda as etapas
     sincrônicas em um thread, e o servidor monta o grafo sem `--allow-blocking`.
@@ -113,3 +121,8 @@ async def make_plan_execute_graph() -> CompiledStateGraph:
 async def make_mcp_graph() -> CompiledStateGraph:
     """Grafo com as ferramentas do servidor MCP, montado como `make_graph`."""
     return await abuild_graph(context=Context(tool_source="mcp"))
+
+
+async def make_skills_graph() -> CompiledStateGraph:
+    """Grafo com o procedimento lido das skills, montado como `make_graph`."""
+    return await abuild_graph(context=Context(procedure="skills"))

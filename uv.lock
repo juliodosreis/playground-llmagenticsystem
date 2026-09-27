@@ -1938,6 +1938,7 @@ dependencies = [
     { name = "langgraph" },
     { name = "mcp" },
     { name = "python-dotenv" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -1960,6 +1961,7 @@ requires-dist = [
     { name = "langgraph", specifier = ">=1.0" },
     { name = "mcp", specifier = ">=1.29,<2" },
     { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
 ]
 provides-extras = ["google"]
 

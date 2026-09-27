@@ -30,6 +30,14 @@ os executados. O desvio é avaliado só depois de `executar`, e ocorre uma vez p
 e ao replanejador quando `passos` chega a `max_steps`, e `concluir` roda depois disso, com uma
 chamada a mais.
 
+Com `Context.procedure` em `skills`, `planejar` chama antes o modelo com só `read_skill` ligada e
+o prompt de `activation_prompt`, escrito na compilação, e roda os pedidos de leitura dessa
+resposta. Os corpos lidos ocupam o lugar de `FLUXO` no prompt do planejador, cada corpo uma vez.
+Uma leitura que devolve o objeto JSON de erro não entra, e sem leitura o planejador recebe o
+prompt sem o bloco do procedimento. A ativação é uma chamada ao modelo, contada em `passos`, e as
+mensagens dela entram em `messages`. `read_skill` fica fora das ferramentas do executor: um passo
+que a nomeie vira o erro `step_without_tool`.
+
 O planejador e o replanejador preenchem o esquema pelo método `function_calling`, em que o esquema
 é declarado como ferramenta, sobre a cópia do modelo que `without_reasoning` devolve. Quando a
 resposta não traz essa chamada, ou traz campos fora do esquema, o parser devolve `None` ou levanta
@@ -59,9 +67,15 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, Field, ValidationError
 
-from ....runtime import Context, with_transient_retry, without_reasoning
+from ....runtime import READ_SKILL, Context, with_transient_retry, without_reasoning
 from ....tools import CATALOG_TOOLS
-from ..prompts import EXECUTOR_PROMPT, SYNTHESIS_PROMPT, planner_prompt, replanner_prompt
+from ..prompts import (
+    EXECUTOR_PROMPT,
+    SYNTHESIS_PROMPT,
+    activation_prompt,
+    planner_prompt,
+    replanner_prompt,
+)
 from ..state import PlanState
 
 TENTATIVAS_ESQUEMA = 3
@@ -95,6 +109,15 @@ class Replano(BaseModel):
     passos_restantes: list[Passo] = Field(
         description="Passos que ainda precisam ser executados, em ordem."
     )
+
+
+def leitura_com_erro(retorno: str) -> bool:
+    """Retorno de `read_skill` que é um objeto JSON com o campo `error`, e não o corpo da skill."""
+    try:
+        objeto = json.loads(retorno)
+    except ValueError:
+        return False
+    return isinstance(objeto, dict) and "error" in objeto
 
 
 def exige_replano(ferramenta: str, retorno: str) -> bool:
@@ -195,12 +218,20 @@ def build_plan_execute_graph(
     tools: list[BaseTool],
     context: Context,
 ) -> CompiledStateGraph:
-    """Compila planejador, executor, replanejador e síntese sobre o modelo e as ferramentas."""
+    """Compila planejador, executor, replanejador e síntese sobre o modelo e as ferramentas.
+
+    Em `skills`, as ferramentas trazem `read_skill`, e a falta dela levanta `ValueError`.
+    """
     tentativas = context.retry_attempts
     limite = context.max_steps
-    ferramentas = descrever_ferramentas(tools)
     por_nome = {tool.name: tool for tool in tools}
-    nomes = list(por_nome)
+    leitor = por_nome.get(READ_SKILL)
+    com_skills = context.procedure == "skills"
+    if com_skills and leitor is None:
+        raise ValueError(f"o procedimento skills pede a ferramenta {READ_SKILL}")
+    do_executor = [tool for tool in tools if tool.name != READ_SKILL]
+    ferramentas = descrever_ferramentas(do_executor)
+    nomes = [tool.name for tool in do_executor]
 
     sem_raciocinio = without_reasoning(model)
 
@@ -211,8 +242,12 @@ def build_plan_execute_graph(
     planejador = estruturado(Plano)
     replanejador = estruturado(Replano)
     executores = {
-        tool.name: with_transient_retry(model.bind_tools([tool]), tentativas) for tool in tools
+        tool.name: with_transient_retry(model.bind_tools([tool]), tentativas)
+        for tool in do_executor
     }
+    ativador = with_transient_retry(model.bind_tools([leitor]), tentativas) if com_skills else None
+    # A lista de skills lê o disco. Escrita na compilação, fica fora do laço de eventos.
+    prompt_de_ativacao = activation_prompt() if com_skills else ""
     sem_ferramentas = with_transient_retry(model, tentativas)
 
     def mensagem_de_erro(chamada: ToolCall, erro: dict) -> ToolMessage:
@@ -230,23 +265,56 @@ def build_plan_execute_graph(
         except Exception as exc:  # argumento inválido: o erro vira evidência do passo
             return mensagem_de_erro(chamada, {"error": f"{type(exc).__name__}: {exc}"})
 
+    async def ativar_skills(state: PlanState) -> tuple[list[AnyMessage], str]:
+        """Pede ao modelo as skills do pedido e as lê.
+
+        Devolve a resposta e as observações, e os corpos lidos, cada um uma vez, na ordem da
+        leitura. Um pedido a outra ferramenta volta como erro `unknown_tool`, sem executar, e uma
+        leitura que devolve o objeto JSON de erro fica fora dos corpos.
+        """
+        resposta = await ativador.ainvoke(
+            [
+                SystemMessage(prompt_de_ativacao),
+                HumanMessage(descrever_pedido(state["messages"])),
+            ]
+        )
+        observacoes: list[ToolMessage] = []
+        for chamada in resposta.tool_calls:
+            if chamada["name"] == READ_SKILL:
+                observacoes.append(await chamar_ferramenta(chamada))
+            else:
+                erro = {"error": "unknown_tool", "tool": chamada["name"]}
+                observacoes.append(mensagem_de_erro(chamada, erro))
+        corpos = [
+            str(obs.content)
+            for obs in observacoes
+            if obs.name == READ_SKILL and not leitura_com_erro(str(obs.content))
+        ]
+        return [resposta, *observacoes], "\n".join(dict.fromkeys(corpos))
+
     async def planejar(state: PlanState) -> dict:
-        """Escreve o plano e recomeça as listas e o contador do pedido."""
+        """Escreve o plano e recomeça as listas e o contador do pedido.
+
+        Em `skills`, a ativação roda antes, e o procedimento do planejador são os corpos lidos.
+        """
+        ativacao: list[AnyMessage] = []
+        prompt = planner_prompt(ferramentas)
+        if ativador is not None:
+            ativacao, procedimento = await ativar_skills(state)
+            prompt = planner_prompt(ferramentas, procedimento)
         plano = await preencher(
             planejador,
-            [
-                SystemMessage(planner_prompt(ferramentas)),
-                HumanMessage(descrever_pedido(state["messages"])),
-            ],
+            [SystemMessage(prompt), HumanMessage(descrever_pedido(state["messages"]))],
         )
         return {
+            "messages": ativacao,
             "plano": [passo.texto() for passo in plano.passos],
             "passos_feitos": [],
             "evidencias": [],
             "recusadas": [],
             "desvio": False,
             "replanejado": False,
-            "passos": 1,
+            "passos": 1 if ativador is None else 2,
         }
 
     async def executar(state: PlanState) -> dict:

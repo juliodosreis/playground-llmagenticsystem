@@ -11,14 +11,17 @@
         --estrategia react --estrategia plan-execute  # e por duas estratégias
     python -m travel_mas comparar \
         --ferramentas local --ferramentas mcp  # e pelas duas fontes de ferramentas
+    python -m travel_mas comparar \
+        --procedimento prompt --procedimento skills  # e pelos dois procedimentos
     python -m travel_mas --strategy plan-execute demo 2  # roda com a estratégia Plan-and-Execute
     python -m travel_mas --tools mcp demo 2  # roda com as ferramentas do servidor MCP
+    python -m travel_mas --procedure skills demo 2  # roda com o fluxo lido da skill
 
-`demo` e `run` começam pela linha `CONFIGURAÇÃO`, com o modelo, a estratégia e a fonte das
-ferramentas. Cada execução parte de um banco limpo e imprime a trajetória de chamadas, a tabela
-`bookings` resultante, os assentos consumidos e a mensagem final. Na estratégia `plan-execute`, a
-saída traz também o plano executado e as chamadas que o executor recusou. Com `--json`, o JSON
-de cada execução leva a configuração no campo `config`.
+`demo` e `run` começam pela linha `CONFIGURAÇÃO`, com o modelo, a estratégia, a fonte das
+ferramentas e o procedimento. Cada execução parte de um banco limpo e imprime a trajetória de
+chamadas, a tabela `bookings` resultante, os assentos consumidos e a mensagem final. Na estratégia
+`plan-execute`, a saída traz também o plano executado e as chamadas que o executor recusou. Com
+`--json`, o JSON de cada execução leva a configuração no campo `config`.
 """
 
 from __future__ import annotations
@@ -38,26 +41,35 @@ from .evaluation import (
     comparison_rows,
     format_comparison,
 )
-from .runtime import Context, RunResult, Workspace, format_rows, format_trace, run_task
+from .runtime import (
+    PROCEDURES,
+    Context,
+    RunResult,
+    Workspace,
+    format_rows,
+    format_trace,
+    run_task,
+)
 from .scenarios import SCENARIOS
 from .tools import TOOL_SOURCES
 
 
 def config_of(context: Context) -> dict[str, str]:
-    """Os quatro campos do contexto que distinguem uma configuração de outra."""
+    """Os cinco campos do contexto que distinguem uma configuração de outra."""
     return {
         "provider": context.provider,
         "model": context.model,
         "strategy": context.strategy,
         "tool_source": context.tool_source,
+        "procedure": context.procedure,
     }
 
 
 def print_config(context: Context) -> None:
-    """Imprime a linha de configuração, com os valores de `--provider`, `--strategy` e `--tools`."""
+    """Imprime a linha de configuração, com os valores das opções globais que montam o agente."""
     print(
         f"CONFIGURAÇÃO  {context.provider}:{context.model} | estratégia {context.strategy} | "
-        f"ferramentas {context.tool_source}"
+        f"ferramentas {context.tool_source} | procedimento {context.procedure}"
     )
 
 
@@ -150,15 +162,17 @@ def command_compare(args: argparse.Namespace) -> int:
     modelos = args.modelo or [f"{args.context.provider}:{args.context.model}"]
     estrategias = args.estrategia or [args.context.strategy]
     fontes = args.ferramentas or [args.context.tool_source]
+    procedimentos = args.procedimento or [args.context.procedure]
     try:
-        specs = combine_specs(modelos, estrategias, fontes, **overrides)
+        specs = combine_specs(modelos, estrategias, fontes, procedimentos, **overrides)
     except SpecError as exc:
         print(exc, file=sys.stderr)
         return 2
 
     if len(specs) < 2:
         mensagem = (
-            "a comparação pede duas configurações: repita --modelo, --estrategia ou --ferramentas"
+            "a comparação pede duas configurações: repita --modelo, --estrategia, --ferramentas "
+            "ou --procedimento"
         )
         print(mensagem, file=sys.stderr)
         return 2
@@ -197,6 +211,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--tools", choices=list(TOOL_SOURCES), help="fonte das ferramentas: local ou mcp"
     )
+    parser.add_argument(
+        "--procedure",
+        choices=list(PROCEDURES),
+        help="origem do fluxo de reserva: prompt de sistema ou skills",
+    )
     parser.add_argument("--max-steps", type=int, help="chamadas ao modelo antes de encerrar")
     parser.add_argument("--json", action="store_true", help="imprime a execução em JSON")
 
@@ -211,7 +230,8 @@ def build_parser() -> argparse.ArgumentParser:
     livre.set_defaults(func=command_run)
 
     comparar = sub.add_parser(
-        "comparar", help="roda os cenários por modelos, estratégias e fontes de ferramentas"
+        "comparar",
+        help="roda os cenários por modelos, estratégias, fontes de ferramentas e procedimentos",
     )
     comparar.add_argument(
         "--modelo",
@@ -230,6 +250,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         choices=list(TOOL_SOURCES),
         help="fonte a comparar; repita a opção uma vez por fonte. Vazio usa a global",
+    )
+    comparar.add_argument(
+        "--procedimento",
+        action="append",
+        choices=list(PROCEDURES),
+        help="procedimento a comparar; repita a opção uma vez por procedimento. Vazio usa o global",
     )
     comparar.add_argument("scenarios", nargs="*", help="números dos cenários; vazio roda todos")
     comparar.set_defaults(func=command_compare)
@@ -254,6 +280,7 @@ def main(argv: list[str] | None = None) -> int:
             ("model", args.model),
             ("strategy", args.strategy),
             ("tool_source", args.tools),
+            ("procedure", args.procedure),
             ("max_steps", args.max_steps),
         )
         if value is not None
@@ -265,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:
     except RuntimeError as exc:  # chave de API ausente: imprime a mensagem, sem traceback
         print(exc, file=sys.stderr)
         return 1
-    except ValueError as exc:  # estratégia ou fonte desconhecida vinda do ambiente
+    except ValueError as exc:  # estratégia, fonte ou procedimento desconhecido vindo do ambiente
         print(exc, file=sys.stderr)
         return 2
 
