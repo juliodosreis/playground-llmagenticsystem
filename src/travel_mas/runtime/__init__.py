@@ -7,7 +7,7 @@ formatação da saída. Nenhum módulo daqui importa um agente.
 from .context import Context
 from .display import format_rows, format_trace
 from .messages import last_text
-from .models import load_chat_model, with_transient_retry
+from .models import load_chat_model, with_transient_retry, without_reasoning
 from .runner import AgentLike, RunResult, arun_task, run_task
 from .workspace import ToolCall, Workspace
 
@@ -23,5 +23,6 @@ __all__ = [
     "last_text",
     "load_chat_model",
     "with_transient_retry",
+    "without_reasoning",
     "run_task",
 ]
