@@ -2,7 +2,8 @@
   "dependencies": ["."],
   "graphs": {
     "travel_agent": "travel_mas.agents.travel.graph:make_graph",
-    "travel_agent_plan_execute": "travel_mas.agents.travel.graph:make_plan_execute_graph"
+    "travel_agent_plan_execute": "travel_mas.agents.travel.graph:make_plan_execute_graph",
+    "travel_agent_mcp": "travel_mas.agents.travel.graph:make_mcp_graph"
   },
   "env": ".env"
 }

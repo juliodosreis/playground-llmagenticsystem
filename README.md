@@ -12,6 +12,10 @@ regra. Em `react`, o modelo escolhe a próxima chamada a cada turno. Em `plan-ex
 escreve a lista de passos antes da primeira chamada, e cada passo é executado em seguida, com uma
 revisão do plano quando uma busca volta vazia ou uma ferramenta devolve erro.
 
+As ferramentas chegam ao agente por uma de duas fontes. Em `local`, o agente chama as funções no
+processo. Em `mcp`, o agente lê o catálogo de um servidor MCP e chama as mesmas funções por esse
+servidor. As duas fontes publicam os mesmos nomes, descrições e schemas, e gravam no mesmo banco.
+
 ## 1. Ambiente
 
 O banco é criado em memória a cada execução, com três tabelas:
@@ -65,6 +69,8 @@ src/travel_mas/
     tools/              as ferramentas ligadas a um workspace
         search.py       as duas buscas de catálogo
         bookings.py     criação, consulta e cancelamento
+        server.py       servidor MCP que publica as ferramentas locais
+        remote.py       cliente MCP que adapta as ferramentas do servidor
     agents/             um pacote por agente
         travel/
             prompts.py  prompt de sistema e prompts do Plan-and-Execute
@@ -75,15 +81,17 @@ src/travel_mas/
                 react.py         laço de ferramentas como StateGraph
                 plan_execute.py  planejador, executor, replanejador e síntese
     evaluation/         comparação de configurações
-        compare.py      execução dos cenários por modelo e estratégia
+        compare.py      execução dos cenários por modelo, estratégia e fonte
         report.py       tabela do relatório
+    interfaces/
+        mcp/            o servidor MCP publicado por stdio
     scenarios.py        os pedidos de demonstração
     cli.py              comandos
 ```
 
 `agents/<nome>/tools.py` nomeia as ferramentas do agente, e `Toolbox.select()` troca cada nome
 pelo objeto correspondente. Um nome que não esteja no `Toolbox` levanta `KeyError` na montagem
-do grafo.
+do grafo. Na fonte `mcp`, o `Toolbox` traz os nomes que o servidor publica em `list_tools`.
 
 ## 3. Instalação
 
@@ -160,11 +168,14 @@ python -m travel_mas demo 2 3          # roda os cenários 2 e 3
 python -m travel_mas run "Reserve o voo MAD-LIM de 2026-09-12 por até 1000 EUR. Sou u-42."
 python -m travel_mas comparar --modelo ollama --modelo google   # dois modelos lado a lado
 python -m travel_mas --strategy plan-execute demo 2             # estratégia Plan-and-Execute
+python -m travel_mas --tools mcp demo 2                         # ferramentas pelo servidor MCP
 ```
 
 Opções: `--provider ollama|google`, `--model <id>`, `--strategy react|plan-execute`,
-`--max-steps <n>`, `--json`. As opções vêm antes do comando. Sem `--strategy`, vale a variável
-`TRAVEL_STRATEGY`, e sem a variável, `react`.
+`--tools local|mcp`, `--max-steps <n>`, `--json`. As opções vêm antes do comando. Sem
+`--strategy`, vale a variável `TRAVEL_STRATEGY`, e sem a variável, `react`. Sem `--tools`, vale
+`TRAVEL_TOOLS`, e sem a variável, `local`. Um valor desconhecido na opção é recusado pelo parser,
+e na variável, pela montagem do agente, com a mensagem e o código de saída 2.
 
 ```bash
 python -m travel_mas --provider google demo 1          # gemini-3.5-flash-lite
@@ -175,10 +186,19 @@ Sem `--model` nem `TRAVEL_MODEL`, cada provedor usa o modelo de `DEFAULT_MODELS`
 no Ollama e `gemini-3.5-flash-lite` no Google. `gemini` é aceito como nome do provedor Google. Os
 parâmetros de amostragem que cada família aceita ficam em `runtime/models.py`.
 
-A saída traz a trajetória de chamadas, a tabela `bookings` resultante, os assentos consumidos e a
-mensagem final. Na estratégia `plan-execute`, a saída começa pelo plano, com a marca
-`(revisto pelo replanejador)` quando o plano foi reescrito durante a execução, e traz depois da
-trajetória as chamadas que o executor recusou, quando houver.
+A saída começa pela linha de configuração, com o provedor, o modelo, a estratégia e a fonte das
+ferramentas:
+
+```
+CONFIGURAÇÃO  ollama:gpt-oss:120b | estratégia react | ferramentas mcp
+```
+
+Em seguida, cada execução traz a trajetória de chamadas, a tabela `bookings` resultante, os
+assentos consumidos e a mensagem final. Na estratégia `plan-execute`, o bloco da execução começa
+pelo plano, com a marca `(revisto pelo replanejador)` quando o plano foi reescrito durante a
+execução, e traz depois da trajetória as chamadas que o executor recusou, quando houver. Com
+`--json`, o JSON de cada execução traz a configuração no campo `config`, com `provider`, `model`,
+`strategy` e `tool_source`.
 
 ### 4.1 Cenários
 
@@ -193,8 +213,8 @@ trajetória as chamadas que o executor recusou, quando houver.
 
 ### 4.2 Comparação de configurações
 
-Uma configuração é um par de modelo e estratégia. `comparar` roda os cenários uma vez por
-configuração:
+Uma configuração é um trio de modelo, estratégia e fonte de ferramentas. `comparar` roda os
+cenários uma vez por configuração:
 
 ```bash
 python -m travel_mas comparar --modelo ollama --modelo google
@@ -202,17 +222,19 @@ python -m travel_mas comparar --modelo ollama:gpt-oss:20b --modelo google 2 5
 python -m travel_mas comparar --estrategia react --estrategia plan-execute
 python -m travel_mas comparar --modelo ollama --modelo google \
     --estrategia react --estrategia plan-execute
+python -m travel_mas comparar --ferramentas local --ferramentas mcp
 ```
 
 `--modelo` aceita `provedor` ou `provedor:modelo`, e se repete uma vez por modelo. A divisão
 ocorre no primeiro dois-pontos, então `ollama:gpt-oss:20b` mantém o identificador inteiro. Sem
-modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia. Sem
-`--modelo`, a comparação usa o modelo das opções globais, e sem `--estrategia`, a estratégia
-global.
+modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia, e
+`--ferramentas`, uma vez por fonte. Sem `--modelo`, a comparação usa o modelo das opções globais,
+sem `--estrategia`, a estratégia global, e sem `--ferramentas`, a fonte global.
 
-Os modelos e as estratégias se combinam dois a dois. O rótulo de cada coluna nomeia o que varia: o
-modelo, a estratégia, ou `modelo/estratégia` quando os dois variam. A comparação pede ao menos duas
-configurações, e duas configurações com o mesmo rótulo são recusadas.
+Os modelos, as estratégias e as fontes se combinam entre si. O rótulo de cada coluna nomeia o que
+varia, na ordem modelo, estratégia e fonte, separados por `/`, como `react/mcp` quando variam a
+estratégia e a fonte. Quando só o modelo varia, ou nada varia, o rótulo é o modelo. A comparação
+pede ao menos duas configurações, e duas configurações com o mesmo rótulo são recusadas.
 
 O relatório traz uma linha por cenário e uma coluna por configuração, e a coluna `estado`. A célula
 traz o tempo, o número de chamadas de ferramenta executadas e o número de chamadas ao modelo, lido
@@ -241,10 +263,11 @@ O comando sobe a API em `http://127.0.0.1:2024` e imprime o endereço do Studio,
 local, e a interface é uma página servida pelo LangSmith, que pede conta e `LANGSMITH_API_KEY` no
 `.env`. Com `LANGSMITH_TRACING=false`, as execuções não são enviadas ao LangSmith.
 
-`langgraph.json` declara dois grafos. `travel_agent` aponta para `make_graph`, com a estratégia de
-`TRAVEL_STRATEGY`, e `travel_agent_plan_execute` aponta para `make_plan_execute_graph`. Os dois
-montadores criam o grafo sobre um workspace novo. A chamada ao montador se repete a cada
-requisição, e cada execução do Studio parte de um banco sem reservas.
+`langgraph.json` declara três grafos. `travel_agent` aponta para `make_graph`, com a estratégia de
+`TRAVEL_STRATEGY` e a fonte de `TRAVEL_TOOLS`. `travel_agent_plan_execute` aponta para
+`make_plan_execute_graph`, e `travel_agent_mcp`, para `make_mcp_graph`, com as ferramentas do
+servidor MCP. Os três montadores criam o grafo sobre um workspace novo. A chamada ao montador se
+repete a cada requisição, e cada execução do Studio parte de um banco sem reservas.
 
 O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
 Apagar o diretório com o servidor parado descarta o histórico de threads do Studio, e o arranque
@@ -285,6 +308,51 @@ Um erro de execução volta como dado (`{"error": "flight_not_found"}`) e chega 
 espera exponencial entre elas; esgotadas as tentativas, o erro entra em `RunResult.error` e os
 cenários seguintes continuam. Cada requisição ao provedor espera até `Context.request_timeout`
 segundos, 120 por padrão, e o prazo esgotado conta como erro passageiro.
+
+### 6.1 Servidor MCP
+
+`tools/server.py` monta um servidor MCP, com o `FastMCP` do SDK `mcp`, a partir das ferramentas
+locais de um workspace. Cada ferramenta entra no servidor com o nome, a descrição e a função dela,
+e o servidor deriva o schema de entrada da assinatura da função. O modelo recebe o mesmo schema
+pelas duas fontes. O servidor roda a função em um thread de trabalho, fora do laço de eventos.
+
+Com `--tools mcp`, `tools/remote.py` lê o catálogo do servidor por `list_tools` e cria uma
+`StructuredTool` assíncrona por ferramenta publicada. Cada chamada abre uma sessão MCP por canais
+em memória, no mesmo processo, e envia `call_tool`. O servidor fica ligado ao workspace da
+execução, então o trace, os snapshots e o `state_hash` registram as chamadas feitas pelo servidor
+como registram as locais.
+
+Um argumento fora do schema volta do servidor com `isError`, sem entrada no trace. A ferramenta
+adaptada põe o texto do servidor no campo `error` de um JSON, o formato dos erros de reserva, e o
+modelo o recebe como `ToolMessage` com status `error`. Em `plan-execute`, esse retorno desvia ao
+replanejador, como o erro de validação da ferramenta local. O texto difere entre as fontes: a
+ferramenta local descreve a recusa com a mensagem do LangChain, e a fonte `mcp`, com a do servidor
+(`Error executing tool ...`).
+
+O mesmo servidor atende um host MCP externo por stdio:
+
+```bash
+python -m travel_mas.interfaces.mcp
+```
+
+Na configuração do host, a entrada roda o módulo pelo `uv`, com o caminho do repositório:
+
+```json
+{
+  "mcpServers": {
+    "travel-mas": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "<repositório>",
+        "python", "-m", "travel_mas.interfaces.mcp"
+      ]
+    }
+  }
+}
+```
+
+O processo cria um banco na partida. As reservas feitas pelo host ficam nesse banco até o processo
+terminar, e o agente, em outro processo, não as lê.
 
 ## 7. Grafo
 
@@ -377,3 +445,5 @@ O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`,
 - Padrões multiagente: https://docs.langchain.com/oss/python/langchain/multi-agent/index
 - Subagents: https://docs.langchain.com/oss/python/langchain/multi-agent/subagents
 - Ollama Cloud: https://docs.ollama.com/cloud
+- Model Context Protocol: https://modelcontextprotocol.io
+- SDK Python do MCP: https://github.com/modelcontextprotocol/python-sdk
