@@ -54,7 +54,7 @@ class Workspace:
     def record(self, name: str, args: Mapping[str, Any], result: str) -> None:
         """Registra no trace uma chamada que não passa por uma operação do domínio.
 
-        Usado pelas ferramentas de delegação quando `Context.trace_delegation` está ligado.
+        Usado por `read_skill`, que lê o corpo de uma skill e não toca o banco.
         """
         with self._lock:
             self.trace.append(ToolCall(name, dict(args), result))

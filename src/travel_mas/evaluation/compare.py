@@ -1,10 +1,11 @@
 """Execução dos mesmos cenários por várias configurações, com os resultados lado a lado.
 
-Uma configuração é um trio de modelo, estratégia de grafo e fonte das ferramentas. `compare_models`
-roda cada cenário uma vez por configuração, sobre um `Workspace` próprio de cada uma, e reduz a
-execução a quatro medidas: o tempo em segundos, o número de chamadas de ferramenta, o número de
-chamadas ao modelo e o hash do estado final do banco. Duas configurações que terminam com o mesmo
-hash deixaram o banco igual, por trajetórias que podem ter sido diferentes.
+Uma configuração reúne modelo, estratégia de grafo, fonte das ferramentas e procedimento.
+`compare_models` roda cada cenário uma vez por configuração, sobre um `Workspace` próprio de cada
+uma, e reduz a execução a quatro medidas: o tempo em segundos, o número de chamadas de
+ferramenta, o número de chamadas ao modelo e o hash do estado final do banco. Duas configurações
+que terminam com o mesmo hash deixaram o banco igual, por trajetórias que podem ter sido
+diferentes.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ class SpecError(ValueError):
 class ModelSpec:
     """Uma configuração a comparar, com o rótulo que a identifica nas colunas do relatório.
 
-    O contexto traz o modelo e a estratégia do grafo.
+    O contexto traz o modelo, a estratégia do grafo, a fonte das ferramentas e o procedimento.
     """
 
     label: str
@@ -58,16 +59,24 @@ def combine_specs(
     modelos: Sequence[str],
     estrategias: Sequence[str],
     fontes: Sequence[str] | None = None,
+    procedimentos: Sequence[str] | None = None,
     **overrides,
 ) -> list[ModelSpec]:
-    """Um spec por trio de modelo, estratégia e fonte, nessa ordem de variação.
+    """Um spec por combinação de modelo, estratégia, fonte e procedimento, nessa ordem de variação.
 
-    Sem `fontes`, cada spec usa a fonte padrão de `Context`. O rótulo nomeia o que varia entre as
-    colunas: o modelo quando há mais de um modelo, a estratégia quando há mais de uma estratégia e
-    a fonte quando há mais de uma fonte, separados por `/`. Quando nada varia, o rótulo é o
-    modelo. Dois specs com o mesmo rótulo levantam `SpecError`.
+    Sem `fontes` ou sem `procedimentos`, cada spec usa o valor padrão de `Context`. O rótulo nomeia
+    o que varia entre as colunas: o modelo, a estratégia, a fonte e o procedimento, cada um quando
+    há mais de um valor, separados por `/`. Quando nada varia, o rótulo é o modelo. Dois specs com
+    o mesmo rótulo levantam `SpecError`.
     """
-    variantes = [{}] if fontes is None else [{"tool_source": fonte} for fonte in fontes]
+    variantes = [
+        {
+            **({} if fonte is None else {"tool_source": fonte}),
+            **({} if procedimento is None else {"procedure": procedimento}),
+        }
+        for fonte in fontes or [None]
+        for procedimento in procedimentos or [None]
+    ]
     specs = []
     for texto in modelos:
         for estrategia in estrategias:
@@ -76,7 +85,8 @@ def combine_specs(
                 eixos = [
                     (len(modelos) > 1, spec.context.model),
                     (len(estrategias) > 1, estrategia),
-                    (len(variantes) > 1, spec.context.tool_source),
+                    (len(fontes or []) > 1, spec.context.tool_source),
+                    (len(procedimentos or []) > 1, spec.context.procedure),
                 ]
                 partes = [valor for varia, valor in eixos if varia] or [spec.context.model]
                 specs.append(ModelSpec(label="/".join(partes), context=spec.context))
@@ -171,7 +181,7 @@ def compare_models(
     e não interrompe as demais.
 
     `build` recebe o workspace e o contexto de um spec. O padrão monta o agente de viagem sobre o
-    provedor, a estratégia e a fonte de ferramentas do contexto.
+    provedor, a estratégia, a fonte de ferramentas e o procedimento do contexto.
     """
     agents = {}
     falhas: dict[str, str] = {}

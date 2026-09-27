@@ -16,6 +16,11 @@ As ferramentas chegam ao agente por uma de duas fontes. Em `local`, o agente cha
 processo. Em `mcp`, o agente lê o catálogo de um servidor MCP e chama as mesmas funções por esse
 servidor. As duas fontes publicam os mesmos nomes, descrições e schemas, e gravam no mesmo banco.
 
+O fluxo de reserva chega ao modelo por um de dois procedimentos. Em `prompt`, o fluxo está no
+prompt de sistema. Em `skills`, o prompt de sistema traz o nome e a descrição da skill
+`reservar-viagem`, e o modelo lê o fluxo pela ferramenta `read_skill` quando o pedido corresponde
+à descrição. O texto do fluxo é o mesmo nos dois procedimentos.
+
 ## 1. Ambiente
 
 O banco é criado em memória a cada execução, com três tabelas:
@@ -66,6 +71,7 @@ src/travel_mas/
         runner.py       execução sobre banco limpo, com trace e snapshots
         messages.py     leitura das mensagens que o grafo devolve
         display.py      trajetória e tabelas em texto
+        skills.py       leitura de SKILL.md, catálogo de skills e a ferramenta read_skill
     tools/              as ferramentas ligadas a um workspace
         search.py       as duas buscas de catálogo
         bookings.py     criação, consulta e cancelamento
@@ -80,8 +86,10 @@ src/travel_mas/
             graphs/
                 react.py         laço de ferramentas como StateGraph
                 plan_execute.py  planejador, executor, replanejador e síntese
+            skills/
+                reservar-viagem/SKILL.md  o fluxo de reserva
     evaluation/         comparação de configurações
-        compare.py      execução dos cenários por modelo, estratégia e fonte
+        compare.py      execução dos cenários por configuração
         report.py       tabela do relatório
     interfaces/
         mcp/            o servidor MCP publicado por stdio
@@ -169,13 +177,15 @@ python -m travel_mas run "Reserve o voo MAD-LIM de 2026-09-12 por até 1000 EUR.
 python -m travel_mas comparar --modelo ollama --modelo google   # dois modelos lado a lado
 python -m travel_mas --strategy plan-execute demo 2             # estratégia Plan-and-Execute
 python -m travel_mas --tools mcp demo 2                         # ferramentas pelo servidor MCP
+python -m travel_mas --procedure skills demo 2                  # fluxo lido da skill
 ```
 
 Opções: `--provider ollama|google`, `--model <id>`, `--strategy react|plan-execute`,
-`--tools local|mcp`, `--max-steps <n>`, `--json`. As opções vêm antes do comando. Sem
-`--strategy`, vale a variável `TRAVEL_STRATEGY`, e sem a variável, `react`. Sem `--tools`, vale
-`TRAVEL_TOOLS`, e sem a variável, `local`. Um valor desconhecido na opção é recusado pelo parser,
-e na variável, pela montagem do agente, com a mensagem e o código de saída 2.
+`--tools local|mcp`, `--procedure prompt|skills`, `--max-steps <n>`, `--json`. As opções vêm
+antes do comando. Sem `--strategy`, vale a variável `TRAVEL_STRATEGY`, e sem a variável, `react`.
+Sem `--tools`, vale `TRAVEL_TOOLS`, e sem a variável, `local`. Sem `--procedure`, vale
+`TRAVEL_PROCEDURE`, e sem a variável, `prompt`. Um valor desconhecido na opção é recusado pelo
+parser, e na variável, pela montagem do agente, com a mensagem e o código de saída 2.
 
 ```bash
 python -m travel_mas --provider google demo 1          # gemini-3.5-flash-lite
@@ -186,11 +196,11 @@ Sem `--model` nem `TRAVEL_MODEL`, cada provedor usa o modelo de `DEFAULT_MODELS`
 no Ollama e `gemini-3.5-flash-lite` no Google. `gemini` é aceito como nome do provedor Google. Os
 parâmetros de amostragem que cada família aceita ficam em `runtime/models.py`.
 
-A saída começa pela linha de configuração, com o provedor, o modelo, a estratégia e a fonte das
-ferramentas:
+A saída começa pela linha de configuração, com o provedor, o modelo, a estratégia, a fonte das
+ferramentas e o procedimento:
 
 ```
-CONFIGURAÇÃO  ollama:gpt-oss:120b | estratégia react | ferramentas mcp
+CONFIGURAÇÃO  ollama:gpt-oss:120b | estratégia react | ferramentas mcp | procedimento prompt
 ```
 
 Em seguida, cada execução traz a trajetória de chamadas, a tabela `bookings` resultante, os
@@ -198,7 +208,7 @@ assentos consumidos e a mensagem final. Na estratégia `plan-execute`, o bloco d
 pelo plano, com a marca `(revisto pelo replanejador)` quando o plano foi reescrito durante a
 execução, e traz depois da trajetória as chamadas que o executor recusou, quando houver. Com
 `--json`, o JSON de cada execução traz a configuração no campo `config`, com `provider`, `model`,
-`strategy` e `tool_source`.
+`strategy`, `tool_source` e `procedure`.
 
 ### 4.1 Cenários
 
@@ -213,8 +223,8 @@ execução, e traz depois da trajetória as chamadas que o executor recusou, qua
 
 ### 4.2 Comparação de configurações
 
-Uma configuração é um trio de modelo, estratégia e fonte de ferramentas. `comparar` roda os
-cenários uma vez por configuração:
+Uma configuração reúne modelo, estratégia, fonte de ferramentas e procedimento. `comparar` roda
+os cenários uma vez por configuração:
 
 ```bash
 python -m travel_mas comparar --modelo ollama --modelo google
@@ -223,18 +233,20 @@ python -m travel_mas comparar --estrategia react --estrategia plan-execute
 python -m travel_mas comparar --modelo ollama --modelo google \
     --estrategia react --estrategia plan-execute
 python -m travel_mas comparar --ferramentas local --ferramentas mcp
+python -m travel_mas comparar --procedimento prompt --procedimento skills
 ```
 
 `--modelo` aceita `provedor` ou `provedor:modelo`, e se repete uma vez por modelo. A divisão
 ocorre no primeiro dois-pontos, então `ollama:gpt-oss:20b` mantém o identificador inteiro. Sem
-modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia, e
-`--ferramentas`, uma vez por fonte. Sem `--modelo`, a comparação usa o modelo das opções globais,
-sem `--estrategia`, a estratégia global, e sem `--ferramentas`, a fonte global.
+modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia,
+`--ferramentas`, uma vez por fonte, e `--procedimento`, uma vez por procedimento. Cada eixo sem a
+opção usa o valor das opções globais.
 
-Os modelos, as estratégias e as fontes se combinam entre si. O rótulo de cada coluna nomeia o que
-varia, na ordem modelo, estratégia e fonte, separados por `/`, como `react/mcp` quando variam a
-estratégia e a fonte. Quando só o modelo varia, ou nada varia, o rótulo é o modelo. A comparação
-pede ao menos duas configurações, e duas configurações com o mesmo rótulo são recusadas.
+Os valores dos quatro eixos se combinam entre si. O rótulo de cada coluna nomeia o que varia, na
+ordem modelo, estratégia, fonte e procedimento, separados por `/`, como `react/skills` quando
+variam a estratégia e o procedimento. Quando só o modelo varia, ou nada varia, o rótulo é o
+modelo. A comparação pede ao menos duas configurações, e duas configurações com o mesmo rótulo são
+recusadas.
 
 O relatório traz uma linha por cenário e uma coluna por configuração, e a coluna `estado`. A célula
 traz o tempo, o número de chamadas de ferramenta executadas e o número de chamadas ao modelo, lido
@@ -263,10 +275,12 @@ O comando sobe a API em `http://127.0.0.1:2024` e imprime o endereço do Studio,
 local, e a interface é uma página servida pelo LangSmith, que pede conta e `LANGSMITH_API_KEY` no
 `.env`. Com `LANGSMITH_TRACING=false`, as execuções não são enviadas ao LangSmith.
 
-`langgraph.json` declara três grafos. `travel_agent` aponta para `make_graph`, com a estratégia de
-`TRAVEL_STRATEGY` e a fonte de `TRAVEL_TOOLS`. `travel_agent_plan_execute` aponta para
-`make_plan_execute_graph`, e `travel_agent_mcp`, para `make_mcp_graph`, com as ferramentas do
-servidor MCP. Os três montadores criam o grafo sobre um workspace novo. A chamada ao montador se
+`langgraph.json` declara quatro grafos. `travel_agent` aponta para `make_graph`, com a estratégia
+de `TRAVEL_STRATEGY`, a fonte de `TRAVEL_TOOLS` e o procedimento de `TRAVEL_PROCEDURE`.
+`travel_agent_plan_execute` aponta para `make_plan_execute_graph`, `travel_agent_mcp`, para
+`make_mcp_graph`, com as ferramentas do servidor MCP, e `travel_agent_skills`, para
+`make_skills_graph`, com o fluxo lido da skill. Os quatro montadores criam o grafo sobre um
+workspace novo. A chamada ao montador se
 repete a cada requisição, e cada execução do Studio parte de um banco sem reservas.
 
 O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
@@ -368,9 +382,51 @@ Na configuração do host, a entrada roda o módulo pelo `uv`, com o caminho do 
 O processo cria um banco na partida. As reservas feitas pelo host ficam nesse banco até o processo
 terminar, e o agente, em outro processo, não as lê.
 
-## 7. Grafo
+## 7. Skills
 
-### 7.1 ReAct
+Uma skill é um diretório em `agents/<nome>/skills/` com o arquivo `SKILL.md`: um frontmatter YAML
+com `name` e `description`, e o corpo em markdown com os passos do procedimento. O campo `name`
+repete o nome do diretório. O agente `travel` tem a skill `reservar-viagem`, cujo corpo é o fluxo
+de reserva: buscar as opções, reservar a mais barata que cumpre a data e o orçamento, e confirmar
+com `get_booking`.
+
+```
+---
+name: reservar-viagem
+description: >-
+  Reserva de voos e hotéis: busca as opções, reserva a mais barata que cumpre a data e o
+  orçamento do pedido e confirma o que ficou gravado. Aplica-se a todo pedido que peça para
+  reservar um voo ou um hotel.
+---
+
+Fluxo de cada pedido:
+1. Busque as opções com search_flights e search_hotels antes de afirmar ...
+```
+
+`--procedure` escolhe onde o corpo entra no contexto do modelo:
+
+| Procedimento | Prompt de sistema | Ferramentas | Corpo da skill |
+|---|---|---|---|
+| `prompt` | fluxo e regras | as seis | no prompt de sistema |
+| `skills` | lista de skills, instrução de leitura e regras | e `read_skill` | na `ToolMessage` |
+
+`prompts.py` lê o corpo do `SKILL.md` na importação e o escreve no prompt do procedimento
+`prompt`, então o texto do fluxo é o mesmo nos dois procedimentos. Em `skills`, a leitura
+acrescenta uma chamada ao modelo e uma chamada de ferramenta ao pedido que ativa a skill.
+
+`read_skill(name)` devolve o corpo da skill, lido do disco a cada chamada, e registra a leitura na
+trajetória, sem alterar o banco. Um nome fora do catálogo volta como
+`{"error": "unknown_skill", "available": [...]}`. A ferramenta roda no processo com as duas fontes
+de ferramentas.
+
+Em `react`, `read_skill` é uma ferramenta como as outras, e o grafo não muda. Em `plan-execute`, o
+nó `planejar` chama antes o modelo com só `read_skill` ligada, e o corpo lido ocupa o lugar do
+fluxo no prompt do planejador. Sem leitura, o planejador recebe o prompt sem o bloco do fluxo.
+`read_skill` fica fora das ferramentas do executor.
+
+## 8. Grafo
+
+### 8.1 ReAct
 
 ```mermaid
 graph TD;
@@ -393,7 +449,7 @@ lido pela rota. O nó de ferramentas é um `ToolNode`. `passos` conta as chamada
 do modelo o recomeça quando a última mensagem é do usuário, e numa thread do Studio cada pedido
 parte do contador zerado.
 
-### 7.2 Plan-and-Execute
+### 8.2 Plan-and-Execute
 
 ```mermaid
 graph TD;
@@ -442,7 +498,9 @@ executados, e a lista vazia encerra o plano.
 ou o desvio ao replanejador, enquanto `passos` estiver abaixo de `max_steps`, e `concluir` roda
 depois disso, com uma chamada a mais. O planejador e o replanejador preenchem o esquema pelo método
 `function_calling`, com o cliente sem raciocínio descrito na seção 4.4. Uma resposta sem o esquema,
-ou com campos fora dele, se repete até 3 vezes antes de o erro entrar em `RunResult.error`.
+ou com campos fora dele, se repete até 3 vezes antes de o erro entrar em `RunResult.error`. Com o
+procedimento `skills`, a leitura da skill em `planejar`, descrita na seção 7, conta como uma
+chamada ao modelo.
 
 O planejador, o executor e a síntese recebem o pedido atual precedido dos turnos anteriores da
 conversa. Um turno anterior é uma mensagem do usuário e a última resposta do agente antes da
@@ -452,7 +510,7 @@ turno.
 O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`, `evidencias`,
 `recusadas`, `desvio` e `replanejado`.
 
-## 8. Referências
+## 9. Referências
 
 - LangGraph: https://docs.langchain.com/oss/python/langgraph/overview
 - Ferramentas no LangChain: https://docs.langchain.com/oss/python/langchain/tools
@@ -461,3 +519,4 @@ O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`,
 - Ollama Cloud: https://docs.ollama.com/cloud
 - Model Context Protocol: https://modelcontextprotocol.io
 - SDK Python do MCP: https://github.com/modelcontextprotocol/python-sdk
+- Agent Skills: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview

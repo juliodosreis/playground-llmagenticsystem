@@ -50,6 +50,14 @@ class Context:
     fontes fica em `tools.TOOL_SOURCES`.
     """
 
+    procedure: str = field(default_factory=lambda: _env("TRAVEL_PROCEDURE", "prompt"))
+    """Origem do procedimento do agente: `prompt` ou `skills`.
+
+    `prompt` escreve o procedimento no prompt de sistema. `skills` escreve ali o nome e a
+    descrição de cada skill, e o modelo lê o corpo pela ferramenta `read_skill`. O agente valida o
+    nome na montagem do grafo, e a lista fica em `runtime.skills.PROCEDURES`.
+    """
+
     base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "https://ollama.com"))
     """Endpoint do Ollama. O padrão é o Ollama Cloud, que exige `OLLAMA_API_KEY`."""
 

@@ -10,6 +10,10 @@
 ligadas. `executar_ferramentas` roda os pedidos da última mensagem e devolve uma `ToolMessage` por
 pedido. A rota lê a última mensagem e o contador de passos.
 
+O prompt de sistema vem de `system_prompt(context.procedure)`, escrito na compilação. Em `skills`,
+ele traz a lista de skills, e `read_skill` chega entre as ferramentas: a leitura da skill é um
+pedido de chamada como os outros, e o grafo não muda.
+
 O contador vale por pedido: `chamar_modelo` o recomeça quando a última mensagem é do usuário. Numa
 thread com checkpointer, como a do Studio, o estado de um pedido passa ao seguinte, e o contador
 acumulado cortaria o laço depois de alguns pedidos.
@@ -30,7 +34,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 
 from ....runtime import Context, with_transient_retry
-from ..prompts import SYSTEM_PROMPT
+from ..prompts import system_prompt
 from ..state import TravelState
 
 
@@ -42,10 +46,11 @@ def build_react_graph(
     """Compila o laço de ferramentas sobre o modelo e as ferramentas dados."""
     model_with_tools = with_transient_retry(model.bind_tools(tools), context.retry_attempts)
     limite = context.max_steps
+    prompt = system_prompt(context.procedure)
 
     async def chamar_modelo(state: TravelState) -> dict:
         """Chama o modelo com o prompt de sistema e o histórico, e conta o passo do pedido."""
-        historico = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
+        historico = [SystemMessage(prompt), *state["messages"]]
         resposta = await model_with_tools.ainvoke(historico)
         inicio_do_pedido = isinstance(state["messages"][-1], HumanMessage)
         anteriores = 0 if inicio_do_pedido else state.get("passos", 0)
