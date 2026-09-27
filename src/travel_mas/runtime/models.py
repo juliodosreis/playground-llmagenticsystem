@@ -93,6 +93,21 @@ def load_chat_model(context: Context) -> BaseChatModel:
     raise ValueError(f"provedor desconhecido: {context.provider!r}. Use 'ollama' ou 'google'.")
 
 
+def without_reasoning(model: BaseChatModel) -> BaseChatModel:
+    """Cópia do cliente do Ollama com `reasoning=False`, para as chamadas de saída estruturada.
+
+    O Ollama Cloud não aplica o campo `format`, e o esquema chega ao `gpt-oss` como ferramenta. Com
+    o raciocínio ligado, o modelo pode devolver o esquema como texto, sem a chamada da ferramenta.
+    A chamada de saída estruturada leva um pedido só, sem histórico de ferramentas. O cliente de
+    outro provedor volta sem cópia.
+    """
+    from langchain_ollama import ChatOllama
+
+    if isinstance(model, ChatOllama):
+        return model.model_copy(update={"reasoning": False})
+    return model
+
+
 def transient_errors() -> tuple[type[Exception], ...]:
     """Erros de provedor que um reintento resolve.
 

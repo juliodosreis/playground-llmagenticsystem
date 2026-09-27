@@ -279,12 +279,16 @@ rm -rf .langgraph_api/
 
 ### 4.4 Limitações do Ollama Cloud
 
+O Ollama Cloud não aplica saídas estruturadas: o campo `format` da API de chat, com um JSON
+Schema, não restringe a resposta do modelo. O planejador e o replanejador de `plan-execute`
+declaram o esquema como ferramenta, pelo método `function_calling`, e o modelo o preenche ao chamar
+essa ferramenta. Uma resposta que traz o esquema como texto, sem a chamada, não é aceita, e o
+pedido se repete até 3 vezes antes do erro `o modelo não preencheu o esquema`.
+
 O cliente do Ollama recebe `reasoning` com o nível de `Context.reasoning_effort`, `low` por
-padrão. O `gpt-oss` ignora `think=false` e gera o raciocínio em cada chamada. Com o nível, o
-cliente guarda o raciocínio da resposta, e no laço de ferramentas ele volta no histórico da chamada
-seguinte. Com `reasoning=False`, o cliente descarta esse raciocínio, e parte das execuções do laço
-termina com argumentos fora do pedido, como um `user_id` que o pedido não traz, ou com o erro 500
-do Ollama Cloud. Um modelo do Ollama sem a capacidade `thinking` recusa o nível com o erro 400
+padrão. No laço ReAct, o raciocínio de cada resposta volta no histórico da chamada seguinte. O
+planejador e o replanejador chamam uma cópia do cliente com `reasoning=False`, criada por
+`without_reasoning`. Um modelo do Ollama sem a capacidade `thinking` recusa o nível com o erro 400
 `"<modelo>" does not support thinking`.
 
 ## 5. Estado da execução
@@ -437,8 +441,8 @@ executados, e a lista vazia encerra o plano.
 `passos` conta as chamadas ao modelo, como no laço ReAct. A rota manda o próximo passo ao executor,
 ou o desvio ao replanejador, enquanto `passos` estiver abaixo de `max_steps`, e `concluir` roda
 depois disso, com uma chamada a mais. O planejador e o replanejador preenchem o esquema pelo método
-`function_calling`. Uma resposta sem o esquema, ou com campos fora dele, se repete até 3 vezes
-antes de o erro entrar em `RunResult.error`.
+`function_calling`, com o cliente sem raciocínio descrito na seção 4.4. Uma resposta sem o esquema,
+ou com campos fora dele, se repete até 3 vezes antes de o erro entrar em `RunResult.error`.
 
 O planejador, o executor e a síntese recebem o pedido atual precedido dos turnos anteriores da
 conversa. Um turno anterior é uma mensagem do usuário e a última resposta do agente antes da

@@ -31,9 +31,9 @@ e ao replanejador quando `passos` chega a `max_steps`, e `concluir` roda depois 
 chamada a mais.
 
 O planejador e o replanejador preenchem o esquema pelo método `function_calling`, em que o esquema
-é declarado como ferramenta. Quando a resposta não traz essa chamada, ou traz campos fora do
-esquema, o parser devolve `None` ou levanta exceção, e o pedido se repete até `TENTATIVAS_ESQUEMA`
-vezes.
+é declarado como ferramenta, sobre a cópia do modelo que `without_reasoning` devolve. Quando a
+resposta não traz essa chamada, ou traz campos fora do esquema, o parser devolve `None` ou levanta
+exceção, e o pedido se repete até `TENTATIVAS_ESQUEMA` vezes.
 """
 
 from __future__ import annotations
@@ -59,7 +59,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, Field, ValidationError
 
-from ....runtime import Context, with_transient_retry
+from ....runtime import Context, with_transient_retry, without_reasoning
 from ....tools import CATALOG_TOOLS
 from ..prompts import EXECUTOR_PROMPT, SYNTHESIS_PROMPT, planner_prompt, replanner_prompt
 from ..state import PlanState
@@ -202,8 +202,10 @@ def build_plan_execute_graph(
     por_nome = {tool.name: tool for tool in tools}
     nomes = list(por_nome)
 
+    sem_raciocinio = without_reasoning(model)
+
     def estruturado(esquema: type[BaseModel]) -> Runnable:
-        saida = model.with_structured_output(esquema, method="function_calling")
+        saida = sem_raciocinio.with_structured_output(esquema, method="function_calling")
         return with_transient_retry(saida, tentativas)
 
     planejador = estruturado(Plano)
