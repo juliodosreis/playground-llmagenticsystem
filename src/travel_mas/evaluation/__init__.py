@@ -1,8 +1,8 @@
 """Comparação de configurações sobre os cenários do pacote.
 
-Roda os mesmos cenários por vários pares de modelo e estratégia, e reduz cada execução a tempo,
-número de chamadas de ferramenta e hash do estado final do banco. Nenhum agente importa este
-pacote.
+Roda os mesmos cenários por várias configurações, cada uma um trio de modelo, estratégia e fonte
+das ferramentas, e reduz cada execução a tempo, número de chamadas de ferramenta, número de
+chamadas ao modelo e hash do estado final do banco. Nenhum agente importa este pacote.
 """
 
 from .compare import (

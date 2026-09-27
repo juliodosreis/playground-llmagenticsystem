@@ -9,11 +9,16 @@
         --modelo ollama --modelo google        # roda os cenários por dois modelos
     python -m travel_mas comparar \
         --estrategia react --estrategia plan-execute  # e por duas estratégias
+    python -m travel_mas comparar \
+        --ferramentas local --ferramentas mcp  # e pelas duas fontes de ferramentas
     python -m travel_mas --strategy plan-execute demo 2  # roda com a estratégia Plan-and-Execute
+    python -m travel_mas --tools mcp demo 2  # roda com as ferramentas do servidor MCP
 
-Cada execução parte de um banco limpo e imprime a trajetória de chamadas, a tabela `bookings`
-resultante, os assentos consumidos e a mensagem final. Na estratégia `plan-execute`, a saída traz
-também o plano executado e as chamadas que o executor recusou.
+`demo` e `run` começam pela linha `CONFIGURAÇÃO`, com o modelo, a estratégia e a fonte das
+ferramentas. Cada execução parte de um banco limpo e imprime a trajetória de chamadas, a tabela
+`bookings` resultante, os assentos consumidos e a mensagem final. Na estratégia `plan-execute`, a
+saída traz também o plano executado e as chamadas que o executor recusou. Com `--json`, o JSON
+de cada execução leva a configuração no campo `config`.
 """
 
 from __future__ import annotations
@@ -35,6 +40,32 @@ from .evaluation import (
 )
 from .runtime import Context, RunResult, Workspace, format_rows, format_trace, run_task
 from .scenarios import SCENARIOS
+from .tools import TOOL_SOURCES
+
+
+def config_of(context: Context) -> dict[str, str]:
+    """Os quatro campos do contexto que distinguem uma configuração de outra."""
+    return {
+        "provider": context.provider,
+        "model": context.model,
+        "strategy": context.strategy,
+        "tool_source": context.tool_source,
+    }
+
+
+def print_config(context: Context) -> None:
+    """Imprime a linha de configuração, com os valores de `--provider`, `--strategy` e `--tools`."""
+    print(
+        f"CONFIGURAÇÃO  {context.provider}:{context.model} | estratégia {context.strategy} | "
+        f"ferramentas {context.tool_source}"
+    )
+
+
+def print_json(result: RunResult, context: Context) -> None:
+    """Imprime a execução em JSON, precedida pela configuração."""
+    print("\nJSON")
+    execucao = {"config": config_of(context), **result.to_dict()}
+    print(json.dumps(execucao, ensure_ascii=False, indent=2))
 
 
 def print_run(name: str, result: RunResult) -> None:
@@ -87,24 +118,24 @@ def command_demo(args: argparse.Namespace) -> int:
 
     workspace = Workspace()
     agent = build_graph(workspace, args.context)
+    print_config(args.context)
     for key in keys:
         scenario = SCENARIOS[key]
         result = run_task(agent, workspace, scenario.prompt, args.context.recursion_limit)
         print_run(f"{key}: {scenario.name}", result)
         if args.json:
-            print("\nJSON")
-            print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            print_json(result, args.context)
     return 0
 
 
 def command_run(args: argparse.Namespace) -> int:
     workspace = Workspace()
     agent = build_graph(workspace, args.context)
+    print_config(args.context)
     result = run_task(agent, workspace, args.prompt, args.context.recursion_limit)
     print_run("livre", result)
     if args.json:
-        print("\nJSON")
-        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        print_json(result, args.context)
     return 0
 
 
@@ -118,14 +149,17 @@ def command_compare(args: argparse.Namespace) -> int:
     overrides = {"max_steps": args.max_steps} if args.max_steps is not None else {}
     modelos = args.modelo or [f"{args.context.provider}:{args.context.model}"]
     estrategias = args.estrategia or [args.context.strategy]
+    fontes = args.ferramentas or [args.context.tool_source]
     try:
-        specs = combine_specs(modelos, estrategias, **overrides)
+        specs = combine_specs(modelos, estrategias, fontes, **overrides)
     except SpecError as exc:
         print(exc, file=sys.stderr)
         return 2
 
     if len(specs) < 2:
-        mensagem = "a comparação pede duas configurações: repita --modelo ou --estrategia"
+        mensagem = (
+            "a comparação pede duas configurações: repita --modelo, --estrategia ou --ferramentas"
+        )
         print(mensagem, file=sys.stderr)
         return 2
 
@@ -160,6 +194,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--provider", help="ollama, google ou gemini")
     parser.add_argument("--model", help="identificador do modelo; vazio usa o padrão do provedor")
     parser.add_argument("--strategy", choices=list(STRATEGIES), help="topologia do grafo")
+    parser.add_argument(
+        "--tools", choices=list(TOOL_SOURCES), help="fonte das ferramentas: local ou mcp"
+    )
     parser.add_argument("--max-steps", type=int, help="chamadas ao modelo antes de encerrar")
     parser.add_argument("--json", action="store_true", help="imprime a execução em JSON")
 
@@ -173,7 +210,9 @@ def build_parser() -> argparse.ArgumentParser:
     livre.add_argument("prompt")
     livre.set_defaults(func=command_run)
 
-    comparar = sub.add_parser("comparar", help="roda os cenários por modelos e estratégias")
+    comparar = sub.add_parser(
+        "comparar", help="roda os cenários por modelos, estratégias e fontes de ferramentas"
+    )
     comparar.add_argument(
         "--modelo",
         action="append",
@@ -185,6 +224,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         choices=list(STRATEGIES),
         help="estratégia a comparar; repita a opção uma vez por estratégia. Vazio usa a global",
+    )
+    comparar.add_argument(
+        "--ferramentas",
+        action="append",
+        choices=list(TOOL_SOURCES),
+        help="fonte a comparar; repita a opção uma vez por fonte. Vazio usa a global",
     )
     comparar.add_argument("scenarios", nargs="*", help="números dos cenários; vazio roda todos")
     comparar.set_defaults(func=command_compare)
@@ -208,6 +253,7 @@ def main(argv: list[str] | None = None) -> int:
             ("provider", args.provider),
             ("model", args.model),
             ("strategy", args.strategy),
+            ("tool_source", args.tools),
             ("max_steps", args.max_steps),
         )
         if value is not None
@@ -219,6 +265,9 @@ def main(argv: list[str] | None = None) -> int:
     except RuntimeError as exc:  # chave de API ausente: imprime a mensagem, sem traceback
         print(exc, file=sys.stderr)
         return 1
+    except ValueError as exc:  # estratégia ou fonte desconhecida vinda do ambiente
+        print(exc, file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

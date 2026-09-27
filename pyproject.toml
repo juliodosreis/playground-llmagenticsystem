@@ -10,6 +10,7 @@ dependencies = [
     "langgraph>=1.0",
     "langchain-ollama>=1.0",
     "python-dotenv>=1.0",
+    "mcp>=1.29,<2",
 ]
 
 [project.optional-dependencies]

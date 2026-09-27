@@ -42,6 +42,14 @@ class Context:
     O agente valida o nome na montagem do grafo, e a lista das estratégias fica no agente.
     """
 
+    tool_source: str = field(default_factory=lambda: _env("TRAVEL_TOOLS", "local"))
+    """Origem das ferramentas do agente: `local` ou `mcp`.
+
+    `local` chama as funções no processo. `mcp` chama as mesmas funções por um servidor MCP,
+    conectado por canais em memória. O agente valida o nome na montagem do grafo, e a lista das
+    fontes fica em `tools.TOOL_SOURCES`.
+    """
+
     base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "https://ollama.com"))
     """Endpoint do Ollama. O padrão é o Ollama Cloud, que exige `OLLAMA_API_KEY`."""
 
