@@ -280,8 +280,8 @@ de `TRAVEL_STRATEGY`, a fonte de `TRAVEL_TOOLS` e o procedimento de `TRAVEL_PROC
 `travel_agent_plan_execute` aponta para `make_plan_execute_graph`, `travel_agent_mcp`, para
 `make_mcp_graph`, com as ferramentas do servidor MCP, e `travel_agent_skills`, para
 `make_skills_graph`, com o fluxo lido da skill. Os quatro montadores criam o grafo sobre um
-workspace novo. A chamada ao montador se
-repete a cada requisição, e cada execução do Studio parte de um banco sem reservas.
+workspace novo. A chamada ao montador se repete a cada requisição, e cada execução do Studio parte
+de um banco sem reservas.
 
 O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
 Apagar o diretório com o servidor parado descarta o histórico de threads do Studio, e o arranque
@@ -300,9 +300,13 @@ essa ferramenta. Uma resposta que traz o esquema como texto, sem a chamada, não
 pedido se repete até 3 vezes antes do erro `o modelo não preencheu o esquema`.
 
 O cliente do Ollama recebe `reasoning` com o nível de `Context.reasoning_effort`, `low` por
-padrão. No laço ReAct, o raciocínio de cada resposta volta no histórico da chamada seguinte. O
-planejador e o replanejador chamam uma cópia do cliente com `reasoning=False`, criada por
-`without_reasoning`. Um modelo do Ollama sem a capacidade `thinking` recusa o nível com o erro 400
+padrão. O `gpt-oss` ignora `think=false` e gera o raciocínio em cada chamada. Com o nível, o
+cliente guarda o raciocínio da resposta, e no laço ReAct ele volta no histórico da chamada
+seguinte. Com `reasoning=False`, o cliente descarta esse raciocínio, e parte das execuções do laço
+termina com argumentos fora do pedido, como um `user_id` que o pedido não traz, ou com o erro 500
+do Ollama Cloud. O planejador e o replanejador preenchem o esquema em uma chamada, fora do laço,
+sobre uma cópia do cliente com `reasoning=False`, criada por `without_reasoning`. Um modelo do
+Ollama sem a capacidade `thinking` recusa o nível com o erro 400
 `"<modelo>" does not support thinking`.
 
 ## 5. Estado da execução
@@ -318,9 +322,9 @@ cenários sem herdar estado do anterior.
 `arun_task` devolve `RunResult`, com os dois snapshots, o trace, a mensagem final, o tempo em
 segundos e o campo `error` preenchido quando o agente levanta exceção. `RunResult.values` traz os
 demais campos do estado final do grafo, como `passos` nas duas estratégias e `plano` em
-`plan-execute`, e `--json` os imprime. `run_task` é o envoltório
-sincrônico, e as execuções de um processo compartilham um laço de eventos só. Dentro de um laço
-já em execução, como uma célula de notebook, use `await arun_task(...)`.
+`plan-execute`, e `--json` os imprime. `run_task` é o envoltório sincrônico, e as execuções de um
+processo compartilham um laço de eventos só. Dentro de um laço já em execução, como uma célula de
+notebook, use `await arun_task(...)`.
 
 ## 6. Ferramentas
 
@@ -411,18 +415,18 @@ Fluxo de cada pedido:
 | `skills` | lista de skills, instrução de leitura e regras | e `read_skill` | na `ToolMessage` |
 
 `prompts.py` lê o corpo do `SKILL.md` na importação e o escreve no prompt do procedimento
-`prompt`, então o texto do fluxo é o mesmo nos dois procedimentos. Em `skills`, a leitura
-acrescenta uma chamada ao modelo e uma chamada de ferramenta ao pedido que ativa a skill.
+`prompt`. Em `skills`, a leitura acrescenta uma chamada ao modelo e uma chamada de ferramenta ao
+pedido que ativa a skill.
 
 `read_skill(name)` devolve o corpo da skill, lido do disco a cada chamada, e registra a leitura na
 trajetória, sem alterar o banco. Um nome fora do catálogo volta como
 `{"error": "unknown_skill", "available": [...]}`. A ferramenta roda no processo com as duas fontes
 de ferramentas.
 
-Em `react`, `read_skill` é uma ferramenta como as outras, e o grafo não muda. Em `plan-execute`, o
-nó `planejar` chama antes o modelo com só `read_skill` ligada, e o corpo lido ocupa o lugar do
-fluxo no prompt do planejador. Sem leitura, o planejador recebe o prompt sem o bloco do fluxo.
-`read_skill` fica fora das ferramentas do executor.
+Em `react`, `read_skill` é uma ferramenta como as outras. Em `plan-execute`, o nó `planejar`
+chama antes o modelo com só `read_skill` ligada, e o corpo lido ocupa o lugar do fluxo no prompt
+do planejador. Sem leitura, o planejador recebe o prompt sem o bloco do fluxo. `read_skill` fica
+fora das ferramentas do executor.
 
 ## 8. Grafo
 

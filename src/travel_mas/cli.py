@@ -5,17 +5,14 @@
     python -m travel_mas demo 2 4              # roda os cenários 2 e 4
     python -m travel_mas run "texto do pedido" # roda um pedido livre
     python -m travel_mas catalogo              # imprime voos e hotéis do ambiente
-    python -m travel_mas comparar \
-        --modelo ollama --modelo google        # roda os cenários por dois modelos
-    python -m travel_mas comparar \
-        --estrategia react --estrategia plan-execute  # e por duas estratégias
-    python -m travel_mas comparar \
-        --ferramentas local --ferramentas mcp  # e pelas duas fontes de ferramentas
-    python -m travel_mas comparar \
-        --procedimento prompt --procedimento skills  # e pelos dois procedimentos
-    python -m travel_mas --strategy plan-execute demo 2  # roda com a estratégia Plan-and-Execute
-    python -m travel_mas --tools mcp demo 2  # roda com as ferramentas do servidor MCP
-    python -m travel_mas --procedure skills demo 2  # roda com o fluxo lido da skill
+
+    python -m travel_mas comparar --modelo ollama --modelo google              # dois modelos
+    python -m travel_mas comparar --estrategia react --estrategia plan-execute # duas estratégias
+    python -m travel_mas comparar --ferramentas local --ferramentas mcp        # duas fontes
+    python -m travel_mas comparar --procedimento prompt --procedimento skills  # dois procedimentos
+    python -m travel_mas --strategy plan-execute demo 2  # estratégia Plan-and-Execute
+    python -m travel_mas --tools mcp demo 2              # ferramentas pelo servidor MCP
+    python -m travel_mas --procedure skills demo 2       # fluxo lido da skill
 
 `demo` e `run` começam pela linha `CONFIGURAÇÃO`, com o modelo, a estratégia, a fonte das
 ferramentas e o procedimento. Cada execução parte de um banco limpo e imprime a trajetória de
@@ -204,7 +201,11 @@ def command_catalog(_: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="travel_mas", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="travel_mas",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--provider", help="ollama, google ou gemini")
     parser.add_argument("--model", help="identificador do modelo; vazio usa o padrão do provedor")
     parser.add_argument("--strategy", choices=list(STRATEGIES), help="topologia do grafo")

@@ -5,14 +5,13 @@ mesma descrição. O servidor deriva o schema de entrada da assinatura da funç�
 do LangChain. As ferramentas de `build_toolbox` fecham sobre um workspace, e a chamada pelo
 servidor grava no banco e no trace desse workspace.
 
-O `FastMCP` chama uma função sincrônica no thread do laço de eventos, e a operação sobre o SQLite
-bloquearia o laço durante a consulta. `in_worker_thread` registra no lugar dela uma corrotina que
-a roda em um thread de trabalho, como o `ToolNode` roda a ferramenta local. Uma ferramenta
-assíncrona tem `func` vazio, e o servidor registra a corrotina dela sem envoltório.
+O `FastMCP` chama uma função sincrônica no thread do laço de eventos. `in_worker_thread` registra
+no lugar dela uma corrotina que a roda em um thread de trabalho, como o `ToolNode` roda a
+ferramenta local. Uma ferramenta assíncrona tem `func` vazio, e o servidor registra a corrotina
+dela sem envoltório.
 
-O construtor do `FastMCP` chama `logging.basicConfig` no logger raiz. Num processo sem handler
-configurado, como a CLI, a chamada fixaria o nível em `ERROR` e esconderia os avisos das demais
-bibliotecas. `root_logging_preserved` devolve ao logger raiz o nível e os handlers de antes.
+O construtor do `FastMCP` chama `logging.basicConfig` no logger raiz. `root_logging_preserved`
+devolve ao logger raiz o nível e os handlers de antes.
 
 O servidor não abre transporte. `tools/remote.py` o conecta ao agente por canais em memória, no
 mesmo processo, e `interfaces/mcp/` o publica por stdio.

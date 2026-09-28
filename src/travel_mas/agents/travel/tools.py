@@ -5,8 +5,7 @@ sobre um workspace, pela fonte que `Context.tool_source` nomeia. O agente de via
 seis, com os mesmos nomes nas duas fontes.
 
 Com `Context.procedure` em `skills`, o agente recebe também `read_skill`, sobre as skills de
-`prompts.SKILLS`. A ferramenta roda no processo com as duas fontes, porque as skills são do agente
-e o servidor MCP publica as ferramentas do sistema.
+`prompts.SKILLS`. A ferramenta roda no processo com as duas fontes.
 """
 
 from __future__ import annotations
