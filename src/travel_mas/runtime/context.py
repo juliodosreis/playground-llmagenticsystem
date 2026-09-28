@@ -43,10 +43,11 @@ class Context:
     """Amostragem do modelo. A família Gemini 3 a recusa, e `load_chat_model` não a envia lá."""
 
     reasoning_effort: str = "low"
-    """Nível de raciocínio da família Gemini 3: `low`, `medium` ou `high`.
+    """Nível de raciocínio do modelo: `low`, `medium` ou `high`.
 
-    Ocupa o lugar de `reasoning=False`, que desliga o raciocínio do modelo no Ollama. O cliente do
-    Google aceita `thinking_level` como outro nome do mesmo parâmetro.
+    O Ollama o recebe como `reasoning` do `ChatOllama`, e o `gpt-oss` aceita esses três níveis. A
+    família Gemini 3 o recebe como `reasoning_effort`, que o cliente do Google aceita também pelo
+    nome `thinking_level`. No Ollama, os tokens do raciocínio contam em `max_tokens`.
     """
 
     max_tokens: int = 1200

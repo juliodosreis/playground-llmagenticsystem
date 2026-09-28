@@ -226,6 +226,16 @@ seguinte recria os arquivos:
 rm -rf .langgraph_api/
 ```
 
+### 4.4 Limitações do Ollama Cloud
+
+O cliente do Ollama recebe `reasoning` com o nível de `Context.reasoning_effort`, `low` por
+padrão. O `gpt-oss` ignora `think=false` e gera o raciocínio em cada chamada. Com o nível, o
+cliente guarda o raciocínio da resposta, e no laço de ferramentas ele volta no histórico da chamada
+seguinte. Com `reasoning=False`, o cliente descarta esse raciocínio, e parte das execuções do laço
+termina com argumentos fora do pedido, como um `user_id` que o pedido não traz, ou com o erro 500
+do Ollama Cloud. Um modelo do Ollama sem a capacidade `thinking` recusa o nível com o erro 400
+`"<modelo>" does not support thinking`.
+
 ## 5. Estado da execução
 
 `TravelDB.snapshot()` devolve as tabelas mutáveis em ordem fixa, `state_hash()` reduz um
