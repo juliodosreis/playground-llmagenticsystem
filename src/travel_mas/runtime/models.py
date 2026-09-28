@@ -39,6 +39,9 @@ def load_chat_model(context: Context) -> BaseChatModel:
     em `additional_kwargs["reasoning_content"]` e o devolve no campo `thinking` da mensagem na
     chamada seguinte do laço de ferramentas. Um modelo do Ollama sem a capacidade `thinking` recusa
     o nível com `400 "<modelo>" does not support thinking`.
+
+    O cliente do Google vem do extra `google`. Sem o extra, o provedor Google levanta
+    `RuntimeError` com o comando de instalação.
     """
     if context.provider == "ollama":
         from langchain_ollama import ChatOllama
@@ -64,8 +67,6 @@ def load_chat_model(context: Context) -> BaseChatModel:
         )
 
     if context.provider in GOOGLE_PROVIDERS:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
         key = os.environ.get("GOOGLE_API_KEY")
         if not key:
             raise RuntimeError(
@@ -73,6 +74,13 @@ def load_chat_model(context: Context) -> BaseChatModel:
                 "https://aistudio.google.com/apikey e defina a variável no arquivo .env ou no "
                 "ambiente."
             )
+
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+        except ImportError as exc:
+            raise RuntimeError(
+                "O provedor Google pede o extra google. Instale-o com uv sync --extra google."
+            ) from exc
 
         # A família Gemini 3 recusa temperature, top_p e top_k, e põe o nível de raciocínio no
         # lugar do reasoning do Ollama. O cliente anula temperature nessa família quando o
