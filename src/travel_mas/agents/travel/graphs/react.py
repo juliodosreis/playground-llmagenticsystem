@@ -12,11 +12,9 @@ pedido. A rota lê a última mensagem e o contador de passos.
 
 O prompt de sistema vem de `system_prompt(context.procedure)`, escrito na compilação. Em `skills`,
 ele traz a lista de skills, e `read_skill` chega entre as ferramentas: a leitura da skill é um
-pedido de chamada como os outros, e o grafo não muda.
+pedido de chamada como os outros.
 
-O contador vale por pedido: `chamar_modelo` o recomeça quando a última mensagem é do usuário. Numa
-thread com checkpointer, como a do Studio, o estado de um pedido passa ao seguinte, e o contador
-acumulado cortaria o laço depois de alguns pedidos.
+O contador vale por pedido: `chamar_modelo` o recomeça quando a última mensagem é do usuário.
 
 O nó de ferramentas é um `ToolNode`, que devolve o erro da ferramenta como `ToolMessage`. A falha
 entra no histórico e o modelo a recebe na chamada seguinte.

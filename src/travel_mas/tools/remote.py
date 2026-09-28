@@ -7,8 +7,7 @@ descrição e o schema de entrada que o servidor declara.
 A ferramenta adaptada é assíncrona. Cada chamada abre uma sessão pela `Connection`, envia
 `call_tool` e devolve o texto do resultado. Um resultado com `isError` vira `ToolException`, e a
 ferramenta devolve o texto do servidor no campo `error` de um JSON, o formato dos erros das
-operações do domínio. O retorno chega ao modelo como `ToolMessage` com status `error`, e o
-executor do Plan-and-Execute o lê como desvio.
+operações do domínio. O retorno chega ao modelo como `ToolMessage` com status `error`.
 
 `in_memory` conecta a um servidor do mesmo processo por canais em memória, sem subprocesso. O
 banco e o trace do servidor ficam no workspace do processo, e o harness os lê como lê os das

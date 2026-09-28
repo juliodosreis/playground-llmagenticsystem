@@ -7,7 +7,7 @@
   desvio ao replanejador quando uma busca volta vazia ou uma ferramenta devolve erro.
 
 As duas estratégias recebem as mesmas ferramentas, declaradas em `tools.py`, e escrevem a mensagem
-final em `messages`. O harness roda qualquer uma das duas sem distinção.
+final em `messages`.
 
 `Context.tool_source` nomeia a fonte das ferramentas: `local` ou `mcp`. As duas fontes publicam os
 mesmos nomes e schemas, e as estratégias não as distinguem.
