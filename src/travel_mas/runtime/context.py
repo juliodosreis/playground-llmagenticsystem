@@ -75,11 +75,7 @@ class Context:
     max_tokens: int = 1200
 
     max_steps: int = 12
-    """Chamadas ao modelo antes de a rota encerrar o laço.
-
-    O cenário `voo-e-hotel`, o mais longo do playground, consumiu 8 dos 12 em uma execução com
-    `gpt-oss:120b`: duas buscas, duas reservas, três leituras de confirmação e a resposta final.
-    """
+    """Chamadas ao modelo antes de a rota encerrar o laço."""
 
     recursion_limit: int = 50
     """Teto de supersteps do LangGraph. Estourá-lo levanta `GraphRecursionError`."""
@@ -87,9 +83,8 @@ class Context:
     request_timeout: float = 120.0
     """Segundos de espera por uma resposta do provedor.
 
-    Sem limite, uma conexão que o servidor mantém aberta sem responder prendeu uma execução por
-    60 minutos no laço de eventos. Esgotado o prazo, o cliente levanta `httpx.TimeoutException`,
-    que `with_transient_retry` reintenta.
+    Esgotado o prazo, o cliente levanta `httpx.TimeoutException`, que `with_transient_retry`
+    reintenta.
     """
 
     retry_attempts: int = 3

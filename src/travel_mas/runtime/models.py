@@ -118,14 +118,9 @@ def transient_errors() -> tuple[type[Exception], ...]:
     """Erros de provedor que um reintento resolve.
 
     O Ollama Cloud devolve `Internal Server Error (ref: ...)` com status 500 em parte das
-    chamadas que levam histórico de tool calling. Uma medição de 20 chamadas do mesmo payload,
-    com oito mensagens e três pares de `tool_calls` e `ToolMessage`, deu 3 falhas, e as 3 foram
-    atendidas no reintento imediato do mesmo conteúdo. O mesmo payload sem histórico de
-    ferramentas não falhou em 40 chamadas.
-
-    Do lado do Google, `google.genai.errors.ServerError` cobre os 5xx da API. O 429 de cota chega
-    como `ClientError` e fica fora da lista, porque a espera exponencial de três tentativas não
-    cobre a janela de reposição da cota.
+    chamadas que levam histórico de tool calling. Do lado do Google,
+    `google.genai.errors.ServerError` cobre os 5xx da API. O 429 de cota chega como `ClientError`
+    e fica fora da lista.
     """
     tipos: list[type[Exception]] = []
     try:

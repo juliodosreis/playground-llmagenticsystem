@@ -150,13 +150,12 @@ sincroniza o `.venv/` antes da execução quando `pyproject.toml` ou `uv.lock` m
 
 ```bash
 uv run python -m travel_mas catalogo
-uv run pytest
 ```
 
-A segunda é a ativação do `.venv/`, que põe `python`, `pytest` e `travel-mas` no `PATH` e
-dispensa o prefixo. A ativação vale na sessão de terminal em que foi feita, e `deactivate` a
-desfaz. Sem ela, `python -m travel_mas` termina em `command not found: python`, já que o macOS
-traz `python3` no `PATH` e não `python`:
+A segunda é a ativação do `.venv/`, que põe `python` e `travel-mas` no `PATH` e dispensa o prefixo.
+A ativação vale na sessão de terminal em que foi feita, e `deactivate` a desfaz. Sem ela,
+`python -m travel_mas` termina em `command not found: python`, já que o macOS traz `python3` no
+`PATH` e não `python`:
 
 ```bash
 source .venv/bin/activate
@@ -309,7 +308,77 @@ sobre uma cópia do cliente com `reasoning=False`, criada por `without_reasoning
 Ollama sem a capacidade `thinking` recusa o nível com o erro 400
 `"<modelo>" does not support thinking`.
 
-## 5. Estado da execução
+## 5. Configurações
+
+O agente se monta por quatro eixos independentes:
+
+| Eixo | Valores | Opção | Variável | Grafo do Studio |
+|---|---|---|---|---|
+| estratégia | `react`, `plan-execute` | `--strategy` | `TRAVEL_STRATEGY` | `travel_agent_plan_execute` |
+| fonte das ferramentas | `local`, `mcp` | `--tools` | `TRAVEL_TOOLS` | `travel_agent_mcp` |
+| procedimento | `prompt`, `skills` | `--procedure` | `TRAVEL_PROCEDURE` | `travel_agent_skills` |
+| modelo | `ollama`, `google` | `--provider`, `--model` | `TRAVEL_PROVIDER`, `TRAVEL_MODEL` | |
+
+O primeiro valor de cada eixo é o padrão. A opção vale para uma execução da CLI, e a variável vale
+para a CLI e para o Studio. Cada grafo do Studio fixa o segundo valor de um eixo e lê os demais do
+`.env`. Os eixos se combinam: `--strategy plan-execute --tools mcp --procedure skills` monta o
+Plan-and-Execute com as ferramentas do servidor MCP e o fluxo lido da skill.
+
+### 5.1 Configuração de referência
+
+`react`, `local` e `prompt` formam a configuração de referência. Nela, o agente recebe o mesmo
+prompt de sistema e as mesmas seis ferramentas da versão 0.0, marcada pelo tag `v0.0`. O cliente
+do Ollama difere: a versão 0.0 passa `reasoning=False`, e esta passa o nível `low` (seção 4.4).
+
+A versão 0.0 roda no mesmo diretório, pelo tag. `uv run` troca as dependências do `.venv/` pelas
+do `uv.lock` de cada versão, e o `.env`, fora do controle de versão, vale para as duas:
+
+```bash
+git switch --detach v0.0
+uv run python -m travel_mas demo
+git switch main
+```
+
+A saída de `demo` traz a tabela `bookings` no fim de cada cenário, e com `--json` o banco final
+fica no campo `after`, nas duas versões. Com os mesmos pedidos, a configuração de referência e a
+versão 0.0 chegam à mesma tabela nos cenários 1, 3, 4 e 6. Nos cenários 2 e 5, parte das execuções
+da versão 0.0 termina com um `user_id` fora do pedido, com o erro 500 do Ollama Cloud ou sem o
+cancelamento, pelo `reasoning=False` descrito na seção 4.4.
+
+### 5.2 Comparação por eixo
+
+`comparar` com um eixo repetido e os demais na referência atribui a esse eixo a diferença de estado
+final, de tempo e de chamadas entre as colunas. Com dois eixos repetidos, a comparação traz uma
+coluna por combinação de valores, e a diferença entre duas colunas pode vir de qualquer um dos dois
+eixos. Um eixo por comparação:
+
+```bash
+python -m travel_mas comparar --estrategia react --estrategia plan-execute
+python -m travel_mas comparar --ferramentas local --ferramentas mcp
+python -m travel_mas comparar --procedimento prompt --procedimento skills
+python -m travel_mas comparar --modelo ollama --modelo google
+```
+
+Nos seis cenários, cada eixo fora da referência chega à mesma tabela `bookings` da referência, e a
+coluna `estado` de `comparar` marca `igual`. A diferença entre as colunas fica no tempo e no número
+de chamadas.
+
+### 5.3 Execução de cada peça
+
+Cada peça roda com os demais eixos na referência:
+
+| Peça | Comando | Saída |
+|---|---|---|
+| Plan-and-Execute | `--strategy plan-execute demo 2` | o plano antes da trajetória |
+| replanejador | `--strategy plan-execute demo 3` | o plano com a marca `(revisto pelo replanejador)` |
+| fonte `mcp` | `--tools mcp demo 5` | a trajetória das chamadas feitas pelo servidor MCP |
+| servidor MCP | `python -m travel_mas.interfaces.mcp` | as seis ferramentas por stdio, para um host MCP |
+| skill | `--procedure skills demo 1` | `read_skill` na trajetória, antes da busca |
+| catálogo de skills | diretório novo em `agents/travel/skills/` | a skill nova na lista do prompt de `skills` |
+| limite do laço | `--max-steps 3 demo 2` | o laço encerrado na terceira chamada ao modelo |
+| pedido livre | `run "<pedido>"` | a execução de um pedido fora dos cenários |
+
+## 6. Estado da execução
 
 `TravelDB.snapshot()` devolve as tabelas mutáveis em ordem fixa, `state_hash()` reduz um
 snapshot a 16 caracteres, e `diff_state()` lista as linhas acrescentadas, removidas e alteradas
@@ -326,7 +395,7 @@ demais campos do estado final do grafo, como `passos` nas duas estratégias e `p
 processo compartilham um laço de eventos só. Dentro de um laço já em execução, como uma célula de
 notebook, use `await arun_task(...)`.
 
-## 6. Ferramentas
+## 7. Ferramentas
 
 | Ferramenta | Efeito |
 |---|---|
@@ -341,7 +410,7 @@ espera exponencial entre elas; esgotadas as tentativas, o erro entra em `RunResu
 cenários seguintes continuam. Cada requisição ao provedor espera até `Context.request_timeout`
 segundos, 120 por padrão, e o prazo esgotado conta como erro passageiro.
 
-### 6.1 Servidor MCP
+### 7.1 Servidor MCP
 
 `tools/server.py` monta um servidor MCP, com o `FastMCP` do SDK `mcp`, a partir das ferramentas
 locais de um workspace. Cada ferramenta entra no servidor com o nome, a descrição e a função dela,
@@ -386,7 +455,7 @@ Na configuração do host, a entrada roda o módulo pelo `uv`, com o caminho do 
 O processo cria um banco na partida. As reservas feitas pelo host ficam nesse banco até o processo
 terminar, e o agente, em outro processo, não as lê.
 
-## 7. Skills
+## 8. Skills
 
 Uma skill é um diretório em `agents/<nome>/skills/` com o arquivo `SKILL.md`: um frontmatter YAML
 com `name` e `description`, e o corpo em markdown com os passos do procedimento. O campo `name`
@@ -428,9 +497,9 @@ chama antes o modelo com só `read_skill` ligada, e o corpo lido ocupa o lugar d
 do planejador. Sem leitura, o planejador recebe o prompt sem o bloco do fluxo. `read_skill` fica
 fora das ferramentas do executor.
 
-## 8. Grafo
+## 9. Grafo
 
-### 8.1 ReAct
+### 9.1 ReAct
 
 ```mermaid
 graph TD;
@@ -453,7 +522,7 @@ lido pela rota. O nó de ferramentas é um `ToolNode`. `passos` conta as chamada
 do modelo o recomeça quando a última mensagem é do usuário, e numa thread do Studio cada pedido
 parte do contador zerado.
 
-### 8.2 Plan-and-Execute
+### 9.2 Plan-and-Execute
 
 ```mermaid
 graph TD;
@@ -503,7 +572,7 @@ ou o desvio ao replanejador, enquanto `passos` estiver abaixo de `max_steps`, e 
 depois disso, com uma chamada a mais. O planejador e o replanejador preenchem o esquema pelo método
 `function_calling`, com o cliente sem raciocínio descrito na seção 4.4. Uma resposta sem o esquema,
 ou com campos fora dele, se repete até 3 vezes antes de o erro entrar em `RunResult.error`. Com o
-procedimento `skills`, a leitura da skill em `planejar`, descrita na seção 7, conta como uma
+procedimento `skills`, a leitura da skill em `planejar`, descrita na seção 8, conta como uma
 chamada ao modelo.
 
 O planejador, o executor e a síntese recebem o pedido atual precedido dos turnos anteriores da
@@ -514,7 +583,7 @@ turno.
 O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`, `evidencias`,
 `recusadas`, `desvio` e `replanejado`.
 
-## 9. Referências
+## 10. Referências
 
 - LangGraph: https://docs.langchain.com/oss/python/langgraph/overview
 - Ferramentas no LangChain: https://docs.langchain.com/oss/python/langchain/tools
