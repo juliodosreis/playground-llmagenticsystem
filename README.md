@@ -327,23 +327,25 @@ Plan-and-Execute com as ferramentas do servidor MCP e o fluxo lido da skill.
 ### 5.1 Configuração de referência
 
 `react`, `local` e `prompt` formam a configuração de referência. Nela, o agente recebe o mesmo
-prompt de sistema e as mesmas seis ferramentas da versão 0.0, marcada pelo tag `v0.0`. O cliente
-do Ollama difere: a versão 0.0 passa `reasoning=False`, e esta passa o nível `low` (seção 4.4).
+prompt de sistema, as mesmas seis ferramentas e o mesmo cliente do Ollama da versão 0.1, marcada
+pelo tag `v0.1`. A versão 0.0, no tag `v0.0`, difere no cliente do Ollama: passa `reasoning=False`
+em vez do nível `low` (seção 4.4).
 
-A versão 0.0 roda no mesmo diretório, pelo tag. `uv run` troca as dependências do `.venv/` pelas
-do `uv.lock` de cada versão, e o `.env`, fora do controle de versão, vale para as duas:
+Cada versão roda no mesmo diretório, pelo tag. `uv run` troca as dependências do `.venv/` pelas do
+`uv.lock` de cada versão, e o `.env`, fora do controle de versão, vale para todas:
 
 ```bash
-git switch --detach v0.0
+git switch --detach v0.1
 uv run python -m travel_mas demo
 git switch main
 ```
 
 A saída de `demo` traz a tabela `bookings` no fim de cada cenário, e com `--json` o banco final
-fica no campo `after`, nas duas versões. Com os mesmos pedidos, a configuração de referência e a
-versão 0.0 chegam à mesma tabela nos cenários 1, 3, 4 e 6. Nos cenários 2 e 5, parte das execuções
-da versão 0.0 termina com um `user_id` fora do pedido, com o erro 500 do Ollama Cloud ou sem o
-cancelamento, pelo `reasoning=False` descrito na seção 4.4.
+fica no campo `after`, em todas as versões. Com os mesmos pedidos, a configuração de referência e a
+versão 0.1 chegam à mesma tabela nos seis cenários. A versão 0.0 chega à mesma tabela nos cenários
+1, 3, 4 e 6. Nos cenários 2 e 5, parte das execuções da versão 0.0 termina com um `user_id` fora
+do pedido, com o erro 500 do Ollama Cloud ou sem o cancelamento, pelo `reasoning=False` descrito
+na seção 4.4.
 
 ### 5.2 Comparação por eixo
 
