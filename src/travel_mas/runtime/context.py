@@ -36,6 +36,28 @@ class Context:
     modelo do Gemini. Um identificador do Ollama passado ao provedor Google chega a ele como está.
     """
 
+    strategy: str = field(default_factory=lambda: _env("TRAVEL_STRATEGY", "react"))
+    """Topologia do grafo do agente: `react` ou `plan-execute`.
+
+    O agente valida o nome na montagem do grafo, e a lista das estratégias fica no agente.
+    """
+
+    tool_source: str = field(default_factory=lambda: _env("TRAVEL_TOOLS", "local"))
+    """Origem das ferramentas do agente: `local` ou `mcp`.
+
+    `local` chama as funções no processo. `mcp` chama as mesmas funções por um servidor MCP,
+    conectado por canais em memória. O agente valida o nome na montagem do grafo, e a lista das
+    fontes fica em `tools.TOOL_SOURCES`.
+    """
+
+    procedure: str = field(default_factory=lambda: _env("TRAVEL_PROCEDURE", "prompt"))
+    """Origem do procedimento do agente: `prompt` ou `skills`.
+
+    `prompt` escreve o procedimento no prompt de sistema. `skills` escreve ali o nome e a
+    descrição de cada skill, e o modelo lê o corpo pela ferramenta `read_skill`. O agente valida o
+    nome na montagem do grafo, e a lista fica em `runtime.skills.PROCEDURES`.
+    """
+
     base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "https://ollama.com"))
     """Endpoint do Ollama. O padrão é o Ollama Cloud, que exige `OLLAMA_API_KEY`."""
 
@@ -53,14 +75,17 @@ class Context:
     max_tokens: int = 1200
 
     max_steps: int = 12
-    """Chamadas ao modelo antes de a rota encerrar o laço.
-
-    O cenário `voo-e-hotel`, o mais longo do playground, consumiu 8 dos 12 em uma execução com
-    `gpt-oss:120b`: duas buscas, duas reservas, três leituras de confirmação e a resposta final.
-    """
+    """Chamadas ao modelo antes de a rota encerrar o laço."""
 
     recursion_limit: int = 50
     """Teto de supersteps do LangGraph. Estourá-lo levanta `GraphRecursionError`."""
+
+    request_timeout: float = 120.0
+    """Segundos de espera por uma resposta do provedor.
+
+    Esgotado o prazo, o cliente levanta `httpx.TimeoutException`, que `with_transient_retry`
+    reintenta.
+    """
 
     retry_attempts: int = 3
     """Tentativas por chamada ao modelo, contando a primeira, em erro passageiro do provedor."""

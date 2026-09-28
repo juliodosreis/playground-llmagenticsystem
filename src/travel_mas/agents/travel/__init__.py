@@ -1,19 +1,39 @@
-"""Agente de viagens: um laço de ferramentas com as seis ferramentas do sistema.
+"""Agente de viagens: as seis ferramentas do sistema, sob uma de duas estratégias de grafo.
 
-Quatro arquivos: `prompts.py` com o prompt de sistema, `tools.py` com as ferramentas declaradas,
-`state.py` com o estado do grafo e `graph.py` com a topologia.
+Quatro arquivos: `prompts.py` com os prompts, `tools.py` com as ferramentas declaradas, `state.py`
+com o estado de cada estratégia e `graph.py` com a montagem. `graphs/` traz uma topologia por
+estratégia, e `Context.strategy` escolhe entre elas. `Context.tool_source` escolhe se as
+ferramentas rodam no processo ou pelo servidor MCP. `skills/` traz as skills do agente, e
+`Context.procedure` escolhe se o fluxo de reserva está no prompt de sistema ou é lido de uma
+delas.
 """
 
-from .graph import build_graph, make_graph
-from .prompts import SYSTEM_PROMPT
-from .state import TravelState
-from .tools import TOOL_NAMES, build_agent_tools
+from .graph import (
+    abuild_graph,
+    build_graph,
+    make_graph,
+    make_mcp_graph,
+    make_plan_execute_graph,
+    make_skills_graph,
+)
+from .graphs import STRATEGIES
+from .prompts import SKILLS, SYSTEM_PROMPT
+from .state import PlanState, TravelState
+from .tools import TOOL_NAMES, abuild_agent_tools, build_agent_tools
 
 __all__ = [
+    "SKILLS",
+    "STRATEGIES",
     "SYSTEM_PROMPT",
     "TOOL_NAMES",
+    "PlanState",
     "TravelState",
+    "abuild_agent_tools",
+    "abuild_graph",
     "build_agent_tools",
     "build_graph",
     "make_graph",
+    "make_mcp_graph",
+    "make_plan_execute_graph",
+    "make_skills_graph",
 ]

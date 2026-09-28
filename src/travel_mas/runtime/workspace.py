@@ -3,7 +3,8 @@
 As ferramentas fecham sobre um `Workspace`, e `reset()` troca o banco por um limpo antes de cada
 execução, o que permite rodar vários cenários com o mesmo grafo compilado.
 
-O trace é plano e registra toda chamada que passa por `Workspace.call`, na ordem em que ocorreram.
+O trace é plano e registra, na ordem em que ocorreram, as chamadas que passam por `Workspace.call`
+e as que `Workspace.record` recebe.
 """
 
 from __future__ import annotations
@@ -54,7 +55,7 @@ class Workspace:
     def record(self, name: str, args: Mapping[str, Any], result: str) -> None:
         """Registra no trace uma chamada que não passa por uma operação do domínio.
 
-        Usado pelas ferramentas de delegação quando `Context.trace_delegation` está ligado.
+        Usado por `read_skill`, que lê o corpo de uma skill e não toca o banco.
         """
         with self._lock:
             self.trace.append(ToolCall(name, dict(args), result))
