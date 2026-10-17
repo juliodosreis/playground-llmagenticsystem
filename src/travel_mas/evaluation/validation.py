@@ -200,7 +200,7 @@ def escrever_relatorio(resultados, output, k):
         "# Validação do MAS",
         "",
         f"Referência: {k} execuções por caso e topologia.",
-        "C06 fica não avaliável enquanto R4 estiver pendente.",
+        "Casos com decisão pendente ficam não avaliáveis.",
         "",
         "| Topologia | Caso | Passou | pass^k | Regras com falha |",
         "|---|---|---|---|---|",

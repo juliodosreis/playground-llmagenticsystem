@@ -4,7 +4,7 @@ procedencia:
   padrao: PLAN_MAS.md
   heranca: O padrão se aplica a cada campo descendente salvo exceção explícita.
   excecoes:
-    regras.R4: Decisão do usuário pendente.
+    regras.R4: Decisão do usuário em 2026-10-16, reserva atômica do pedido combinado.
     regras.R6: PLAN_MAS.md; a conferência de titularidade inclui preservar user_id na Ordem.
 agentes:
   coordenador:
@@ -59,8 +59,10 @@ regras:
     texto: Comparar orçamento total; hotel custa price_per_night vezes noites.
     origem: spec/mas.yaml#regras.R3
   - id: R4
-    tipo: pendente
-    texto: Pedidos combinados parcialmente disponíveis aguardam definição de reserva parcial.
+    tipo: obrigacao
+    texto: >-
+      Pedido combinado é uma unidade; se um item não tem opção aprovada, nada se reserva e o
+      relatório informa o item que falhou e os disponíveis com preço.
     origem: spec/mas.yaml#regras.R4
   - id: R5
     tipo: obrigacao

@@ -176,10 +176,15 @@ def build_graph(workspace=None, context=None, model=None):
             return finalizar(state, relatorio, "concluido")
         if decisao.proximo == "pesquisador":
             rejeicao = any(not v.aprovado for v in recebidas(state, "coordenador", Veredito))
-            # R10: a nova pesquisa responde a uma rejeição. Depois de um Relatorio sem opções,
-            # inclusive por erro de ferramenta, o passo seguinte é informar.
+            buscou = any(
+                e["tipo"] == "tool_call" and e.get("agente") == "pesquisador"
+                for e in workspace.eventos
+            )
+            # R10: a nova pesquisa responde a uma rejeição. Depois de um Relatorio sem opções
+            # com busca executada, inclusive com erro de ferramenta, o passo seguinte é informar.
+            # Sem busca executada, um Pedido corrigido conta como a nova pesquisa.
             if "D6" not in workspace._ativadas and (
-                state["pesquisas"] >= 2 or (state["pesquisas"] >= 1 and not rejeicao)
+                state["pesquisas"] >= 2 or (state["pesquisas"] >= 1 and buscou and not rejeicao)
             ):
                 state["motivo_terminacao"] = "limite_repropostas"
                 return state, "coordenador"

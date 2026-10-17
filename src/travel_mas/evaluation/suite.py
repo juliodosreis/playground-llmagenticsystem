@@ -36,7 +36,7 @@ async def arun_case(caso: Caso, context: Context, repeticao=1, build=abuild_grap
                 CheckResult(
                     "decisão pendente",
                     "no_evaluable",
-                    origem("R4"),
+                    origem(caso.regra_origem[0]),
                     caso.pendente,
                 )
             ],

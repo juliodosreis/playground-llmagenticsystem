@@ -726,3 +726,102 @@ def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada():
         "Ordem",
     ]
     assert avaliar(result, caso).status == "pass", avaliar(result, caso).to_dict()
+
+
+def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa():
+    # mas-validation-v2 C07B supervisor: o Pedido sem cidade voltou sem busca, e a regra de R10
+    # bloqueou a pesquisa com o Pedido corrigido.
+    def pedido_hotel(cidade):
+        def decidir(messages):
+            return Decisao(
+                proximo="pesquisador",
+                pedido=Pedido(
+                    tarefa_id=entrada(messages)["tarefa_id"],
+                    user_id="u-42",
+                    acao="reservar",
+                    itens=[{"kind": "hotel", "data": "2026-09-12", "cidade": cidade, "noites": 3}],
+                ),
+            )
+
+        return decidir
+
+    model = ModeloScriptado(
+        script=[
+            pedido_hotel(None),
+            AIMessage("falta a cidade"),
+            ResultadoPesquisa(propostas=[], motivo="falta cidade"),
+            pedido_hotel("LIM"),
+            chamada("search_hotels", {"city": "LIM"}, "h1"),
+            AIMessage("sem opção no teto"),
+            ResultadoPesquisa(propostas=[], motivo="sem opção"),
+            pedido_hotel("LIM"),
+            lambda m: Relatorio(tarefa_id=entrada(m)["tarefa_id"], mensagem="Sem opção."),
+        ]
+    )
+    workspace = Workspace()
+    result = run_task(build_graph(workspace, Context(), model), workspace, "x")
+    assert not model.script, result.to_dict()
+    assert result.tool_names() == ["search_hotels"]
+    assert result.values["pesquisas"] == 2
+    assert result.eventos[-1]["motivo"] == "limite_repropostas"
+
+
+@pytest.mark.parametrize("reserva_parcial", [False, True])
+def test_c06_avalia_reserva_atomica_do_pedido_combinado(reserva_parcial):
+    from travel_mas.evaluation.casos import CASOS
+    from travel_mas.evaluation.checks import avaliar
+
+    def pedido_combinado(messages):
+        return Decisao(
+            proximo="pesquisador",
+            pedido=Pedido(
+                tarefa_id=entrada(messages)["tarefa_id"],
+                user_id="u-42",
+                acao="reservar",
+                itens=[
+                    {"kind": "flight", "data": "2026-09-12", "origem": "MAD", "destino": "LIM",
+                     "teto": 1000},
+                    {"kind": "hotel", "data": "2026-09-12", "cidade": "XYZ", "teto": 100},
+                ],
+            ),
+        )
+
+    def concluir(messages):
+        tarefa = entrada(messages)["tarefa_id"]
+        if reserva_parcial:
+            return Decisao(
+                proximo="reservador",
+                ordens=[Ordem(tarefa_id=tarefa, proposta_id="p1", user_id="u-42")],
+            )
+        return Decisao(
+            proximo="fim",
+            relatorio=Relatorio(
+                tarefa_id=tarefa,
+                mensagem="Nenhuma reserva: não há hotel em XYZ. O voo FL-101 custa 980 EUR.",
+            ),
+        )
+
+    script = [
+        pedido_combinado,
+        chamada("search_flights", {"origin": "MAD", "destination": "LIM", "date": "2026-09-12"},
+                "busca-privada"),
+        chamada("search_hotels", {"city": "XYZ"}, "hoteis"),
+        AIMessage("voo encontrado; nenhum hotel em XYZ"),
+        proposta,
+        chamada("check_item", {"kind": "flight", "item_id": "FL-101"}, "check"),
+        AIMessage("voo aprovado"),
+        veredito,
+        concluir,
+    ]
+    if reserva_parcial:
+        script += script_reserva("workflow")[-6:]
+    workspace = Workspace()
+    model = ModeloScriptado(script=script)
+    result = run_task(build_graph(workspace, Context(), model), workspace, CASOS["C06"].solicitud)
+    assert not model.script, result.to_dict()
+    avaliacao = avaliar(result, CASOS["C06"])
+    if reserva_parcial:
+        falhas = {c.regra_origem.rsplit(".", 1)[-1] for c in avaliacao.checks if c.status == "fail"}
+        assert avaliacao.status == "fail" and "R4" in falhas
+    else:
+        assert avaliacao.status == "pass", avaliacao.to_dict()

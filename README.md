@@ -69,9 +69,9 @@ regras R1–R11, recuperação, terminação e procedência. Um teste compara se
 R1 (veredito correspondente), R6 (titularidade) e R7 (duplicatas) são instruções de prompt.
 As operações do domínio não as bloqueiam: o futuro avaliador deve detectar seus descumprimentos.
 
-R4 continua pendente: quando apenas parte de um pedido combinado pode ser atendida, o Coordenador
-pede esclarecimento sobre reserva parcial. Esse comportamento provisório ainda não define uma
-expectativa de avaliação para C06.
+R4 trata o pedido combinado como uma unidade: quando um item não tem opção aprovada, nenhum item
+é reservado, e o relatório informa o item que falhou e os disponíveis com preço. É uma instrução
+do Coordenador, sem bloqueio em código; C06 a avalia.
 
 ## Critérios C1–C7
 
@@ -101,8 +101,9 @@ preenche `Decisao` para escolher Pesquisador, Verificador, Reservador ou fim, e 
 `Command(goto=..., update=...)`. Os limites de rodadas e de novas pesquisas também se aplicam.
 
 As duas topologias terminam com `Relatorio` e evento `termination`. Uma nova pesquisa exige um
-`Veredito` rejeitado; depois de um `Relatorio` sem opções, inclusive por erro de ferramenta, o
-pedido de pesquisa encerra a tarefa com `limite_repropostas`. Com um motivo de encerramento
+`Veredito` rejeitado ou uma pesquisa anterior sem chamada de ferramenta. Depois de um `Relatorio`
+sem opções com busca executada, inclusive com erro de ferramenta, o pedido de pesquisa encerra a
+tarefa com `limite_repropostas`. Com um motivo de encerramento
 (`max_rodadas`, `limite_repropostas` ou `error`), o Coordenador é chamado com o esquema
 `Relatorio` em vez de `Decisao` e escreve o relatório final sobre o próprio histórico. Uma falha
 de agente é registrada como `error` e encaminhada ao Coordenador. Se o próprio Coordenador
@@ -190,7 +191,8 @@ ficam fora da média e aparecem contados separadamente. Uma execução sem erro 
 falhar no avaliador por violar uma expectativa. O comando `casos` devolve código 1 quando alguma
 execução não passa; `validar` também aponta defeitos não detectados ou controles com falha.
 
-C06 permanece `no_evaluable` por R4. C07 verifica três noites dentro do teto total; C07B usa um
+C06 combina um voo disponível com um hotel inexistente e exige nenhuma escrita e um relatório
+que nomeie o hotel ausente e o preço do voo. C07 verifica três noites dentro do teto total; C07B usa um
 teto menor que o total mais barato para detectar confusão entre preço por noite e total. Para
 igual duração, um hotel de menor preço por noite sempre tem menor total; a descrição original do
 plano não pode produzir a inversão de ordem que sugeria. C12P exercita timeout persistente.

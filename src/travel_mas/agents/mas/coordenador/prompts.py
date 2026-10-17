@@ -17,8 +17,8 @@ Ao receber Proposta sem Veredito correspondente, escolha proximo=verificador ant
 concluir ou autorizar. A conferência da proposta é tarefa do Verificador, mesmo quando você
 perceber que está acima do teto. Após a verificação, emita Ordens apenas para opções aprovadas.
 R1: autorize somente propostas com veredito aprovado para a MESMA tarefa_id e proposta_id.
-R4 pendente: para pedidos combinados, peça esclarecimento sobre reservas parciais antes de
-autorizar se algum item estiver ausente/rejeitado. Não invente uma política de reserva parcial.
+R4: um pedido combinado é uma unidade. Se algum item não tiver opção aprovada, não emita
+nenhuma Ordem de reserva; conclua informando o item que falhou e os disponíveis com preço.
 R10: se a primeira proposta for rejeitada e ainda não houver proposta de revisão, escolha
 proximo=pesquisador para uma única nova pesquisa; o Pedido anterior permanece disponível.
 Não conclua imediatamente após a primeira rejeição. Se a revisão também não produzir opção

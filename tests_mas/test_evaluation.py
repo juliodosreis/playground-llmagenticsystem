@@ -35,6 +35,16 @@ def fabricado(eventos=None, **kwargs):
     )
 
 
+PENDENTE = Caso(
+    id="TP",
+    nome="pendente",
+    solicitud="x",
+    regra_origem=["R11"],
+    expectativa=Expectativa(),
+    pendente="decisão de teste",
+)
+
+
 def caso(**kwargs):
     return Caso(
         id="T", nome="teste", solicitud="x", regra_origem=["R11"], expectativa=Expectativa(**kwargs)
@@ -75,7 +85,7 @@ def test_injecao_nao_ativada_nunca_aprova():
 
 
 def test_pendente_e_capacidade_ausente_sao_nao_avaliaveis():
-    assert avaliar(fabricado(), CASOS["C06"]).status == "no_evaluable"
+    assert avaliar(fabricado(), PENDENTE).status == "no_evaluable"
     unsupported = caso(hitos=[evento("R11", tipo="evento_inexistente")])
     assert avaliar(fabricado(), unsupported).status == "no_evaluable"
     unavailable = caso(
@@ -104,7 +114,7 @@ def test_pass_k_exige_todas_as_repeticoes_e_exclui_nao_avaliaveis():
         [
             CaseRun("T", 1, config, ok, result),
             CaseRun("T", 2, config, bad, result),
-            CaseRun("C06", 1, config, avaliar(result, CASOS["C06"]), result),
+            CaseRun("TP", 1, config, avaliar(result, PENDENTE), result),
         ]
     )
     assert rows["pass^k"] == 0 and rows["nao_avaliaveis"] == 1
@@ -205,7 +215,7 @@ def test_falhas_de_mensagem_preservam_original_na_bitacora(tipo):
 
 
 def test_caso_pendente_nao_chama_modelo():
-    result = asyncio.run(arun_case(CASOS["C06"], Context()))
+    result = asyncio.run(arun_case(PENDENTE, Context()))
     assert result.resultado is None and result.avaliacao.status == "no_evaluable"
 
 
@@ -235,9 +245,10 @@ def test_cli_descobre_capacidades_e_recusa_caso_desconhecido_sem_llm(capsys):
     assert "desconhecidos" in capsys.readouterr().err
 
 
-def test_cli_pendente_exporta_sem_llm_e_sem_sucesso_falso(tmp_path, capsys):
+def test_cli_pendente_exporta_sem_llm_e_sem_sucesso_falso(monkeypatch, tmp_path, capsys):
+    monkeypatch.setitem(CASOS, "TP", PENDENTE)
     path = tmp_path / "relatorio.json"
-    assert main(["casos", "C06", "--k", "3", "--output", str(path)]) == 1
+    assert main(["casos", "TP", "--k", "3", "--output", str(path)]) == 1
     payload = json.loads(path.read_text())
     assert payload["resumo"]["pass^k"] is None
     assert all(r["avaliacao"]["status"] == "no_evaluable" for r in payload["execucoes"])

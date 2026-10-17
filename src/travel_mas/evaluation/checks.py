@@ -245,6 +245,7 @@ def _normas(result, caso):
     return [
         CheckResult(r, "fail" if erros else "pass", origem(r), "; ".join(dict.fromkeys(erros)))
         for r, erros in sorted(falhas.items())
+        # R4 não tem verificação de norma própria; as expectativas do caso a verificam.
         if r != "R4"
     ]
 
@@ -271,7 +272,11 @@ def avaliar(result: RunResult, caso: Caso) -> Evaluation:
             )
         )
     if caso.pendente:
-        checks.append(CheckResult("decisão pendente", "no_evaluable", origem("R4"), caso.pendente))
+        checks.append(
+            CheckResult(
+                "decisão pendente", "no_evaluable", origem(caso.regra_origem[0]), caso.pendente
+            )
+        )
     for i, exp in enumerate(caso.expectativa.estado_final):
         table = exp["tabela"]
         if table not in result.after:

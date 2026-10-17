@@ -192,11 +192,22 @@ CASOS = {
             id="C06",
             nome="voo disponível, hotel ausente",
             user_id="u-42",
+            tetos={"flight": 1000, "hotel": 100},
             solicitud="Sou u-42. Reserve MAD-LIM em 2026-09-12 até 1000 EUR e um hotel "
             "em XYZ por uma noite até 100 EUR, com entrada em 2026-09-12.",
-            expectativa=Expectativa(),
-            regra_origem=["R4"],
-            pendente="R4: reserva parcial indefinida",
+            expectativa=Expectativa(
+                estado_final=[tabela("R4", "bookings", linhas=[])],
+                prohibiciones=sem_escrita("R4"),
+                mensaje_debe=[
+                    mensagem(
+                        "R4",
+                        r"(hotel|XYZ).{0,120}(n[aã]o|sem|nenhum|indispon)"
+                        r"|(n[aã]o|sem|nenhum|indispon).{0,120}(hotel|XYZ)",
+                    ),
+                    mensagem("R4", r"980"),
+                ],
+            ),
+            regra_origem=["R4", "R1", "R2"],
         ),
         Caso(
             id="C07",
