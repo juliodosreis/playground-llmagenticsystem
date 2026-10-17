@@ -1,6 +1,7 @@
 """Ferramentas de leitura do catálogo.
 
-As duas consultam `flights` e `hotels` e não alteram o estado.
+`search_flights` e `search_hotels` consultam `flights` e `hotels`; `check_item` lê o estado atual
+de um voo ou hotel pelo id. Nenhuma das três altera o estado.
 """
 
 from __future__ import annotations

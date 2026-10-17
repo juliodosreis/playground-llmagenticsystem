@@ -1,5 +1,6 @@
 """Planejamento de tandas sem carregar configuração nem chamar o provedor."""
 
+import json
 import runpy
 from pathlib import Path
 
@@ -39,3 +40,43 @@ def test_tanda_recusa_excesso_e_sobrescrita_antes_de_carregar_provedor(tanda, tm
         assert evidencia.read_text() == "original"
     else:
         assert not output.exists()
+
+
+def _script(nome):
+    return runpy.run_path(str(Path(f"reports/scripts/{nome}.py")))["main"]
+
+
+def _traca(path, status, item_id):
+    path.write_text(json.dumps({
+        "avaliacao": {"status": status, "checks": [
+            {"expectativa": "R2", "status": status, "regra_origem": "spec/mas.yaml#regras.R2",
+             "detalhe": "sem evidência" if status == "fail" else ""},
+        ]},
+        "resultado": {"eventos": [
+            {"seq": 1, "tipo": "agent_end", "agente": "pesquisador",
+             "saida": {"propostas": [{"item_id": item_id}]}},
+        ]},
+    }))
+
+
+def test_resumo_ignora_arquivos_sem_avaliacao(tmp_path, capsys):
+    _traca(tmp_path / "referencia-workflow-normal-C01-1.json", "fail", "FL-101")
+    (tmp_path / "manifest.json").write_text(json.dumps({"commit": "x"}))
+    (tmp_path / "summary.json").write_text(json.dumps({"referencia": {}}))
+    assert _script("resumo")(sorted(str(p) for p in tmp_path.glob("*.json"))) == 0
+    saida = capsys.readouterr().out.splitlines()
+    assert saida == ["referencia-workflow-normal-C01-1.json: fail  R2[R2]:sem evidência"]
+
+
+def test_ids_conta_os_diretorios_recebidos(tmp_path, capsys):
+    diretorio = tmp_path / "medicao"
+    diretorio.mkdir()
+    _traca(diretorio / "a.json", "pass", "FL-101")
+    _traca(diretorio / "b.json", "pass", "item-1")
+    (diretorio / "manifest.json").write_text(json.dumps({"commit": "x"}))
+    assert _script("ids")([str(diretorio)]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "('medicao', False) 1",
+        "('medicao', True) 1",
+        "medicao [('b.json', 'item-1')]",
+    ]

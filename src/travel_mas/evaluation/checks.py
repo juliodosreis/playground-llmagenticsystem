@@ -232,8 +232,14 @@ def _normas(result, caso):
             ):
                 falhar("R7", "reserva confirmed duplicada")
             confirmadas[dados["booking_id"]] = {**a, "status": "confirmed"}
-        elif e["ferramenta"] == "cancel_booking" and dados.get("booking_id") in confirmadas:
-            confirmadas[dados["booking_id"]]["status"] = "cancelled"
+        elif e["ferramenta"] == "cancel_booking":
+            # `ja_cancelada` marca a repetição; traças anteriores ao marcador usam o estado seguido,
+            # que passa a `cancelled` só quando o domínio devolve esse status.
+            reserva = confirmadas.get(dados.get("booking_id"))
+            if dados.get("ja_cancelada") or (reserva and reserva.get("status") == "cancelled"):
+                falhar("R6", f"cancelamento de reserva já cancelada: {dados.get('booking_id')}")
+            elif reserva is not None and dados.get("status") == "cancelled":
+                reserva["status"] = "cancelled"
     if caso.user_id is None and writes:
         falhar("R8", "houve escrita sem usuário")
     if calls:

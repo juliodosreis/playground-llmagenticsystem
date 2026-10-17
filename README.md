@@ -88,8 +88,12 @@ contém os cinco contratos públicos e os esquemas das respostas dos subgrafos.
 `ResultadoPesquisa` e `ResultadoVerificacao` permitem tratar pedidos com mais de um item.
 
 Um teste compara os nomes de [spec/mas.yaml](spec/mas.yaml) com o código.
-R1 (veredito correspondente), R6 (titularidade) e R7 (duplicatas) são instruções de prompt.
-As operações do domínio não as bloqueiam, e `evaluation/checks.py` detecta seus descumprimentos.
+R1 (veredito correspondente), R6 (titularidade e cancelamento único) e R7 (duplicatas) são
+instruções de prompt. As operações do domínio não as bloqueiam, e `evaluation/checks.py` detecta
+seus descumprimentos. Em R6, o avaliador reprova o cancelamento sem `get_booking` da mesma
+reserva e titular e o cancelamento de uma reserva já `cancelled`: a resposta com
+`ja_cancelada=true` ou, em traças sem o marcador, o estado seguido desde o snapshot inicial, que
+passa a `cancelled` só quando o domínio devolve esse status.
 
 R4 trata o pedido combinado como uma unidade: quando um item não tem opção aprovada, nenhum item
 é reservado, e o relatório informa o item que falhou e os disponíveis com preço. É uma instrução
@@ -256,7 +260,7 @@ documentados com seus traces; a execução da matriz não presume estabilidade d
 
 ```bash
 uv run pytest
-uv run ruff check src tests_mas
+uv run ruff check src tests_mas main.py reports/scripts
 uv run langgraph dev
 ```
 
@@ -271,9 +275,9 @@ ordem das ativações.
 | `test_recovery.py` | C03: revisão aprovada reserva só a alternativa |
 | `test_defects.py` | ativação de D1–D6 e controles fora do alvo |
 | `test_evaluation.py` | oráculos, `pass^k`, falhas injetadas, CLI de casos e reavaliação |
-| `test_reporting.py` | `reports/scripts/tanda.py` sem provedor |
+| `test_reporting.py` | `tanda.py` sem provedor; `resumo.py` e `ids.py` sobre traças sintéticas |
 | `test_domain.py` | ids iniciais com lacunas, rollback de escritas e cancelamento repetido |
-| `test_integrity.py` | preço efetivo em R3 e fechamento sem relatório nas duas topologias |
+| `test_integrity.py` | preço efetivo em R3, cancelamento repetido em R6 e fechamento sem relatório |
 
 A suíte cobre pesquisa corrigida sem busca anterior, rejeição seguida de revisão aprovada,
 timeout persistente, encerramento após duas pesquisas e sequência reservar–listar–cancelar nas
@@ -312,22 +316,25 @@ como `no_activado` em supervisor. D6 termina com `GraphRecursionError` do watchd
 duas topologias e é reprovado por R10 e R11.
 
 `reports/scripts/` lê as traças sem executar agentes: `resumo.py` imprime status e checks com
-falha, `eventos.py` a sequência de handoffs e chamadas, e `ids.py` conta formatos de `item_id`.
+falha e ignora `summary.json` e `manifest.json`, `eventos.py` imprime a sequência de handoffs e
+chamadas, e `ids.py` conta formatos de `item_id` nos diretórios recebidos ou, sem argumentos,
+nos subdiretórios do diretório atual.
 `tanda.py` imprime o plano de uma tanda; a execução com o provedor exige `--autorizar-provedor`,
 admite até seis execuções e recusa um diretório existente.
 
 ```bash
-uv run --offline python reports/scripts/resumo.py reports/mas-validation-v3/referencia-*.json
+uv run --offline python reports/scripts/resumo.py reports/mas-validation-v3/*.json
+uv run --offline python reports/scripts/ids.py reports/mas-validation-v3
 uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 --k 3
 ```
 
 ## Verificação de integridade
 
-A suíte tem 112 testes locais sem provedor. `test_domain.py` e `test_integrity.py` cobrem
-transações, ids não contíguos, cancelamento repetido, orçamento total e fechamento sem
-relatório. Em R3, o avaliador usa o preço da reserva criada, correlacionando o resultado da
-ferramenta com a linha guardada; quando não há escrita observável, mantém o preço informado na
-chamada.
+A suíte tem 119 testes locais sem provedor. `test_domain.py` e `test_integrity.py` cobrem
+transações, ids não contíguos, cancelamento repetido no domínio e em R6, orçamento total e
+fechamento sem relatório. Em R3, o avaliador usa o preço da reserva criada, correlacionando o
+resultado da ferramenta com a linha guardada; quando não há escrita observável, mantém o preço
+informado na chamada.
 
 `reports/scripts/reavaliar_integridade.py` compara o avaliador de um commit com o atual sobre as
 mesmas traças e os casos vigentes, sem executar agentes. `--baseline` exige o commit do avaliador

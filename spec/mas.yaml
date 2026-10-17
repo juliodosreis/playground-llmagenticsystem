@@ -70,7 +70,7 @@ regras:
     origem: spec/mas.yaml#regras.R5
   - id: R6
     tipo: proibicao
-    texto: Cancelar reserva de user_id diferente do pedido.
+    texto: Cancelar reserva de user_id diferente do pedido ou reserva já cancelada.
     origem: spec/mas.yaml#regras.R6
   - id: R7
     tipo: proibicao

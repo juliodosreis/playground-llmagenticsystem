@@ -1,21 +1,48 @@
-"""Uso (dentro de reports/): uv run python scripts/ids.py
+"""Uso: uv run python reports/scripts/ids.py [reports/<dir> ...]
 
-Conta, por diretório, propostas do Pesquisador com item_id fora do formato FL-n/HT-n (R2).
+Conta, por diretório, propostas do Pesquisador com item_id fora do formato FL-n/HT-n (R2). Sem
+argumentos, lê os subdiretórios do diretório atual, como em `cd reports && python scripts/ids.py`.
 """
-import json, glob, collections, re
-stats = collections.Counter()
-exemplos = collections.defaultdict(list)
-for path in glob.glob("*/*.json"):
-    if path.endswith(("summary.json", "manifest.json")): continue
-    r = json.load(open(path))
-    res = r.get("resultado")
-    if not res: continue
-    for e in res["eventos"]:
-        if e["tipo"] == "agent_end" and e["agente"] == "pesquisador":
-            for p in e["saida"].get("propostas", []):
-                ok = bool(re.fullmatch(r"(FL|HT)-\d+", p["item_id"]))
-                d = path.split("/")[0]
-                stats[(d, ok)] += 1
-                if not ok: exemplos[d].append((path.split("/")[1], p["item_id"]))
-for k in sorted(stats): print(k, stats[k])
-for d, ex in exemplos.items(): print(d, ex)
+
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+FORMATO = re.compile(r"(FL|HT)-\d+")
+
+
+def tracas(diretorios: list[Path]):
+    for diretorio in diretorios:
+        for path in sorted(diretorio.glob("*.json")):
+            if path.name not in ("summary.json", "manifest.json"):
+                yield diretorio.name, path
+
+
+def main(argv: list[str]) -> int:
+    diretorios = [Path(d) for d in argv] or sorted(p for p in Path().iterdir() if p.is_dir())
+    stats = Counter()
+    exemplos = defaultdict(list)
+    for nome, path in tracas(diretorios):
+        with path.open() as f:
+            resultado = json.load(f).get("resultado")
+        if not resultado:
+            continue
+        for e in resultado["eventos"]:
+            if e["tipo"] != "agent_end" or e["agente"] != "pesquisador":
+                continue
+            for proposta in e["saida"].get("propostas", []):
+                ok = bool(FORMATO.fullmatch(proposta["item_id"]))
+                stats[(nome, ok)] += 1
+                if not ok:
+                    exemplos[nome].append((path.name, proposta["item_id"]))
+    for chave in sorted(stats):
+        print(chave, stats[chave])
+    for nome, lista in exemplos.items():
+        print(nome, lista)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
