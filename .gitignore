@@ -20,8 +20,9 @@ dist/
 # Sistema
 .DS_Store
 
-CLAUDE.md
-GEMINI.md
+# Documentação de trabalho local; o README da raiz é versionado.
+/*.md
+!/README.md
 
 .agents/
 .claude/
@@ -30,16 +31,10 @@ GEMINI.md
 notebooks/
 padrao/
 
-MEDICOES.md
-NOTAS.md
-
 # Testes locais das versões anteriores; a suíte MAS fica em tests_mas/.
 tests/
 
-# Transferência de sessão local.
-HANDOFF_MAS.md
-
-# As traças e os resumos de avaliação permanecem locais; só os scripts de leitura são versionados.
+# Traças e resumos permanecem locais; os scripts reutilizáveis são versionados.
 reports/*
 !reports/scripts/
 # Os resumos em markdown da evidência permanecem locais.

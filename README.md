@@ -1,7 +1,7 @@
 # travel-mas
 
-Playground de reservas de viagens em LangGraph. A implementação da branch `mas`, iniciada no tag
-`v1.0`, separa a coordenação, a pesquisa, a verificação e a reserva em quatro agentes.
+Playground de reservas de viagens em LangGraph, com coordenação, pesquisa, verificação e reserva
+em quatro agentes.
 O sistema inclui controles de injeção, defeitos semeados e avaliação dos casos C01–C14, além das
 variantes C07B e C12P.
 
@@ -23,7 +23,7 @@ uv run python -m travel_mas casos --listar
 uv run python -m travel_mas casos C01 C03 --k 3 --output reports/casos.json
 uv run python -m travel_mas --topologia supervisor casos C01 C03 --k 3
 uv run python -m travel_mas casos C03 --defeito D1 --k 1
-uv run python -m travel_mas validar --k 3 --jobs 3 --output reports/mas-validation
+uv run python -m travel_mas validar --k 3 --jobs 3 --output reports/nova-validacao
 ```
 
 Preencha `OLLAMA_API_KEY` para Ollama Cloud ou `GOOGLE_API_KEY` para o Google. O catálogo e a
@@ -34,8 +34,10 @@ Os modelos padrão são `gpt-oss:120b` e `gemini-3.5-flash-lite`, respectivament
 
 `TRAVEL_TOPOLOGIA` escolhe `workflow` (padrão) ou `supervisor`. `--max-rodadas` limita as
 ativações dos agentes (12 por padrão) e reserva a última para o relatório do Coordenador.
-`--max-steps` limita as chamadas ao modelo dentro de cada ativação ReAct (12 por padrão).
-`Context` também declara temperatura, prazo por requisição e tentativas de erros do provedor.
+`--max-steps` limita as etapas de pensamento do laço ReAct por ativação (12 por padrão).
+A conversão para saída estruturada e os reintentos do provedor têm contadores próprios.
+Esse limite não é um teto de requisições à API. `Context` também declara temperatura,
+prazo por requisição e tentativas de erros do provedor, contando a primeira chamada.
 
 | Comando | Saída |
 |---|---|
@@ -226,6 +228,7 @@ harness é falha de terminação, sem relatório de sucesso do Coordenador.
 limites de ocorrências e expressões simples sobre a mensagem. `evaluation/checks.py` também
 confere relações entre Ordem, Proposta, Veredito e a escrita observada, referências de evidência,
 orçamento, titularidade, duplicação, recuperação e terminação. Cada resultado traz `regra_origem`.
+Valores como `spec/mas.yaml#regras.R3` identificam o arquivo e o id lógico da regra no YAML.
 
 A evidência da proposta é o identificador da busca. Esse id aparece explicitamente no conteúdo
 de cada ToolMessage como `evidencia`, junto de `resultado`, pois nem todo transporte envia o
@@ -295,10 +298,10 @@ coincidem com os arquivos de `5288f47`.
 |---|---|---|
 | referência | 96: 16 casos, k=3, duas topologias | 31 de 32 combinações com 3/3 |
 | defeitos-alvo | 18: D1–D6 nos casos de `ALVOS` | D1–D6 detectados em workflow e em supervisor |
-| controles C11 | 12: um por defeito e topologia | 12 de 12 sem ativação do defeito |
+| controles C11 | 12: um por defeito e topologia | 12 de 12 aprovadas, sem ativação do defeito |
 
 A combinação abaixo de 3/3 é C06 supervisor, com 2 de 3. Na execução reprovada, o Verificador
-recebeu `Internal Server Error` do Ollama Cloud depois dos três reintentos. A execução terminou
+recebeu `Internal Server Error` do Ollama Cloud após três tentativas. A execução terminou
 sem escrita, com `motivo_terminacao=error` e um relatório do Coordenador que informa o voo FL-101
 por 980 EUR e o hotel ausente; o avaliador reprova R11 quando há `RunResult.error`.
 
@@ -327,20 +330,21 @@ ferramenta com a linha guardada; quando não há escrita observável, mantém o 
 chamada.
 
 `reports/scripts/reavaliar_integridade.py` compara o avaliador de um commit com o atual sobre as
-mesmas traças e os casos vigentes, sem executar agentes. A saída registra, por diretório, os
-status antes e depois, os checks alterados e os hashes das fontes e das traças lidas. O script
-exige um arquivo de saída novo e não altera as traças.
+mesmas traças e os casos vigentes, sem executar agentes. `--baseline` exige o commit do avaliador
+de comparação. A saída registra, por diretório, os status antes e depois, os checks alterados
+e os hashes das fontes e das traças lidas. O script exige um arquivo de saída novo e não altera
+as traças.
 
 ```bash
 uv run --offline python reports/scripts/reavaliar_integridade.py reports/mas-validation-v3 \
-  --baseline b78b999 --output reports/nova-revisao/summary.json
+  --baseline HEAD --output reports/nova-revisao/summary.json
 ```
 
 ## Referências de implementação
 
-- [Subgrafos e históricos privados](https://docs.langchain.com/oss/python/langgraph/use-subgraphs).
-- [Command e rotas](https://docs.langchain.com/oss/python/langgraph/graph-api).
-- [Saída estruturada de modelos](https://docs.langchain.com/oss/python/langchain/models).
+- [Subgrafos e históricos privados](https://docs.langchain.com/oss/python/langgraph/use-subgraphs#call-a-subgraph-inside-a-node).
+- [Command e rotas](https://docs.langchain.com/oss/python/langgraph/graph-api#command).
+- [Saída estruturada de modelos](https://docs.langchain.com/oss/python/langchain/models#structured-output).
 
 No Ollama Cloud, o esquema é declarado como ferramenta por `function_calling` sobre a cópia do
 cliente com `reasoning=False`. `runtime/structured.py` mantém até três tentativas de preencher

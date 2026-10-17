@@ -494,8 +494,7 @@ def resultados_de(messages, ferramenta):
 
 @pytest.mark.parametrize("topologia", TOPOLOGIAS)
 def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao(topologia):
-    # mas-validation-final C12P: o Coordenador pediu nova pesquisa após o Relatorio de erro, e a
-    # ativação nova do Pesquisador, sem histórico, reintentou duas vezes mais.
+    # C12P: nova pesquisa após um Relatorio de erro não pode reiniciar os reintentos esgotados.
     from travel_mas.evaluation.casos import CASOS
     from travel_mas.evaluation.checks import avaliar
 
@@ -538,8 +537,7 @@ def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao(topologia):
 
 @pytest.mark.parametrize("topologia", TOPOLOGIAS)
 def test_revisao_recebe_historico_e_encerramento_informa_menor_preco(topologia):
-    # mas-validation-final C04-2 e mas-followup C04 supervisor: após a segunda rejeição, o
-    # Coordenador pediu terceira pesquisa e o encerramento genérico perdeu o preço de 980 EUR.
+    # C04: após a segunda rejeição, o fechamento deve conservar o menor preço observado.
     from travel_mas.evaluation.casos import CASOS
     from travel_mas.evaluation.checks import avaliar
 
@@ -618,8 +616,7 @@ def test_revisao_recebe_historico_e_encerramento_informa_menor_preco(topologia):
 
 @pytest.mark.parametrize("topologia", TOPOLOGIAS)
 def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada(topologia):
-    # mas-validation-final C13: cada Ordem nova chegava com a Ordem de reservar já executada, e a
-    # ativação nova do Reservador, sem histórico, criava outra reserva.
+    # C13: uma Ordem nova não deve reenviar a Ordem de reserva já executada.
     from travel_mas.evaluation.casos import CASOS
     from travel_mas.evaluation.checks import avaliar
 
@@ -743,8 +740,7 @@ def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada(topologia):
 
 @pytest.mark.parametrize("topologia", TOPOLOGIAS)
 def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa(topologia):
-    # mas-validation-v2 C07B supervisor: o Pedido sem cidade voltou sem busca, e a regra de R10
-    # bloqueou a pesquisa com o Pedido corrigido.
+    # Um Pedido sem cidade e sem busca executada admite pesquisa com o Pedido corrigido.
     def pedido_hotel(cidade):
         def decidir(messages):
             return Decisao(

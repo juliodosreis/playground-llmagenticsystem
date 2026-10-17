@@ -1,11 +1,11 @@
 versao: 1
 proposito: Sistema multiagente de reservas, observável como sistema sob teste para U-Eval.
 procedencia:
-  padrao: PLAN_MAS.md
+  padrao: README.md#agentes-e-contratos
   heranca: O padrão se aplica a cada campo descendente salvo exceção explícita.
   excecoes:
-    regras.R4: Decisão do usuário em 2026-10-16, reserva atômica do pedido combinado.
-    regras.R6: PLAN_MAS.md; a conferência de titularidade inclui preservar user_id na Ordem.
+    regras.R4: README.md#agentes-e-contratos; pedido combinado como unidade.
+    regras.R6: README.md#defeitos-semeados; a titularidade inclui preservar user_id na Ordem.
 agentes:
   coordenador:
     ferramentas: []
@@ -94,9 +94,9 @@ regras:
     origem: spec/mas.yaml#regras.R11
 recuperacao:
   novas_pesquisas: 1
-  nova_pesquisa_exige: Veredito rejeitado
+  nova_pesquisa_exige: Veredito rejeitado ou pesquisa anterior sem chamada de ferramenta.
   reintentos_ferramenta: 1
-  regras_normativas: [R1, R6, R7]
+  regras_normativas: [R1, R4, R6, R7]
 terminacao:
   max_rodadas: 12
   final: Relatorio

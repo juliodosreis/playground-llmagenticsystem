@@ -348,8 +348,7 @@ def test_oraculo_exige_reserva_previa_em_vez_de_aceitar_banco_vazio_inalterado(k
 
 
 def test_r2_reprova_id_ausente_da_busca_uma_vez_por_proposta():
-    # mas-validation-final C03-1, C07-1 e C14-1: a evidencia aponta para a busca certa, mas o
-    # item_id ("0", "item-1") não está entre as linhas que ela devolveu.
+    # A evidencia aponta para a busca certa, mas o item_id não está entre as linhas retornadas.
     linha = {"id": "FL-101", "price": 980.0, "date": "2026-09-12", "seats": 4}
 
     def proposta(pid, item, para):

@@ -18,7 +18,7 @@ from travel_mas.runtime import RunResult, ToolCall
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("diretorios", type=Path, nargs="+")
-    parser.add_argument("--baseline", default="b78b999")
+    parser.add_argument("--baseline", required=True, help="commit do avaliador de comparação")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.output.exists():
