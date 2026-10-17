@@ -11,6 +11,7 @@ inalterado.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -78,7 +79,7 @@ def create_booking(
     Uma reserva de voo altera duas tabelas: a linha nova em `bookings` e o assento em
     `flights.seats`.
     """
-    with db.lock:
+    with db.transaction():
         if nights < 1:
             return _dump({"error": "invalid_nights"})
         if kind == "flight":
@@ -96,8 +97,15 @@ def create_booking(
         else:
             return _dump({"error": "invalid_kind", "kind": kind})
 
-        total = db.query_one("SELECT COUNT(*) AS c FROM bookings")["c"]
-        booking_id = f"BK-{total + 1:04d}"
+        maior = max(
+            (
+                int(match[1])
+                for reserva in db.query("SELECT id FROM bookings")
+                if (match := re.fullmatch(r"BK-([0-9]+)", reserva["id"]))
+            ),
+            default=0,
+        )
+        booking_id = f"BK-{maior + 1:04d}"
         db.execute(
             "INSERT INTO bookings VALUES (?,?,?,?,?,?,?,?)",
             (booking_id, user_id, kind, item_id, start_date, price, "confirmed", nights),
@@ -118,10 +126,15 @@ def list_bookings(db: TravelDB, user_id: str) -> str:
 
 def cancel_booking(db: TravelDB, booking_id: str) -> str:
     """Marca a reserva como `cancelled` e devolve o assento quando é voo."""
-    with db.lock:
+    with db.transaction():
         row = db.query_one("SELECT * FROM bookings WHERE id=?", (booking_id,))
         if row is None:
             return _dump({"error": "not_found", "booking_id": booking_id})
+        if row["status"] != "confirmed":
+            resultado = {"booking_id": booking_id, "status": row["status"]}
+            if row["status"] == "cancelled":
+                resultado["ja_cancelada"] = True
+            return _dump(resultado)
         db.execute("UPDATE bookings SET status='cancelled' WHERE id=?", (booking_id,))
         if row["kind"] == "flight":
             db.execute("UPDATE flights SET seats = seats + 1 WHERE id=?", (row["item_id"],))

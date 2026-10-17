@@ -150,6 +150,12 @@ continuam ligadas ao mesmo Workspace e passam a operar sobre o banco novo. `Trav
 `state_hash` e `diff_state` continuam disponíveis. Reservas de hotel armazenam `nights`, e
 `create_booking` calcula o preço total a partir do catálogo.
 
+`create_booking` usa o maior sufixo numérico dos ids `BK-` existentes para gerar o próximo id.
+A inserção e o desconto de assento pertencem à mesma transação. `TravelDB.transaction()` agrupa
+escritas com rollback em caso de exceção; `execute()` confirma cada sentença apenas fora desse
+grupo. `cancel_booking` devolve o assento na passagem de `confirmed` para `cancelled`; outra
+chamada para a reserva cancelada retorna o estado com `ja_cancelada=true`, sem alterar o banco.
+
 Os históricos privados ficam na instância compilada do grafo, indexados por `tarefa_id`, fora do
 estado do pai. Um checkpointer não os salva, e o Studio mostra só o estado do pai. O histórico de
 uma tarefa é descartado em `termination`; uma execução interrompida por exceção do LangGraph,
@@ -160,6 +166,11 @@ como `GraphRecursionError`, não passa por `termination`.
 `agent_start`, `agent_end`, `handoff`, `tool_call`, `tool_result`, `termination` e `error`.
 Cada chamada de ferramenta registra o agente e o `chamada_id`; a evidência da proposta deve
 referenciar o id da chamada de busca.
+
+Um fechamento sem relatório ou com mensagem vazia gera `relatorio_ausente`, evento `error` e
+`motivo_terminacao=error`. O harness preenche `RunResult.error`, e o avaliador reprova R11.
+O evento de erro conserva `motivo_original`, inclusive `max_rodadas` ou `limite_repropostas`.
+O marcador `relatorio_ausente` também reprova R11 em traças históricas com `error=null`.
 
 O adaptador expõe `capabilities()`, `ToolFault` e `MessageFault` pelo pacote público. Para
 semear um estado, use `Workspace.reset(estado_inicial)` ou passe `estado_inicial` a `run_task`.
@@ -258,6 +269,8 @@ ordem das ativações.
 | `test_defects.py` | ativação de D1–D6 e controles fora do alvo |
 | `test_evaluation.py` | oráculos, `pass^k`, falhas injetadas, CLI de casos e reavaliação |
 | `test_reporting.py` | `reports/scripts/tanda.py` sem provedor |
+| `test_domain.py` | ids iniciais com lacunas, rollback de escritas e cancelamento repetido |
+| `test_integrity.py` | preço efetivo em R3 e fechamento sem relatório nas duas topologias |
 
 A suíte cobre pesquisa corrigida sem busca anterior, rejeição seguida de revisão aprovada,
 timeout persistente, encerramento após duas pesquisas e sequência reservar–listar–cancelar nas
@@ -280,7 +293,7 @@ Cada diretório de `reports/` contém uma traça JSON por execução, `summary.j
 |---|---|---|---|
 | `mas-validation-v2` | `2149cc6` | 126, matriz completa | 28 de 30 combinações de referência com 3/3 |
 | `mas-validation-v2b` | `f67d097` | 21, casos afetados | C07B e C12P 3/3; C06 2/3 (workflow) e 1/3 (supervisor); D6 detectado |
-| `mas-validation-c06-v3` | commit que introduz o diretório | 6, só C06 | 3/3 em workflow e em supervisor |
+| `mas-validation-c06-v3` | `187c344` | 6, só C06 | 3/3 em workflow e em supervisor |
 
 Em v2, C07B supervisor (R3) e C12P workflow (R10) passaram 2 de 3; D1–D5 foram detectados nas
 duas topologias, D6 em workflow, e os 12 controles C11 passaram sem ativação do defeito. Nas
@@ -301,6 +314,29 @@ admite até seis execuções e recusa um diretório existente.
 uv run --offline python reports/scripts/resumo.py reports/mas-validation-c06-v3/referencia-*.json
 uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 --k 3
 ```
+
+## Verificação de integridade
+
+As correções posteriores a `b78b999` têm 112 testes locais sem provedor. Elas cobrem transações,
+ids não contíguos, cancelamento repetido, orçamento total e fechamento sem relatório. Em R3, o
+avaliador usa o preço da reserva criada, correlacionando o resultado da ferramenta com a linha
+guardada; quando não há escrita observável, mantém o preço informado na chamada.
+
+`reports/scripts/reavaliar_integridade.py` compara o avaliador de um commit com o atual sobre
+as mesmas traças e os casos vigentes. A comparação de 147 resultados dos três diretórios de
+evidência incluídos no repositório não alterou checks nem estados; seis registros sem resultado
+foram separados. O arquivo `reports/mas-offline-integrity-review/summary.json` registra essa
+comparação e os hashes das fontes e entradas. A comparação adicional dos diretórios anteriores,
+mantidos apenas localmente, também permanece local. O script exige um arquivo de saída novo
+e preserva as traças originais.
+
+```bash
+uv run --offline python reports/scripts/reavaliar_integridade.py reports/mas-validation-c06-v3 \
+  --baseline b78b999 --output reports/nova-revisao/summary.json
+```
+
+Essa comparação reaplica oráculos a dados capturados. As operações corrigidas são verificadas
+pelas regressões locais; as medições com modelo real permanecem vinculadas aos commits da tabela.
 
 ## Referências de implementação
 

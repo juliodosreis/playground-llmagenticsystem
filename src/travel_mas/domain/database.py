@@ -13,6 +13,8 @@ import hashlib
 import json
 import sqlite3
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from .catalog import FLIGHTS, HOTELS, MUTABLE_TABLES, SCHEMA, Flight, Hotel
@@ -32,6 +34,7 @@ class TravelDB:
         self._conn = sqlite3.connect(":memory:", check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._lock = threading.RLock()
+        self._transaction_depth = 0
         self._conn.executescript(SCHEMA)
         self._conn.executemany("INSERT INTO flights VALUES (?,?,?,?,?,?,?)", FLIGHTS)
         self._conn.executemany("INSERT INTO hotels  VALUES (?,?,?,?,?)", HOTELS)
@@ -92,7 +95,24 @@ class TravelDB:
     def execute(self, sql: str, params: tuple = ()) -> None:
         with self._lock:
             self._conn.execute(sql, params)
-            self._conn.commit()
+            if self._transaction_depth == 0:
+                self._conn.commit()
+
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Agrupa escritas sob o mesmo lock e desfaz o grupo em caso de exceção."""
+        with self._lock:
+            nome = f"travel_tx_{self._transaction_depth}"
+            self._conn.execute(f"SAVEPOINT {nome}")
+            self._transaction_depth += 1
+            try:
+                yield
+            except BaseException:
+                self._conn.execute(f"ROLLBACK TO SAVEPOINT {nome}")
+                raise
+            finally:
+                self._transaction_depth -= 1
+                self._conn.execute(f"RELEASE SAVEPOINT {nome}")
 
     def snapshot(self) -> Snapshot:
         """Estado mutável em ordem determinística."""

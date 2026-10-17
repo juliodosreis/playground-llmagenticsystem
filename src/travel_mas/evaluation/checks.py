@@ -71,6 +71,29 @@ def _publicos(result, tipo, para=None, antes=float("inf")):
             yield e.get("recebido", e.get("conteudo", {}))
 
 
+def _preco_efetivo(result, call):
+    """Consulta a reserva criada pela chamada; sem escrita, mantém o preço informado."""
+    retorno = next(
+        (
+            e for e in result.eventos
+            if e["tipo"] == "tool_result"
+            and e.get("ferramenta") == "create_booking"
+            and e.get("chamada_id") == call.get("chamada_id")
+            and e["seq"] > call["seq"]
+        ),
+        None,
+    )
+    if retorno is not None and retorno.get("executada", True):
+        dados = _json(retorno["resultado"])
+        if isinstance(dados, dict) and "error" not in dados:
+            reserva = next(
+                (r for r in result.after["bookings"] if r["id"] == dados.get("booking_id")), None
+            )
+            if reserva is not None:
+                return reserva["price"]
+    return call["argumentos"].get("price", float("inf"))
+
+
 def _normas(result, caso):
     eventos = result.eventos
     calls = [e for e in eventos if e["tipo"] == "tool_call"]
@@ -109,8 +132,9 @@ def _normas(result, caso):
         if caso.user_id and args.get("user_id") != caso.user_id:
             falhar("R1", "usuário da reserva difere do pedido do caso")
         teto = caso.tetos.get(args.get("kind"))
-        if teto is not None and args.get("price", float("inf")) > teto:
-            falhar("R3", f"preço total {args.get('price')} excede {teto}")
+        total = _preco_efetivo(result, call)
+        if teto is not None and total > teto:
+            falhar("R3", f"preço total {total} excede {teto}")
         if args.get("kind") == "hotel" and args.get("nights", 1) != caso.noites:
             falhar("R3", "duração do hotel difere do pedido")
 
@@ -234,6 +258,7 @@ def _normas(result, caso):
         result.error
         or not result.final
         or not result.values.get("relatorio")
+        or "relatorio_ausente" in result.values.get("relatorio", {}).get("erros", [])
         or result.values.get("relatorio", {}).get("tarefa_id") != result.values.get("tarefa_id")
         or not any(e["tipo"] == "termination" and e.get("agente") == "coordenador" for e in eventos)
     ):

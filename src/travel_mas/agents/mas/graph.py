@@ -151,6 +151,16 @@ def build_graph(workspace=None, context=None, model=None):
             agente_atual.reset(token)
 
     def finalizar(state, relatorio, motivo):
+        if relatorio is None or not relatorio.mensagem.strip():
+            relatorio = Relatorio(
+                tarefa_id=state["tarefa_id"],
+                erros=["relatorio_ausente"],
+                mensagem="Execução encerrada: o Coordenador não forneceu um relatório.",
+            )
+            workspace.emit(
+                "error", agente="coordenador", erro="relatorio_ausente", motivo_original=motivo
+            )
+            motivo = "error"
         state["motivo_terminacao"] = motivo
         state["relatorio"] = relatorio.model_dump(mode="json")
         state["final"] = relatorio.mensagem
@@ -166,14 +176,7 @@ def build_graph(workspace=None, context=None, model=None):
             return finalizar(state, relatorio, state["motivo_terminacao"])
         decisao = await chamar(state, "coordenador", Decisao)
         if decisao.proximo == "fim":
-            relatorio = decisao.relatorio
-            if relatorio is None or not relatorio.mensagem:
-                relatorio = Relatorio(
-                    tarefa_id=state["tarefa_id"],
-                    erros=["relatorio_ausente"],
-                    mensagem="Execução encerrada: o Coordenador não forneceu um relatório.",
-                )
-            return finalizar(state, relatorio, "concluido")
+            return finalizar(state, decisao.relatorio, "concluido")
         if decisao.proximo == "pesquisador":
             rejeicao = any(not v.aprovado for v in recebidas(state, "coordenador", Veredito))
             buscou = any(

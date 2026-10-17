@@ -44,6 +44,9 @@ reports/*
 !reports/mas-validation-v2/
 !reports/mas-validation-v2b/
 !reports/mas-validation-c06-v3/
+!reports/mas-offline-integrity-review/
+reports/mas-offline-integrity-review/*
+!reports/mas-offline-integrity-review/summary.json
 !reports/scripts/
 # Os resumos em markdown da evidência permanecem locais.
 reports/**/*.md
