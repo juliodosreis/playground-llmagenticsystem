@@ -23,8 +23,6 @@ dist/
 CLAUDE.md
 GEMINI.md
 
-tests/
-
 .agents/
 .claude/
 .deepeval/
@@ -34,3 +32,6 @@ padrao/
 
 MEDICOES.md
 NOTAS.md
+
+# Testes locais das versões anteriores; a suíte MAS fica em tests_mas/.
+tests/

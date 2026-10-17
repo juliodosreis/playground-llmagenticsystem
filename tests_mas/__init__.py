@@ -1,0 +1,1 @@
+"""Suíte versionada do MAS."""

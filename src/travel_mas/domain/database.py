@@ -15,7 +15,7 @@ import sqlite3
 import threading
 from typing import Any
 
-from .catalog import FLIGHTS, HOTELS, MUTABLE_TABLES, SCHEMA
+from .catalog import FLIGHTS, HOTELS, MUTABLE_TABLES, SCHEMA, Flight, Hotel
 
 # Estado mutável em forma canônica: nome da tabela -> linhas ordenadas por id.
 Snapshot = dict[str, list[dict[str, Any]]]
@@ -28,7 +28,7 @@ class TravelDB:
     `check_same_thread=False` e toda escrita passa por um `RLock`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, estado_inicial: dict | None = None) -> None:
         self._conn = sqlite3.connect(":memory:", check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._lock = threading.RLock()
@@ -36,6 +36,46 @@ class TravelDB:
         self._conn.executemany("INSERT INTO flights VALUES (?,?,?,?,?,?,?)", FLIGHTS)
         self._conn.executemany("INSERT INTO hotels  VALUES (?,?,?,?,?)", HOTELS)
         self._conn.commit()
+        if estado_inicial is not None:
+            self._load(estado_inicial)
+
+    def _load(self, estado: dict) -> None:
+        """Substitui tabelas explicitadas; nomes e colunas são de uma lista fixa."""
+        colunas = {
+            "flights": Flight._fields,
+            "hotels": Hotel._fields,
+            "bookings": (
+                "id",
+                "user_id",
+                "kind",
+                "item_id",
+                "start_date",
+                "price",
+                "status",
+                "nights",
+            ),
+        }
+        if set(estado) - colunas.keys():
+            self.close()
+            raise ValueError(f"tabelas desconhecidas: {sorted(set(estado) - colunas.keys())}")
+        try:
+            with self._conn:
+                for table, rows in estado.items():
+                    fields = colunas[table]
+                    self._conn.execute(f"DELETE FROM {table}")
+                    for row in rows:
+                        row = dict(row)
+                        if table == "bookings":
+                            row.setdefault("nights", 1)
+                        if set(row) != set(fields):
+                            raise ValueError(f"colunas inválidas em {table}: {sorted(row)}")
+                        marks = ",".join("?" for _ in fields)
+                        self._conn.execute(
+                            f"INSERT INTO {table} VALUES ({marks})", tuple(row[c] for c in fields)
+                        )
+        except Exception:
+            self.close()
+            raise
 
     @property
     def lock(self) -> threading.RLock:

@@ -42,4 +42,9 @@ def build_catalog_tools(workspace: Workspace) -> list[BaseTool]:
             max_price_per_night=max_price_per_night,
         )
 
-    return [search_flights, search_hotels]
+    @tool
+    def check_item(kind: str, item_id: str) -> str:
+        """Consulta preço, data e assentos atuais de flight/hotel, ou devolve not_found."""
+        return workspace.call(operations.check_item, kind=kind, item_id=item_id)
+
+    return [search_flights, search_hotels, check_item]

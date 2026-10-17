@@ -20,7 +20,7 @@ CREATE TABLE hotels (
 );
 CREATE TABLE bookings (
     id TEXT PRIMARY KEY, user_id TEXT, kind TEXT, item_id TEXT,
-    start_date TEXT, price REAL, status TEXT
+    start_date TEXT, price REAL, status TEXT, nights INTEGER NOT NULL DEFAULT 1
 );
 """
 
@@ -47,6 +47,9 @@ FLIGHTS: tuple[Flight, ...] = (
     Flight("FL-101", "MAD", "LIM", "2026-09-12", 980.0, "Iberia", 4),
     Flight("FL-102", "MAD", "LIM", "2026-09-12", 1240.0, "LATAM", 9),
     Flight("FL-103", "MAD", "LIM", "2026-09-13", 760.0, "Air France", 2),
+    Flight("FL-104", "MAD", "LIM", "2026-09-13", 760.0, "LATAM", 3),
+    Flight("FL-105", "MAD", "LIM", "2026-09-15", 650.0, "Iberia", 0),
+    Flight("FL-106", "MAD", "LIM", "2026-09-15", 820.0, "LATAM", 5),
     Flight("FL-201", "LIM", "MAD", "2026-09-20", 890.0, "Iberia", 6),
 )
 
@@ -54,6 +57,7 @@ HOTELS: tuple[Hotel, ...] = (
     Hotel("HT-1", "LIM", "Miraflores Suites", 4, 120.0),
     Hotel("HT-2", "LIM", "Barranco Hostal", 2, 45.0),
     Hotel("HT-3", "LIM", "Surco Business", 3, 58.0),
+    Hotel("HT-4", "LIM", "Centro Hotel", 3, 52.0),
 )
 
 # Tabelas que o agente pode modificar, e portanto as que compõem o estado observado.

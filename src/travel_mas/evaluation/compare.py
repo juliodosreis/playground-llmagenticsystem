@@ -1,6 +1,6 @@
 """Execução dos mesmos cenários por várias configurações, com os resultados lado a lado.
 
-Uma configuração reúne modelo, estratégia de grafo, fonte das ferramentas e procedimento.
+Uma configuração reúne modelo e topologia do MAS.
 `compare_models` roda cada cenário uma vez por configuração, sobre um `Workspace` próprio de cada
 uma, e reduz a execução a quatro medidas: o tempo em segundos, o número de chamadas de
 ferramenta, o número de chamadas ao modelo e o hash do estado final do banco. Duas configurações
@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from ..agents.travel import build_graph
+from ..agents.mas import build_graph
 from ..domain import state_hash
 from ..runtime import AgentLike, Context, Workspace, run_task
 from ..runtime.context import DEFAULT_MODELS
@@ -31,7 +31,7 @@ class SpecError(ValueError):
 class ModelSpec:
     """Uma configuração a comparar, com o rótulo que a identifica nas colunas do relatório.
 
-    O contexto traz o modelo, a estratégia do grafo, a fonte das ferramentas e o procedimento.
+    O contexto traz o modelo, a topologia e os limites da execução.
     """
 
     label: str
@@ -57,40 +57,23 @@ def parse_spec(texto: str, **overrides) -> ModelSpec:
 
 def combine_specs(
     modelos: Sequence[str],
-    estrategias: Sequence[str],
-    fontes: Sequence[str] | None = None,
-    procedimentos: Sequence[str] | None = None,
+    topologias: Sequence[str],
     **overrides,
 ) -> list[ModelSpec]:
-    """Um spec por combinação de modelo, estratégia, fonte e procedimento, nessa ordem de variação.
-
-    Sem `fontes` ou sem `procedimentos`, cada spec usa o valor padrão de `Context`. O rótulo nomeia
-    o que varia entre as colunas: o modelo, a estratégia, a fonte e o procedimento, cada um quando
-    há mais de um valor, separados por `/`. Quando nada varia, o rótulo é o modelo. Dois specs com
-    o mesmo rótulo levantam `SpecError`.
-    """
-    variantes = [
-        {
-            **({} if fonte is None else {"tool_source": fonte}),
-            **({} if procedimento is None else {"procedure": procedimento}),
-        }
-        for fonte in fontes or [None]
-        for procedimento in procedimentos or [None]
-    ]
+    """Um spec por combinação de modelo e topologia."""
     specs = []
     for texto in modelos:
-        for estrategia in estrategias:
-            for variante in variantes:
-                spec = parse_spec(texto, strategy=estrategia, **variante, **overrides)
-                eixos = [
-                    (len(modelos) > 1, spec.context.model),
-                    (len(estrategias) > 1, estrategia),
-                    (len(fontes or []) > 1, spec.context.tool_source),
-                    (len(procedimentos or []) > 1, spec.context.procedure),
-                ]
-                partes = [valor for varia, valor in eixos if varia] or [spec.context.model]
-                specs.append(ModelSpec(label="/".join(partes), context=spec.context))
-
+        for topologia in topologias:
+            spec = parse_spec(texto, topologia=topologia, **overrides)
+            partes = [
+                valor
+                for varia, valor in (
+                    (len(modelos) > 1, f"{spec.context.provider}:{spec.context.model}"),
+                    (len(topologias) > 1, topologia),
+                )
+                if varia
+            ] or [f"{spec.context.provider}:{spec.context.model}"]
+            specs.append(ModelSpec(label="/".join(partes), context=spec.context))
     rotulos = [spec.label for spec in specs]
     if len(set(rotulos)) < len(rotulos):
         raise SpecError(f"configurações repetidas na comparação: {', '.join(rotulos)}")
@@ -107,8 +90,8 @@ class ModelRun:
     state: str
     error: str | None = None
     model_calls: int = 0
-    """Chamadas ao modelo, lidas do campo `passos` do estado final, que as duas estratégias do
-    agente incrementam a cada chamada. Um reintento de erro passageiro não conta outra vez."""
+    """Chamadas ao modelo, lidas do campo `passos` do estado final, que os subgrafos do
+    MAS incrementam a cada chamada. Um reintento de erro passageiro não conta outra vez."""
 
     def cell(self) -> str:
         """A célula da coluna: tempo, chamadas de ferramenta e chamadas ao modelo, ou o erro."""
@@ -181,7 +164,7 @@ def compare_models(
     e não interrompe as demais.
 
     `build` recebe o workspace e o contexto de um spec. O padrão monta o agente de viagem sobre o
-    provedor, a estratégia, a fonte de ferramentas e o procedimento do contexto.
+    provedor e a topologia do contexto.
     """
     agents = {}
     falhas: dict[str, str] = {}

@@ -16,20 +16,33 @@ Uso:
     result = run_task(agent, workspace, "Quero voar de MAD para LIM em 2026-09-12.")
 """
 
-from .agents.travel import TravelState, build_agent_tools, build_graph, make_graph
+from .agents.mas import build_graph, make_graph
+from .agents.mas.graph import MASState
 from .domain import diff_state
-from .runtime import Context, RunResult, ToolCall, Workspace, arun_task, run_task
+from .runtime import (
+    Context,
+    MessageFault,
+    RunResult,
+    ToolCall,
+    ToolFault,
+    Workspace,
+    arun_task,
+    capabilities,
+    run_task,
+)
 from .tools import Toolbox, build_toolbox
 
 __all__ = [
     "Context",
+    "MessageFault",
+    "ToolFault",
+    "capabilities",
     "RunResult",
     "ToolCall",
     "Toolbox",
-    "TravelState",
+    "MASState",
     "Workspace",
     "arun_task",
-    "build_agent_tools",
     "build_graph",
     "build_toolbox",
     "diff_state",

@@ -2,7 +2,7 @@
 
 `arun_task` devolve três registros de uma execução: o par de snapshots do banco antes e depois, o
 trace de chamadas de ferramenta e a mensagem final ao usuário. Os demais campos do estado final do
-grafo, como o plano da estratégia Plan-and-Execute, ficam em `RunResult.values`.
+grafo, como as bandejas e o relatório tipado, ficam em `RunResult.values`.
 
 Uma exceção do agente preenche o campo `error` do resultado em vez de propagar, então uma sequência
 de cenários continua depois de uma falha.
@@ -20,6 +20,7 @@ from typing import Any, Protocol
 from langchain_core.messages import BaseMessage
 
 from ..domain import Snapshot
+from .faults import MessageFault, ToolFault
 from .messages import last_text
 from .workspace import ToolCall, Workspace
 
@@ -44,6 +45,9 @@ class RunResult:
     """Campos do estado final além de `messages`, com os nomes que o grafo declara."""
     error: str | None = None
     seconds: float = 0.0
+    eventos: list[dict[str, Any]] = field(default_factory=list)
+    bitacora: list[dict[str, Any]] = field(default_factory=list)
+    injecoes_esperadas: list[str] = field(default_factory=list)
 
     def tool_names(self) -> list[str]:
         return [call.name for call in self.trace]
@@ -63,6 +67,9 @@ class RunResult:
             "values": self.values,
             "error": self.error,
             "seconds": self.seconds,
+            "eventos": self.eventos,
+            "bitacora": self.bitacora,
+            "injecoes_esperadas": self.injecoes_esperadas,
         }
 
 
@@ -71,9 +78,17 @@ async def arun_task(
     workspace: Workspace,
     prompt: str,
     recursion_limit: int = 50,
+    *,
+    estado_inicial: dict | None = None,
+    tool_faults: list[ToolFault] | None = None,
+    message_faults: list[MessageFault] | None = None,
 ) -> RunResult:
     """Executa o agente sobre um banco limpo e devolve o registro da execução."""
-    workspace.reset()
+    if tool_faults is not None:
+        workspace.tool_faults = list(tool_faults)
+    if message_faults is not None:
+        workspace.message_faults = list(message_faults)
+    workspace.reset(estado_inicial)
     before = workspace.snapshot()
 
     started = time.time()
@@ -84,14 +99,20 @@ async def arun_task(
 
     try:
         result = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": prompt}], "passos": 0},
+            {"pedido_usuario": prompt},
             {"recursion_limit": recursion_limit},
         )
-        messages = result["messages"]
+        messages = result.get("messages", [])
         values = {key: value for key, value in result.items() if key != "messages"}
-        final = last_text(messages)
+        final = result.get("final") or last_text(messages)
+        erros = result.get("relatorio", {}).get("erros", [])
+        if result.get("motivo_terminacao") == "error":
+            error = "; ".join(erros) or "erro de agente"
     except Exception as exc:  # um crash é um resultado da execução, registrado como tal
         error = f"{type(exc).__name__}: {exc}"
+        workspace.emit("error", erro=error)
+        final = f"Execução interrompida: {error}"
+        workspace.emit("termination", agente="harness", motivo="error", erro=error)
 
     return RunResult(
         prompt=prompt,
@@ -103,6 +124,9 @@ async def arun_task(
         values=values,
         error=error,
         seconds=round(time.time() - started, 1),
+        eventos=copy.deepcopy(workspace.eventos),
+        bitacora=copy.deepcopy([e for e in workspace.eventos if e["tipo"] == "handoff"]),
+        injecoes_esperadas=[f.id for f in [*workspace.tool_faults, *workspace.message_faults]],
     )
 
 
@@ -128,6 +152,7 @@ def run_task(
     workspace: Workspace,
     prompt: str,
     recursion_limit: int = 50,
+    **kwargs,
 ) -> RunResult:
     """Envoltório sincrônico de `arun_task`, para a CLI.
 
@@ -138,7 +163,7 @@ def run_task(
         asyncio.get_running_loop()
     except RuntimeError:
         return event_loop().run_until_complete(
-            arun_task(agent, workspace, prompt, recursion_limit)
+            arun_task(agent, workspace, prompt, recursion_limit, **kwargs)
         )
     raise RuntimeError(
         "há um laço de eventos em execução neste processo. Use `await arun_task(...)` em vez de "

@@ -24,9 +24,7 @@ def format_rows(rows: Sequence[dict[str, Any]], empty: str = "  (tabela vazia)")
     if not rows:
         return empty
     columns = list(rows[0])
-    widths = {
-        col: max(len(col), *(len(str(row.get(col, ""))) for row in rows)) for col in columns
-    }
+    widths = {col: max(len(col), *(len(str(row.get(col, ""))) for row in rows)) for col in columns}
     header = "  " + "  ".join(col.ljust(widths[col]) for col in columns)
     rule = "  " + "  ".join("-" * widths[col] for col in columns)
     body = [
