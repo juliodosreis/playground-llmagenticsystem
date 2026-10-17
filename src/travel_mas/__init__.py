@@ -1,11 +1,12 @@
-"""Agente de reservas de viagem em LangGraph.
+"""Sistema multiagente de reservas de viagem em LangGraph.
 
 Camadas do pacote:
 
-    domain/     catálogo, banco e regras de reserva, sem LangChain
-    runtime/    configuração, modelo, workspace e harness
-    tools/      as ferramentas ligadas a um workspace, agrupadas por efeito
-    agents/     um pacote por agente: prompt, ferramentas, estado e grafo
+    domain/      catálogo, banco e operações de reserva, sem LangChain
+    runtime/     configuração, modelo, workspace, harness, falhas e saída estruturada
+    tools/       as ferramentas ligadas a um workspace, agrupadas por efeito
+    agents/mas/  contratos, os quatro agentes, o grafo pai e os defeitos semeados
+    evaluation/  casos, oráculos, suíte pass^k, matriz de validação e comparação
 
 Uso:
 
