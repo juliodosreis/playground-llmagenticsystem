@@ -39,14 +39,8 @@ tests/
 # Transferência de sessão local.
 HANDOFF_MAS.md
 
-# Evidência selecionada; os ensaios anteriores permanecem locais.
+# As traças e os resumos de avaliação permanecem locais; só os scripts de leitura são versionados.
 reports/*
-!reports/mas-validation-v2/
-!reports/mas-validation-v2b/
-!reports/mas-validation-c06-v3/
-!reports/mas-offline-integrity-review/
-reports/mas-offline-integrity-review/*
-!reports/mas-offline-integrity-review/summary.json
 !reports/scripts/
 # Os resumos em markdown da evidência permanecem locais.
 reports/**/*.md

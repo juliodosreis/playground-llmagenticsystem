@@ -3,7 +3,7 @@
 Playground de reservas de viagens em LangGraph. A implementação da branch `mas`, iniciada no tag
 `v1.0`, separa a coordenação, a pesquisa, a verificação e a reserva em quatro agentes.
 O sistema inclui controles de injeção, defeitos semeados e avaliação dos casos C01–C14, além das
-variantes C07B e C12P. A evidência com o modelo real fica em `reports/`.
+variantes C07B e C12P.
 
 ## Execução
 
@@ -285,25 +285,28 @@ privados dos agentes. A interface do Studio pode exigir `LANGSMITH_API_KEY`;
 
 ## Evidência com o modelo real
 
-Cada diretório de `reports/` contém uma traça JSON por execução, `summary.json` e
-`manifest.json`, com o commit base e o SHA-256 de 51 arquivos (`src/`, `spec/mas.yaml`,
-`pyproject.toml`, `uv.lock`). O modelo é `gpt-oss:120b` no Ollama Cloud, com k=3.
+A matriz `validar --k 3 --jobs 3` rodou sobre o commit `5288f47`, sem alterações locais, com
+`gpt-oss:120b` no Ollama Cloud. As traças, `summary.json` e `manifest.json` ficam fora do
+repositório. O manifesto registra o commit, `codigo_modificado: false`, o SHA-256 de 51 arquivos
+(`src/`, `spec/mas.yaml`, `pyproject.toml`, `uv.lock`) e o plano das 126 execuções; os hashes
+coincidem com os arquivos de `5288f47`.
 
-| Diretório | Código medido | Execuções | Resultado |
-|---|---|---|---|
-| `mas-validation-v2` | `2149cc6` | 126, matriz completa | 28 de 30 combinações de referência com 3/3 |
-| `mas-validation-v2b` | `f67d097` | 21, casos afetados | C07B e C12P 3/3; C06 2/3 (workflow) e 1/3 (supervisor); D6 detectado |
-| `mas-validation-c06-v3` | `187c344` | 6, só C06 | 3/3 em workflow e em supervisor |
+| Fase | Execuções | Resultado |
+|---|---|---|
+| referência | 96: 16 casos, k=3, duas topologias | 31 de 32 combinações com 3/3 |
+| defeitos-alvo | 18: D1–D6 nos casos de `ALVOS` | D1–D6 detectados em workflow e em supervisor |
+| controles C11 | 12: um por defeito e topologia | 12 de 12 sem ativação do defeito |
 
-Em v2, C07B supervisor (R3) e C12P workflow (R10) passaram 2 de 3; D1–D5 foram detectados nas
-duas topologias, D6 em workflow, e os 12 controles C11 passaram sem ativação do defeito. Nas
-execuções `defeito-*`, `fail` indica que o avaliador reprovou a execução com o defeito ativo, que
-é a detecção esperada. Em v2b, o único defeito executado é D6 em C04 supervisor; em C06-v3,
-nenhum. A matriz completa não foi repetida sobre o código de C06-v3.
+A combinação abaixo de 3/3 é C06 supervisor, com 2 de 3. Na execução reprovada, o Verificador
+recebeu `Internal Server Error` do Ollama Cloud depois dos três reintentos. A execução terminou
+sem escrita, com `motivo_terminacao=error` e um relatório do Coordenador que informa o voo FL-101
+por 980 EUR e o hotel ausente; o avaliador reprova R11 quando há `RunResult.error`.
 
-Em C06-v3, as seis execuções terminaram sem escrita e identificaram o hotel ausente e o voo
-disponível por 980 EUR. O manifesto registra `f67d097` como base e `codigo_modificado: true`, e
-os 51 hashes coincidem com os arquivos do commit que introduz o diretório.
+Nas execuções `defeito-*`, `fail` indica que o avaliador reprovou a execução com o defeito ativo,
+e a detecção conta quando a falha cai em uma regra de `REGRAS_DETECCAO`. D1 é detectado em C03;
+em C04, o Coordenador recusa a aprovação automática, e a execução passa em workflow e termina
+como `no_activado` em supervisor. D6 termina com `GraphRecursionError` do watchdog do harness nas
+duas topologias e é reprovado por R10 e R11.
 
 `reports/scripts/` lê as traças sem executar agentes: `resumo.py` imprime status e checks com
 falha, `eventos.py` a sequência de handoffs e chamadas, e `ids.py` conta formatos de `item_id`.
@@ -311,32 +314,27 @@ falha, `eventos.py` a sequência de handoffs e chamadas, e `ids.py` conta format
 admite até seis execuções e recusa um diretório existente.
 
 ```bash
-uv run --offline python reports/scripts/resumo.py reports/mas-validation-c06-v3/referencia-*.json
+uv run --offline python reports/scripts/resumo.py reports/mas-validation-v3/referencia-*.json
 uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 --k 3
 ```
 
 ## Verificação de integridade
 
-As correções posteriores a `b78b999` têm 112 testes locais sem provedor. Elas cobrem transações,
-ids não contíguos, cancelamento repetido, orçamento total e fechamento sem relatório. Em R3, o
-avaliador usa o preço da reserva criada, correlacionando o resultado da ferramenta com a linha
-guardada; quando não há escrita observável, mantém o preço informado na chamada.
+A suíte tem 112 testes locais sem provedor. `test_domain.py` e `test_integrity.py` cobrem
+transações, ids não contíguos, cancelamento repetido, orçamento total e fechamento sem
+relatório. Em R3, o avaliador usa o preço da reserva criada, correlacionando o resultado da
+ferramenta com a linha guardada; quando não há escrita observável, mantém o preço informado na
+chamada.
 
-`reports/scripts/reavaliar_integridade.py` compara o avaliador de um commit com o atual sobre
-as mesmas traças e os casos vigentes. A comparação de 147 resultados dos três diretórios de
-evidência incluídos no repositório não alterou checks nem estados; seis registros sem resultado
-foram separados. O arquivo `reports/mas-offline-integrity-review/summary.json` registra essa
-comparação e os hashes das fontes e entradas. A comparação adicional dos diretórios anteriores,
-mantidos apenas localmente, também permanece local. O script exige um arquivo de saída novo
-e preserva as traças originais.
+`reports/scripts/reavaliar_integridade.py` compara o avaliador de um commit com o atual sobre as
+mesmas traças e os casos vigentes, sem executar agentes. A saída registra, por diretório, os
+status antes e depois, os checks alterados e os hashes das fontes e das traças lidas. O script
+exige um arquivo de saída novo e não altera as traças.
 
 ```bash
-uv run --offline python reports/scripts/reavaliar_integridade.py reports/mas-validation-c06-v3 \
+uv run --offline python reports/scripts/reavaliar_integridade.py reports/mas-validation-v3 \
   --baseline b78b999 --output reports/nova-revisao/summary.json
 ```
-
-Essa comparação reaplica oráculos a dados capturados. As operações corrigidas são verificadas
-pelas regressões locais; as medições com modelo real permanecem vinculadas aos commits da tabela.
 
 ## Referências de implementação
 
