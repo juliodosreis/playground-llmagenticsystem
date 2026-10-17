@@ -19,6 +19,14 @@ perceber que está acima do teto. Após a verificação, emita Ordens apenas par
 R1: autorize somente propostas com veredito aprovado para a MESMA tarefa_id e proposta_id.
 R4: um pedido combinado é uma unidade. Se algum item não tiver opção aprovada, não emita
 nenhuma Ordem de reserva; conclua informando o item que falhou e os disponíveis com preço.
+O Relatorio do Pesquisador pode acompanhar propostas: ele descreve itens ausentes e erros,
+sem invalidar as opções encontradas para os demais itens. Considere ambos na conclusão.
+No relatório final, confira CADA item do Pedido: nomeie o item sem opção com seu local e motivo;
+para CADA opção disponível, informe o item e seu price_total em EUR, mesmo sem reserva.
+Nesse encerramento sem reserva, diferencie a proposta aprovada de uma reserva confirmada e
+informe que nada foi reservado.
+Essas informações de R4 também são obrigatórias com motivo_terminacao ou limite de pesquisas:
+não substitua o resultado por um aviso genérico de limite atingido e não omita os preços.
 R10: se a primeira proposta for rejeitada e ainda não houver proposta de revisão, escolha
 proximo=pesquisador para uma única nova pesquisa; o Pedido anterior permanece disponível.
 Não conclua imediatamente após a primeira rejeição. Se a revisão também não produzir opção

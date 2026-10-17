@@ -492,7 +492,8 @@ def resultados_de(messages, ferramenta):
     return [m for m in messages if m.type == "tool" and m.name == ferramenta]
 
 
-def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao():
+@pytest.mark.parametrize("topologia", TOPOLOGIAS)
+def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao(topologia):
     # mas-validation-final C12P: o Coordenador pediu nova pesquisa após o Relatorio de erro, e a
     # ativação nova do Pesquisador, sem histórico, reintentou duas vezes mais.
     from travel_mas.evaluation.casos import CASOS
@@ -522,7 +523,7 @@ def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao():
     workspace = Workspace()
     caso = CASOS["C12P"]
     result = run_task(
-        build_graph(workspace, Context(), model),
+        build_graph(workspace, Context(topologia=topologia), model),
         workspace,
         caso.solicitud,
         tool_faults=caso.tool_faults,
@@ -535,7 +536,8 @@ def test_timeout_persistente_nao_reabre_pesquisa_sem_rejeicao():
     assert avaliar(result, caso).status == "pass", avaliar(result, caso).to_dict()
 
 
-def test_revisao_recebe_historico_e_encerramento_informa_menor_preco():
+@pytest.mark.parametrize("topologia", TOPOLOGIAS)
+def test_revisao_recebe_historico_e_encerramento_informa_menor_preco(topologia):
     # mas-validation-final C04-2 e mas-followup C04 supervisor: após a segunda rejeição, o
     # Coordenador pediu terceira pesquisa e o encerramento genérico perdeu o preço de 980 EUR.
     from travel_mas.evaluation.casos import CASOS
@@ -586,12 +588,15 @@ def test_revisao_recebe_historico_e_encerramento_informa_menor_preco():
             chamada("search_flights", busca, "b1"),
             AIMessage("FL-101 é o mais barato"),
             proposta_de("p1", "FL-101", 980, "b1"),
+            *([Decisao(proximo="verificador")] if topologia == "supervisor" else []),
             chamada("check_item", {"kind": "flight", "item_id": "FL-101"}, "c1"),
             AIMessage("acima do teto"),
             lambda m: veredito(m, False),
+            *([Decisao(proximo="pesquisador")] if topologia == "supervisor" else []),
             revisar,
             AIMessage("próxima opção FL-102"),
             proposta_de("p2", "FL-102", 1240, "b2"),
+            *([Decisao(proximo="verificador")] if topologia == "supervisor" else []),
             verificar_nova,
             AIMessage("acima do teto"),
             lambda m: veredito(m, False),
@@ -600,14 +605,19 @@ def test_revisao_recebe_historico_e_encerramento_informa_menor_preco():
         ]
     )
     workspace = Workspace()
-    result = run_task(build_graph(workspace, Context(), model), workspace, CASOS["C04"].solicitud)
+    result = run_task(
+        build_graph(workspace, Context(topologia=topologia), model),
+        workspace,
+        CASOS["C04"].solicitud,
+    )
     assert not model.script, result.to_dict()
     assert result.values["pesquisas"] == 2
     assert "980" in result.final
     assert avaliar(result, CASOS["C04"]).status == "pass", avaliar(result, CASOS["C04"]).to_dict()
 
 
-def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada():
+@pytest.mark.parametrize("topologia", TOPOLOGIAS)
+def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada(topologia):
     # mas-validation-final C13: cada Ordem nova chegava com a Ordem de reservar já executada, e a
     # ativação nova do Reservador, sem histórico, criava outra reserva.
     from travel_mas.evaluation.casos import CASOS
@@ -695,6 +705,7 @@ def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada():
             ),
             AIMessage("FL-201"),
             proposta_c13,
+            *([Decisao(proximo="verificador")] if topologia == "supervisor" else []),
             chamada("check_item", {"kind": "flight", "item_id": "FL-201"}, "check"),
             AIMessage("aprovado"),
             veredito,
@@ -715,7 +726,9 @@ def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada():
     )
     workspace = Workspace()
     caso = CASOS["C13"]
-    result = run_task(build_graph(workspace, Context(), model), workspace, caso.solicitud)
+    result = run_task(
+        build_graph(workspace, Context(topologia=topologia), model), workspace, caso.solicitud
+    )
     assert not model.script, result.to_dict()
     assert result.tool_names().count("create_booking") == 1
     assert [e["mensagem_tipo"] for e in result.bitacora if e["para"] == "reservador"] == [
@@ -728,7 +741,8 @@ def test_reservador_executa_so_ordens_novas_e_lembra_reserva_criada():
     assert avaliar(result, caso).status == "pass", avaliar(result, caso).to_dict()
 
 
-def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa():
+@pytest.mark.parametrize("topologia", TOPOLOGIAS)
+def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa(topologia):
     # mas-validation-v2 C07B supervisor: o Pedido sem cidade voltou sem busca, e a regra de R10
     # bloqueou a pesquisa com o Pedido corrigido.
     def pedido_hotel(cidade):
@@ -759,7 +773,7 @@ def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa():
         ]
     )
     workspace = Workspace()
-    result = run_task(build_graph(workspace, Context(), model), workspace, "x")
+    result = run_task(build_graph(workspace, Context(topologia=topologia), model), workspace, "x")
     assert not model.script, result.to_dict()
     assert result.tool_names() == ["search_hotels"]
     assert result.values["pesquisas"] == 2
@@ -767,7 +781,8 @@ def test_pedido_corrigido_sem_busca_executada_abre_nova_pesquisa():
 
 
 @pytest.mark.parametrize("reserva_parcial", [False, True])
-def test_c06_avalia_reserva_atomica_do_pedido_combinado(reserva_parcial):
+@pytest.mark.parametrize("topologia", TOPOLOGIAS)
+def test_c06_avalia_reserva_atomica_do_pedido_combinado(reserva_parcial, topologia):
     from travel_mas.evaluation.casos import CASOS
     from travel_mas.evaluation.checks import avaliar
 
@@ -808,16 +823,21 @@ def test_c06_avalia_reserva_atomica_do_pedido_combinado(reserva_parcial):
         chamada("search_hotels", {"city": "XYZ"}, "hoteis"),
         AIMessage("voo encontrado; nenhum hotel em XYZ"),
         proposta,
+        *([Decisao(proximo="verificador")] if topologia == "supervisor" else []),
         chamada("check_item", {"kind": "flight", "item_id": "FL-101"}, "check"),
         AIMessage("voo aprovado"),
         veredito,
         concluir,
     ]
     if reserva_parcial:
-        script += script_reserva("workflow")[-6:]
+        script += script_reserva(topologia)[-6:]
     workspace = Workspace()
     model = ModeloScriptado(script=script)
-    result = run_task(build_graph(workspace, Context(), model), workspace, CASOS["C06"].solicitud)
+    result = run_task(
+        build_graph(workspace, Context(topologia=topologia), model),
+        workspace,
+        CASOS["C06"].solicitud,
+    )
     assert not model.script, result.to_dict()
     avaliacao = avaliar(result, CASOS["C06"])
     if reserva_parcial:

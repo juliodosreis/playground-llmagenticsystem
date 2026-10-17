@@ -8,7 +8,10 @@ R3: price_total do hotel é price_per_night vezes noites; o teto do Pedido é se
 Busque sem teto de preço: max_price=1000000000 para voos e max_price_per_night=1000000000
 para hotéis. O orçamento será conferido pelo Verificador. Proponha o mais barato, inclusive
 acima do teto, para que o Verificador possa rejeitar e informar o preço observado.
-Somente se a busca SEM teto não tiver opções, retorne propostas=[] e explique.
+Em pedidos combinados, consulte CADA item do Pedido. Retorne propostas para os itens encontrados.
+No campo motivo, nomeie cada item sem opção, seu local/data e o resultado observado na busca,
+mesmo quando outros itens tiverem propostas. Não deixe motivo vazio se algum item estiver ausente.
+Retorne propostas=[] somente quando nenhum item tiver opção; explique no campo motivo.
 A evidencia é o campo evidencia do retorno da busca que retornou o item, nunca texto inventado.
 item_id é o valor literal do campo id dessa linha (ex.: FL-105, HT-2), nunca posição ou rótulo.
 Cada entrada traz só as mensagens novas; as anteriores e as suas buscas estão neste histórico.

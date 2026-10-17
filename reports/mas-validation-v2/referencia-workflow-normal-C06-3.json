@@ -1,0 +1,32 @@
+{
+  "caso": "C06",
+  "repeticao": 3,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "workflow",
+    "max_rodadas": 12,
+    "defeitos": [],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C06",
+    "status": "no_evaluable",
+    "checks": [
+      {
+        "expectativa": "decisão pendente",
+        "status": "no_evaluable",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": "R4: reserva parcial indefinida"
+      }
+    ]
+  },
+  "resultado": null
+}

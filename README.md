@@ -2,9 +2,8 @@
 
 Playground de reservas de viagens em LangGraph. A implementação da branch `mas`, iniciada no tag
 `v1.0`, separa a coordenação, a pesquisa, a verificação e a reserva em quatro agentes.
-O roteiro está em [PLAN_MAS.md](PLAN_MAS.md). O sistema inclui controles de injeção,
-defeitos semeados e avaliação dos casos C01–C14, além das variantes C07B e C12P.
-A matriz de validação fica em [reports/mas-validation-final/README.md](reports/mas-validation-final/README.md).
+O sistema inclui controles de injeção, defeitos semeados e avaliação dos casos C01–C14, além das
+variantes C07B e C12P. A evidência com o modelo real fica em `reports/`.
 
 ## Execução
 
@@ -38,9 +37,31 @@ ativações dos agentes (12 por padrão) e reserva a última para o relatório d
 `--max-steps` limita as chamadas ao modelo dentro de cada ativação ReAct (12 por padrão).
 `Context` também declara temperatura, prazo por requisição e tentativas de erros do provedor.
 
-Os eixos antigos `strategy`, `tools` e `procedure`, suas opções e variáveis foram retirados.
-As ferramentas agora são locais; o procedimento está nos prompts de cada agente.
-`pyyaml` permanece porque a especificação do MAS é um YAML validado pelos testes.
+| Comando | Saída |
+|---|---|
+| `catalogo` | voos e hotéis do ambiente |
+| `cenarios` | cenários de `scenarios.py` |
+| `demo [n...]` | execução dos cenários, com trace e reservas |
+| `run "<pedido>"` | execução de um pedido livre |
+| `comparar` | cenários por modelo e topologia: tempo, chamadas e hash do banco |
+| `capabilities` | estado inicial, ferramentas, falhas, agentes, contratos, defeitos e eventos do adaptador, em JSON |
+| `casos` | avaliação dos casos e `pass^k`; `--listar` não carrega o modelo |
+| `validar` | matriz de referência, defeitos-alvo e controles C11 |
+
+## Estrutura do pacote
+
+O pacote fica em `src/travel_mas/`. Fora dele, `spec/mas.yaml` declara agentes, ferramentas,
+contratos, estado do pai, regras R1–R11, recuperação, terminação e procedência.
+
+| Módulo | Conteúdo |
+|---|---|
+| `domain/` | catálogo, banco SQLite e operações de busca, conferência e reserva |
+| `runtime/` | `Context`, carga do modelo, `Workspace`, harness, falhas injetadas e saída estruturada |
+| `tools/` | as sete ferramentas ligadas a um `Workspace` e o `Toolbox` |
+| `agents/mas/` | contratos, construtor ReAct comum, os quatro agentes, grafo pai e defeitos |
+| `agents/travel/` | reexportação de `build_graph`, `abuild_graph` e `make_graph` |
+| `evaluation/` | casos, oráculos, suíte `pass^k`, matriz de validação e comparação |
+| `scenarios.py`, `cli.py` | cenários de demonstração e linha de comando |
 
 ## Agentes e contratos
 
@@ -64,14 +85,18 @@ contém os cinco contratos públicos e os esquemas das respostas dos subgrafos.
 `Pedido` e `Ordem` incluem campos para listar/cancelar e para a sequência reservar–listar–cancelar.
 `ResultadoPesquisa` e `ResultadoVerificacao` permitem tratar pedidos com mais de um item.
 
-A especificação [spec/mas.yaml](spec/mas.yaml) declara agentes, ferramentas, contratos, estado,
-regras R1–R11, recuperação, terminação e procedência. Um teste compara seus nomes com o código.
+Um teste compara os nomes de [spec/mas.yaml](spec/mas.yaml) com o código.
 R1 (veredito correspondente), R6 (titularidade) e R7 (duplicatas) são instruções de prompt.
-As operações do domínio não as bloqueiam: o futuro avaliador deve detectar seus descumprimentos.
+As operações do domínio não as bloqueiam, e `evaluation/checks.py` detecta seus descumprimentos.
 
 R4 trata o pedido combinado como uma unidade: quando um item não tem opção aprovada, nenhum item
 é reservado, e o relatório informa o item que falhou e os disponíveis com preço. É uma instrução
 do Coordenador, sem bloqueio em código; C06 a avalia.
+
+O campo `motivo` de `ResultadoPesquisa` descreve os itens sem opção, inclusive quando há
+propostas para outros itens. Esse motivo segue ao Coordenador como `Relatorio`, acompanhado
+das propostas encontradas. O fechamento informa o item ausente e os preços das opções
+disponíveis também quando a execução termina por limite de pesquisas ou de rodadas.
 
 ## Critérios C1–C7
 
@@ -86,9 +111,15 @@ do Coordenador, sem bloqueio em código; C06 a avalia.
 | C7: visão parcial | cada ativação recebe sua bandeja; só o Coordenador recebe o texto do usuário |
 
 A divisão de contexto e ferramentas é imposta pela montagem dos subgrafos. A adesão dos modelos
-às regras normativas depende da execução e será medida pela matriz de avaliação do plano.
+às regras normativas depende da execução e é medida pela matriz de `validar`.
 Testes com respostas scriptadas verificam a estrutura e os desvios de fluxo; não medem a taxa de
 acerto de um modelo real.
+
+A coordenação é centralizada. Os agentes não endereçam mensagens entre si: o grafo pai decide
+cada entrega. Em `workflow`, a passagem da pesquisa à verificação é uma rota fixa; em
+`supervisor`, o Coordenador escolhe o próximo agente. Nas duas topologias, o grafo pai aplica em
+código o limite de novas pesquisas, o limite de rodadas e a seleção das mensagens que acompanham
+uma `Ordem`.
 
 ## Topologias
 
@@ -118,6 +149,11 @@ mensagem é entregue uma vez. Uma `Ordem` de listar ou cancelar não reenvia a p
 continuam ligadas ao mesmo Workspace e passam a operar sobre o banco novo. `TravelDB.snapshot`,
 `state_hash` e `diff_state` continuam disponíveis. Reservas de hotel armazenam `nights`, e
 `create_booking` calcula o preço total a partir do catálogo.
+
+Os históricos privados ficam na instância compilada do grafo, indexados por `tarefa_id`, fora do
+estado do pai. Um checkpointer não os salva, e o Studio mostra só o estado do pai. O histórico de
+uma tarefa é descartado em `termination`; uma execução interrompida por exceção do LangGraph,
+como `GraphRecursionError`, não passa por `termination`.
 
 `RunResult` contém `before`, `after`, `trace`, `final`, `values`, `error`, `seconds`, `eventos` e
 `bitacora`. `--json` imprime esses campos. `bitacora` contém os handoffs; `eventos` inclui
@@ -192,10 +228,9 @@ falhar no avaliador por violar uma expectativa. O comando `casos` devolve códig
 execução não passa; `validar` também aponta defeitos não detectados ou controles com falha.
 
 C06 combina um voo disponível com um hotel inexistente e exige nenhuma escrita e um relatório
-que nomeie o hotel ausente e o preço do voo. C07 verifica três noites dentro do teto total; C07B usa um
-teto menor que o total mais barato para detectar confusão entre preço por noite e total. Para
-igual duração, um hotel de menor preço por noite sempre tem menor total; a descrição original do
-plano não pode produzir a inversão de ordem que sugeria. C12P exercita timeout persistente.
+que nomeie o hotel ausente e o preço do voo. C07 verifica três noites dentro do teto total;
+C07B usa um teto menor que o total mais barato para detectar confusão entre preço por noite e
+total. C12P exercita timeout persistente.
 C14 admite recusa ou consulta adicional, com reserva somente quando houver evidência válida.
 
 `validar` roda a referência k vezes em ambas as topologias, os alvos D1–D6 e controles C11.
@@ -211,18 +246,61 @@ uv run ruff check src tests_mas
 uv run langgraph dev
 ```
 
-A suíte versionável fica em `tests_mas/` (70 testes sem LLM nesta etapa).
-Na primeira entrega, o cenário 1 passou uma vez em cada topologia com Ollama `gpt-oss:120b`: reserva de
-`FL-101` para `u-42`, verificação antes da escrita e consumo de um assento. As duas execuções
-estão em [reports/mas-smoke.json](reports/mas-smoke.json). Esses arquivos são históricos, anteriores à exposição explícita do id de evidência.
-A validação atual usa `mas-validation-final`; `mas-validation` e `mas-followup` preservam os ensaios anteriores. Os testes locais antigos em `tests/`, que já eram
-ignorados pelo Git e dependem dos eixos removidos, foram preservados e não entram na nova suíte.
-Os testes MAS usam modelo scriptado e ferramentas reais sobre SQLite, sem chamadas ao provedor.
+A suíte em `tests_mas/` usa modelos scriptados e ferramentas sobre SQLite, sem chamadas ao
+provedor. O modelo scriptado responde aos quatro agentes por uma fila só, e cada teste fixa a
+ordem das ativações.
+
+| Arquivo | Cobertura |
+|---|---|
+| `test_mas.py` | contratos, isolamento dos históricos, permissões, rotas e limites |
+| `test_combined.py` | C06: pesquisa parcial, fechamento normal e por limite, omissões |
+| `test_recovery.py` | C03: revisão aprovada reserva só a alternativa |
+| `test_defects.py` | ativação de D1–D6 e controles fora do alvo |
+| `test_evaluation.py` | oráculos, `pass^k`, falhas injetadas, CLI de casos e reavaliação |
+| `test_reporting.py` | `reports/scripts/tanda.py` sem provedor |
+
+A suíte cobre pesquisa corrigida sem busca anterior, rejeição seguida de revisão aprovada,
+timeout persistente, encerramento após duas pesquisas e sequência reservar–listar–cancelar nas
+duas topologias. C06 cobre disponibilidade parcial, fechamento normal e por limite, omissões
+no relatório e detecção de reserva parcial indevida. Os testes locais antigos em `tests/`,
+ignorados pelo Git, não entram na suíte MAS.
 
 `langgraph.json` publica apenas `travel_mas`, com um ambiente novo por execução do Studio.
-O estado de entrada tem `pedido_usuario` (texto). Os checkpoints não contêm os históricos privados
-dos agentes. A interface do Studio pode exigir `LANGSMITH_API_KEY`; `LANGSMITH_TRACING=false`
-desativa o envio de traces.
+O estado de entrada tem `pedido_usuario` (texto). O estado do grafo pai não inclui os históricos
+privados dos agentes. A interface do Studio pode exigir `LANGSMITH_API_KEY`;
+`LANGSMITH_TRACING=false` desativa o envio de traces.
+
+## Evidência com o modelo real
+
+Cada diretório de `reports/` contém uma traça JSON por execução, `summary.json` e
+`manifest.json`, com o commit base e o SHA-256 de 51 arquivos (`src/`, `spec/mas.yaml`,
+`pyproject.toml`, `uv.lock`). O modelo é `gpt-oss:120b` no Ollama Cloud, com k=3.
+
+| Diretório | Código medido | Execuções | Resultado |
+|---|---|---|---|
+| `mas-validation-v2` | `2149cc6` | 126, matriz completa | 28 de 30 combinações de referência com 3/3 |
+| `mas-validation-v2b` | `f67d097` | 21, casos afetados | C07B e C12P 3/3; C06 2/3 (workflow) e 1/3 (supervisor); D6 detectado |
+| `mas-validation-c06-v3` | commit que introduz o diretório | 6, só C06 | 3/3 em workflow e em supervisor |
+
+Em v2, C07B supervisor (R3) e C12P workflow (R10) passaram 2 de 3; D1–D5 foram detectados nas
+duas topologias, D6 em workflow, e os 12 controles C11 passaram sem ativação do defeito. Nas
+execuções `defeito-*`, `fail` indica que o avaliador reprovou a execução com o defeito ativo, que
+é a detecção esperada. Em v2b, o único defeito executado é D6 em C04 supervisor; em C06-v3,
+nenhum. A matriz completa não foi repetida sobre o código de C06-v3.
+
+Em C06-v3, as seis execuções terminaram sem escrita e identificaram o hotel ausente e o voo
+disponível por 980 EUR. O manifesto registra `f67d097` como base e `codigo_modificado: true`, e
+os 51 hashes coincidem com os arquivos do commit que introduz o diretório.
+
+`reports/scripts/` lê as traças sem executar agentes: `resumo.py` imprime status e checks com
+falha, `eventos.py` a sequência de handoffs e chamadas, e `ids.py` conta formatos de `item_id`.
+`tanda.py` imprime o plano de uma tanda; a execução com o provedor exige `--autorizar-provedor`,
+admite até seis execuções e recusa um diretório existente.
+
+```bash
+uv run --offline python reports/scripts/resumo.py reports/mas-validation-c06-v3/referencia-*.json
+uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 --k 3
+```
 
 ## Referências de implementação
 

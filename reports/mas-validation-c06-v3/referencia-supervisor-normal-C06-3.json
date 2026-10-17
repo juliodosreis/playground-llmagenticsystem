@@ -1,0 +1,1137 @@
+{
+  "caso": "C06",
+  "repeticao": 3,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "supervisor",
+    "max_rodadas": 12,
+    "defeitos": [],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C06",
+    "status": "pass",
+    "checks": [
+      {
+        "expectativa": "estado:bookings:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "proibição:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'create_booking'}"
+      },
+      {
+        "expectativa": "proibição:1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'cancel_booking'}"
+      },
+      {
+        "expectativa": "mensagem:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": "(hotel|XYZ).{0,120}(n[aã]o|sem|nenhum|indispon)|(n[aã]o|sem|nenhum|indispon).{0,120}(hotel|XYZ)"
+      },
+      {
+        "expectativa": "mensagem:1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R4",
+        "detalhe": "980"
+      },
+      {
+        "expectativa": "R1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R1",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R11",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R11",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R2",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R2",
+        "detalhe": ""
+      }
+    ]
+  },
+  "resultado": {
+    "prompt": "Sou u-42. Reserve MAD-LIM em 2026-09-12 até 1000 EUR e um hotel em XYZ por uma noite até 100 EUR, com entrada em 2026-09-12.",
+    "before": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "after": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "trace": [
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        },
+        "result": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]"
+      },
+      {
+        "name": "search_hotels",
+        "args": {
+          "city": "XYZ",
+          "max_price_per_night": 1000000000.0
+        },
+        "result": "[]"
+      }
+    ],
+    "final": "Item hotel em XYZ: nenhum hotel encontrado para a data 2026-09-12 dentro do teto de 100 EUR. Item flight MAD → LIM em 2026-09-12: opção encontrada com preço total 980.0 EUR. Nenhuma reserva foi confirmada. Menor preço observado entre as propostas: 980.0 EUR.",
+    "values": {
+      "pedido_usuario": "Sou u-42. Reserve MAD-LIM em 2026-09-12 até 1000 EUR e um hotel em XYZ por uma noite até 100 EUR, com entrada em 2026-09-12.",
+      "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+      "bandejas": {
+        "coordenador": [
+          {
+            "tipo": "Relatorio",
+            "conteudo": {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "booking_ids": [],
+              "erros": [
+                "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+              ],
+              "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "proposta_id": "prop-1",
+              "kind": "flight",
+              "item_id": "FL-101",
+              "price_total": 980.0,
+              "date": "2026-09-12",
+              "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+              "noites": 1
+            }
+          }
+        ],
+        "pesquisador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-12",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 1000.0
+                },
+                {
+                  "kind": "hotel",
+                  "data": "2026-09-12",
+                  "origem": null,
+                  "destino": null,
+                  "cidade": "XYZ",
+                  "noites": 1,
+                  "teto": 100.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          }
+        ],
+        "verificador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-12",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 1000.0
+                },
+                {
+                  "kind": "hotel",
+                  "data": "2026-09-12",
+                  "origem": null,
+                  "destino": null,
+                  "cidade": "XYZ",
+                  "noites": 1,
+                  "teto": 100.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "proposta_id": "prop-1",
+              "kind": "flight",
+              "item_id": "FL-101",
+              "price_total": 980.0,
+              "date": "2026-09-12",
+              "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+              "noites": 1
+            }
+          }
+        ],
+        "reservador": []
+      },
+      "bitacora": [
+        {
+          "seq": 3,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "pesquisador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              },
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "XYZ",
+                "noites": 1,
+                "teto": 100.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              },
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "XYZ",
+                "noites": 1,
+                "teto": 100.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 4,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "verificador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              },
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "XYZ",
+                "noites": 1,
+                "teto": 100.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              },
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "XYZ",
+                "noites": 1,
+                "teto": 100.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 11,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "coordenador",
+          "mensagem_tipo": "Relatorio",
+          "conteudo": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "booking_ids": [],
+            "erros": [
+              "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+            ],
+            "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "booking_ids": [],
+            "erros": [
+              "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+            ],
+            "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          }
+        },
+        {
+          "seq": 12,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "verificador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "proposta_id": "prop-1",
+            "kind": "flight",
+            "item_id": "FL-101",
+            "price_total": 980.0,
+            "date": "2026-09-12",
+            "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+            "noites": 1
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "proposta_id": "prop-1",
+            "kind": "flight",
+            "item_id": "FL-101",
+            "price_total": 980.0,
+            "date": "2026-09-12",
+            "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+            "noites": 1
+          }
+        },
+        {
+          "seq": 13,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "coordenador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "proposta_id": "prop-1",
+            "kind": "flight",
+            "item_id": "FL-101",
+            "price_total": 980.0,
+            "date": "2026-09-12",
+            "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+            "noites": 1
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "proposta_id": "prop-1",
+            "kind": "flight",
+            "item_id": "FL-101",
+            "price_total": 980.0,
+            "date": "2026-09-12",
+            "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+            "noites": 1
+          }
+        }
+      ],
+      "rodada": 3,
+      "max_rodadas": 12,
+      "pesquisas": 1,
+      "motivo_terminacao": "concluido",
+      "final": "Item hotel em XYZ: nenhum hotel encontrado para a data 2026-09-12 dentro do teto de 100 EUR. Item flight MAD → LIM em 2026-09-12: opção encontrada com preço total 980.0 EUR. Nenhuma reserva foi confirmada. Menor preço observado entre as propostas: 980.0 EUR.",
+      "relatorio": {
+        "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+        "booking_ids": [],
+        "erros": [
+          "Nenhum hotel encontrado em XYZ para a data 2026-09-12 dentro do teto de 100 EUR.",
+          "Voo MAD → LIM em 2026-09-12 encontrado com preço total 980.0 EUR."
+        ],
+        "mensagem": "Item hotel em XYZ: nenhum hotel encontrado para a data 2026-09-12 dentro do teto de 100 EUR. Item flight MAD → LIM em 2026-09-12: opção encontrada com preço total 980.0 EUR. Nenhuma reserva foi confirmada. Menor preço observado entre as propostas: 980.0 EUR."
+      },
+      "passos": 6,
+      "proximo": "__end__"
+    },
+    "error": null,
+    "seconds": 7.7,
+    "eventos": [
+      {
+        "seq": 1,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 1
+      },
+      {
+        "seq": 2,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "pesquisador",
+          "pedido": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              },
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "XYZ",
+                "noites": 1,
+                "teto": 100.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 5,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 2
+      },
+      {
+        "seq": 6,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 7,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+        "resultado": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]",
+        "executada": true
+      },
+      {
+        "seq": 8,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_hotels",
+        "chamada_id": "e5a69418-13db-405f-a4c6-3284927c669b",
+        "argumentos": {
+          "city": "XYZ",
+          "max_price_per_night": 1000000000.0
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_hotels",
+        "chamada_id": "e5a69418-13db-405f-a4c6-3284927c669b",
+        "resultado": "[]",
+        "executada": true
+      },
+      {
+        "seq": 10,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [
+            {
+              "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+              "proposta_id": "prop-1",
+              "kind": "flight",
+              "item_id": "FL-101",
+              "price_total": 980.0,
+              "date": "2026-09-12",
+              "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+              "noites": 1
+            }
+          ],
+          "motivo": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+        }
+      },
+      {
+        "seq": 11,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "booking_ids": [],
+          "erros": [
+            "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          ],
+          "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "booking_ids": [],
+          "erros": [
+            "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          ],
+          "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+        }
+      },
+      {
+        "seq": 12,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 14,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 3
+      },
+      {
+        "seq": 15,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "fim",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": {
+            "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+            "booking_ids": [],
+            "erros": [
+              "Nenhum hotel encontrado em XYZ para a data 2026-09-12 dentro do teto de 100 EUR.",
+              "Voo MAD → LIM em 2026-09-12 encontrado com preço total 980.0 EUR."
+            ],
+            "mensagem": "Item hotel em XYZ: nenhum hotel encontrado para a data 2026-09-12 dentro do teto de 100 EUR. Item flight MAD → LIM em 2026-09-12: opção encontrada com preço total 980.0 EUR. Nenhuma reserva foi confirmada. Menor preço observado entre as propostas: 980.0 EUR."
+          }
+        }
+      },
+      {
+        "seq": 16,
+        "tipo": "termination",
+        "agente": "coordenador",
+        "motivo": "concluido"
+      }
+    ],
+    "bitacora": [
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            },
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "XYZ",
+              "noites": 1,
+              "teto": 100.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 11,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "booking_ids": [],
+          "erros": [
+            "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          ],
+          "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "booking_ids": [],
+          "erros": [
+            "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+          ],
+          "mensagem": "Nenhum hotel encontrado em XYZ para a data 2026-09-12; voo MAD → LIM em 2026-09-12 encontrado com preço 980.0."
+        }
+      },
+      {
+        "seq": 12,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "1e3d0f2fb4304ebbbe8a72c25c7a0c80",
+          "proposta_id": "prop-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "47f964d3-4546-4b8d-b728-ef47afcadd12",
+          "noites": 1
+        }
+      }
+    ],
+    "injecoes_esperadas": []
+  }
+}

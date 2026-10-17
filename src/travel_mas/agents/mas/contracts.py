@@ -71,12 +71,21 @@ class Relatorio(Contrato):
     tarefa_id: str
     booking_ids: list[str] = Field(default_factory=list)
     erros: list[str] = Field(default_factory=list)
-    mensagem: str = ""
+    mensagem: str = Field(
+        default="",
+        description="Informe o resultado e os erros observados. No fechamento de um pedido "
+        "combinado parcialmente disponível, nomeie cada item sem opção e cada opção "
+        "disponível com seu preço total em EUR, mesmo sem reserva e com limite atingido.",
+    )
 
 
 class ResultadoPesquisa(Contrato):
     propostas: list[Proposta]
-    motivo: str = ""
+    motivo: str = Field(
+        default="",
+        description="Explique cada item sem opção e o local/data consultados, inclusive "
+        "quando outros itens tiverem propostas. Não omita falhas de uma pesquisa parcial.",
+    )
 
 
 class ResultadoVerificacao(Contrato):

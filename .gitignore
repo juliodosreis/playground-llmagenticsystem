@@ -35,3 +35,15 @@ NOTAS.md
 
 # Testes locais das versões anteriores; a suíte MAS fica em tests_mas/.
 tests/
+
+# Transferência de sessão local.
+HANDOFF_MAS.md
+
+# Evidência selecionada; os ensaios anteriores permanecem locais.
+reports/*
+!reports/mas-validation-v2/
+!reports/mas-validation-v2b/
+!reports/mas-validation-c06-v3/
+!reports/scripts/
+# Os resumos em markdown da evidência permanecem locais.
+reports/**/*.md

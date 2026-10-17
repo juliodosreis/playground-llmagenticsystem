@@ -1,0 +1,837 @@
+{
+  "caso": "C12P",
+  "repeticao": 3,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "supervisor",
+    "max_rodadas": 12,
+    "defeitos": [],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C12P",
+    "status": "pass",
+    "checks": [
+      {
+        "expectativa": "ativação:C12P-timeout",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "estado:bookings:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "hito:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'search_flights'}"
+      },
+      {
+        "expectativa": "hito:1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "{'tipo': 'injection_applied', 'id': 'C12P-timeout'}"
+      },
+      {
+        "expectativa": "hito:2",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'search_flights'}"
+      },
+      {
+        "expectativa": "proibição:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'create_booking'}"
+      },
+      {
+        "expectativa": "proibição:1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'cancel_booking'}"
+      },
+      {
+        "expectativa": "limite:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "2 <= 2"
+      },
+      {
+        "expectativa": "mensagem:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "erro|timeout|falha|indispon|não"
+      },
+      {
+        "expectativa": "R10",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R11",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R11",
+        "detalhe": ""
+      }
+    ]
+  },
+  "resultado": {
+    "prompt": "Sou u-42. Reserve MAD-LIM em 2026-09-12 por até 1000 EUR.",
+    "before": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "after": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "trace": [
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        },
+        "result": "{\"error\": \"timeout\", \"transient\": true}"
+      },
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        },
+        "result": "{\"error\": \"timeout\", \"transient\": true}"
+      }
+    ],
+    "final": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas.",
+    "values": {
+      "pedido_usuario": "Sou u-42. Reserve MAD-LIM em 2026-09-12 por até 1000 EUR.",
+      "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+      "bandejas": {
+        "coordenador": [
+          {
+            "tipo": "Relatorio",
+            "conteudo": {
+              "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+              "booking_ids": [],
+              "erros": [
+                "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+              ],
+              "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+            }
+          }
+        ],
+        "pesquisador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-12",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 1000.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          }
+        ],
+        "verificador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-12",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 1000.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          }
+        ],
+        "reservador": []
+      },
+      "bitacora": [
+        {
+          "seq": 3,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "pesquisador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 4,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "verificador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 13,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "coordenador",
+          "mensagem_tipo": "Relatorio",
+          "conteudo": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "booking_ids": [],
+            "erros": [
+              "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+            ],
+            "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "booking_ids": [],
+            "erros": [
+              "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+            ],
+            "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          }
+        }
+      ],
+      "rodada": 3,
+      "max_rodadas": 12,
+      "pesquisas": 1,
+      "motivo_terminacao": "concluido",
+      "final": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas.",
+      "relatorio": {
+        "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+        "booking_ids": [],
+        "erros": [
+          "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        ],
+        "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+      },
+      "passos": 6,
+      "proximo": "__end__"
+    },
+    "error": null,
+    "seconds": 34.2,
+    "eventos": [
+      {
+        "seq": 1,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 1
+      },
+      {
+        "seq": 2,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "pesquisador",
+          "pedido": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 1000.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 5,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 2
+      },
+      {
+        "seq": 6,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "45f153b0-283c-412e-884a-a0dbcae59e97",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 7,
+        "tipo": "injection_applied",
+        "id": "C12P-timeout",
+        "classe": "ferramenta",
+        "ferramenta": "search_flights",
+        "falha": "timeout",
+        "n_chamada": 1
+      },
+      {
+        "seq": 8,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "45f153b0-283c-412e-884a-a0dbcae59e97",
+        "resultado": "{\"error\": \"timeout\", \"transient\": true}",
+        "executada": false
+      },
+      {
+        "seq": 9,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "e26ab2c4-c383-4bf6-8d9c-4d8f62f52fb5",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "injection_applied",
+        "id": "C12P-timeout",
+        "classe": "ferramenta",
+        "ferramenta": "search_flights",
+        "falha": "timeout",
+        "n_chamada": 2
+      },
+      {
+        "seq": 11,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "e26ab2c4-c383-4bf6-8d9c-4d8f62f52fb5",
+        "resultado": "{\"error\": \"timeout\", \"transient\": true}",
+        "executada": false
+      },
+      {
+        "seq": 12,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "booking_ids": [],
+          "erros": [
+            "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          ],
+          "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "booking_ids": [],
+          "erros": [
+            "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          ],
+          "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        }
+      },
+      {
+        "seq": 14,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 3
+      },
+      {
+        "seq": 15,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "fim",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": {
+            "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+            "booking_ids": [],
+            "erros": [
+              "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+            ],
+            "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          }
+        }
+      },
+      {
+        "seq": 16,
+        "tipo": "termination",
+        "agente": "coordenador",
+        "motivo": "concluido"
+      }
+    ],
+    "bitacora": [
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 1000.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "booking_ids": [],
+          "erros": [
+            "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          ],
+          "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "6bc49db920814263967d69183e76a5f1",
+          "booking_ids": [],
+          "erros": [
+            "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+          ],
+          "mensagem": "Não foi possível obter resultados de voos devido a falhas técnicas repetidas."
+        }
+      }
+    ],
+    "injecoes_esperadas": [
+      "C12P-timeout"
+    ]
+  }
+}

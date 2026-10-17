@@ -1,0 +1,1487 @@
+{
+  "caso": "C07",
+  "repeticao": 3,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "supervisor",
+    "max_rodadas": 12,
+    "defeitos": [],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C07",
+    "status": "pass",
+    "checks": [
+      {
+        "expectativa": "estado:bookings:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R1",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R11",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R11",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R2",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R2",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R3",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": ""
+      }
+    ]
+  },
+  "resultado": {
+    "prompt": "Sou u-42. Reserve o hotel mais barato em LIM de 2026-09-12 por três noites. Meu orçamento TOTAL para as três noites é 150 EUR.",
+    "before": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "after": {
+      "bookings": [
+        {
+          "id": "BK-0001",
+          "user_id": "u-42",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "start_date": "2026-09-12",
+          "price": 135.0,
+          "status": "confirmed",
+          "nights": 3
+        }
+      ],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "trace": [
+      {
+        "name": "search_hotels",
+        "args": {
+          "city": "LIM",
+          "max_price_per_night": 1000000000.0
+        },
+        "result": "[{\"id\": \"HT-2\", \"city\": \"LIM\", \"name\": \"Barranco Hostal\", \"stars\": 2, \"price_per_night\": 45.0}, {\"id\": \"HT-4\", \"city\": \"LIM\", \"name\": \"Centro Hotel\", \"stars\": 3, \"price_per_night\": 52.0}, {\"id\": \"HT-3\", \"city\": \"LIM\", \"name\": \"Surco Business\", \"stars\": 3, \"price_per_night\": 58.0}, {\"id\": \"HT-1\", \"city\": \"LIM\", \"name\": \"Miraflores Suites\", \"stars\": 4, \"price_per_night\": 120.0}]"
+      },
+      {
+        "name": "check_item",
+        "args": {
+          "kind": "hotel",
+          "item_id": "HT-2"
+        },
+        "result": "{\"id\": \"HT-2\", \"city\": \"LIM\", \"name\": \"Barranco Hostal\", \"stars\": 2, \"price_per_night\": 45.0}"
+      },
+      {
+        "name": "list_bookings",
+        "args": {
+          "user_id": "u-42"
+        },
+        "result": "[]"
+      },
+      {
+        "name": "create_booking",
+        "args": {
+          "user_id": "u-42",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "start_date": "2026-09-12",
+          "price": 135.0,
+          "nights": 3
+        },
+        "result": "{\"booking_id\": \"BK-0001\", \"status\": \"confirmed\"}"
+      },
+      {
+        "name": "get_booking",
+        "args": {
+          "booking_id": "BK-0001"
+        },
+        "result": "{\"id\": \"BK-0001\", \"user_id\": \"u-42\", \"kind\": \"hotel\", \"item_id\": \"HT-2\", \"start_date\": \"2026-09-12\", \"price\": 135.0, \"status\": \"confirmed\", \"nights\": 3}"
+      }
+    ],
+    "final": "Reserva concluída com sucesso. Booking ID BK-0001. Preço total 135 EUR, menor preço observado entre as propostas: 135 EUR. Nenhum erro.",
+    "values": {
+      "pedido_usuario": "Sou u-42. Reserve o hotel mais barato em LIM de 2026-09-12 por três noites. Meu orçamento TOTAL para as três noites é 150 EUR.",
+      "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+      "bandejas": {
+        "coordenador": [
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "kind": "hotel",
+              "item_id": "HT-2",
+              "price_total": 135.0,
+              "date": "2026-09-12",
+              "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+              "noites": 3
+            }
+          },
+          {
+            "tipo": "Veredito",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "aprovado": true,
+              "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+            }
+          },
+          {
+            "tipo": "Relatorio",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "booking_ids": [
+                "BK-0001"
+              ],
+              "erros": [],
+              "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+            }
+          }
+        ],
+        "pesquisador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "hotel",
+                  "data": "2026-09-12",
+                  "origem": null,
+                  "destino": null,
+                  "cidade": "LIM",
+                  "noites": 3,
+                  "teto": 150.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          }
+        ],
+        "verificador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "hotel",
+                  "data": "2026-09-12",
+                  "origem": null,
+                  "destino": null,
+                  "cidade": "LIM",
+                  "noites": 3,
+                  "teto": 150.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "kind": "hotel",
+              "item_id": "HT-2",
+              "price_total": 135.0,
+              "date": "2026-09-12",
+              "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+              "noites": 3
+            }
+          }
+        ],
+        "reservador": [
+          {
+            "tipo": "Ordem",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "user_id": "u-42",
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "kind": "hotel",
+              "item_id": "HT-2",
+              "price_total": 135.0,
+              "date": "2026-09-12",
+              "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+              "noites": 3
+            }
+          },
+          {
+            "tipo": "Veredito",
+            "conteudo": {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "aprovado": true,
+              "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+            }
+          }
+        ]
+      },
+      "bitacora": [
+        {
+          "seq": 3,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "pesquisador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "LIM",
+                "noites": 3,
+                "teto": 150.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "LIM",
+                "noites": 3,
+                "teto": 150.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 4,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "verificador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "LIM",
+                "noites": 3,
+                "teto": 150.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "LIM",
+                "noites": 3,
+                "teto": 150.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 9,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "verificador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          }
+        },
+        {
+          "seq": 10,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "coordenador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          }
+        },
+        {
+          "seq": 17,
+          "tipo": "handoff",
+          "de": "verificador",
+          "para": "coordenador",
+          "mensagem_tipo": "Veredito",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "aprovado": true,
+            "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "aprovado": true,
+            "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+          }
+        },
+        {
+          "seq": 20,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Ordem",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "user_id": "u-42",
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "user_id": "u-42",
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 21,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "kind": "hotel",
+            "item_id": "HT-2",
+            "price_total": 135.0,
+            "date": "2026-09-12",
+            "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+            "noites": 3
+          }
+        },
+        {
+          "seq": 22,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Veredito",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "aprovado": true,
+            "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+            "aprovado": true,
+            "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+          }
+        },
+        {
+          "seq": 31,
+          "tipo": "handoff",
+          "de": "reservador",
+          "para": "coordenador",
+          "mensagem_tipo": "Relatorio",
+          "conteudo": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+          }
+        }
+      ],
+      "rodada": 7,
+      "max_rodadas": 12,
+      "pesquisas": 1,
+      "motivo_terminacao": "concluido",
+      "final": "Reserva concluída com sucesso. Booking ID BK-0001. Preço total 135 EUR, menor preço observado entre as propostas: 135 EUR. Nenhum erro.",
+      "relatorio": {
+        "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+        "booking_ids": [
+          "BK-0001"
+        ],
+        "erros": [],
+        "mensagem": "Reserva concluída com sucesso. Booking ID BK-0001. Preço total 135 EUR, menor preço observado entre as propostas: 135 EUR. Nenhum erro."
+      },
+      "passos": 15,
+      "proximo": "__end__"
+    },
+    "error": null,
+    "seconds": 41.5,
+    "eventos": [
+      {
+        "seq": 1,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 1
+      },
+      {
+        "seq": 2,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "pesquisador",
+          "pedido": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "hotel",
+                "data": "2026-09-12",
+                "origem": null,
+                "destino": null,
+                "cidade": "LIM",
+                "noites": 3,
+                "teto": 150.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 5,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 2
+      },
+      {
+        "seq": 6,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_hotels",
+        "chamada_id": "e81ddbbb-47c6-457e-9029-b17a34312185",
+        "argumentos": {
+          "city": "LIM",
+          "max_price_per_night": 1000000000.0
+        }
+      },
+      {
+        "seq": 7,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_hotels",
+        "chamada_id": "e81ddbbb-47c6-457e-9029-b17a34312185",
+        "resultado": "[{\"id\": \"HT-2\", \"city\": \"LIM\", \"name\": \"Barranco Hostal\", \"stars\": 2, \"price_per_night\": 45.0}, {\"id\": \"HT-4\", \"city\": \"LIM\", \"name\": \"Centro Hotel\", \"stars\": 3, \"price_per_night\": 52.0}, {\"id\": \"HT-3\", \"city\": \"LIM\", \"name\": \"Surco Business\", \"stars\": 3, \"price_per_night\": 58.0}, {\"id\": \"HT-1\", \"city\": \"LIM\", \"name\": \"Miraflores Suites\", \"stars\": 4, \"price_per_night\": 120.0}]",
+        "executada": true
+      },
+      {
+        "seq": 8,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [
+            {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "kind": "hotel",
+              "item_id": "HT-2",
+              "price_total": 135.0,
+              "date": "2026-09-12",
+              "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+              "noites": 3
+            }
+          ],
+          "motivo": ""
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 11,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 3
+      },
+      {
+        "seq": 12,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "verificador",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 4
+      },
+      {
+        "seq": 14,
+        "tipo": "tool_call",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "d0ced8b6-73e8-4d7e-918c-e4588dcae4bf",
+        "argumentos": {
+          "kind": "hotel",
+          "item_id": "HT-2"
+        }
+      },
+      {
+        "seq": 15,
+        "tipo": "tool_result",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "d0ced8b6-73e8-4d7e-918c-e4588dcae4bf",
+        "resultado": "{\"id\": \"HT-2\", \"city\": \"LIM\", \"name\": \"Barranco Hostal\", \"stars\": 2, \"price_per_night\": 45.0}",
+        "executada": true
+      },
+      {
+        "seq": 16,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "aprovado": true,
+              "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+            }
+          ]
+        }
+      },
+      {
+        "seq": 17,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        }
+      },
+      {
+        "seq": 18,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 5
+      },
+      {
+        "seq": 19,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "reservador",
+          "pedido": null,
+          "ordens": [
+            {
+              "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+              "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+              "user_id": "u-42",
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          ],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Ordem",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 21,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 22,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        }
+      },
+      {
+        "seq": 23,
+        "tipo": "agent_start",
+        "agente": "reservador",
+        "rodada": 6
+      },
+      {
+        "seq": 24,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "list_bookings",
+        "chamada_id": "0f4728d5-16fb-4036-9a69-623a7f205bc9",
+        "argumentos": {
+          "user_id": "u-42"
+        }
+      },
+      {
+        "seq": 25,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "list_bookings",
+        "chamada_id": "0f4728d5-16fb-4036-9a69-623a7f205bc9",
+        "resultado": "[]",
+        "executada": true
+      },
+      {
+        "seq": 26,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "create_booking",
+        "chamada_id": "2a621710-38ed-4b35-ad0b-cb2b7fbc21ac",
+        "argumentos": {
+          "user_id": "u-42",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "start_date": "2026-09-12",
+          "price": 135.0,
+          "nights": 3
+        }
+      },
+      {
+        "seq": 27,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "create_booking",
+        "chamada_id": "2a621710-38ed-4b35-ad0b-cb2b7fbc21ac",
+        "resultado": "{\"booking_id\": \"BK-0001\", \"status\": \"confirmed\"}",
+        "executada": true
+      },
+      {
+        "seq": 28,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "get_booking",
+        "chamada_id": "709c4044-20a5-4844-9c25-47e91a2985ec",
+        "argumentos": {
+          "booking_id": "BK-0001"
+        }
+      },
+      {
+        "seq": 29,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "get_booking",
+        "chamada_id": "709c4044-20a5-4844-9c25-47e91a2985ec",
+        "resultado": "{\"id\": \"BK-0001\", \"user_id\": \"u-42\", \"kind\": \"hotel\", \"item_id\": \"HT-2\", \"start_date\": \"2026-09-12\", \"price\": 135.0, \"status\": \"confirmed\", \"nights\": 3}",
+        "executada": true
+      },
+      {
+        "seq": 30,
+        "tipo": "agent_end",
+        "agente": "reservador",
+        "saida": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+        }
+      },
+      {
+        "seq": 31,
+        "tipo": "handoff",
+        "de": "reservador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+        }
+      },
+      {
+        "seq": 32,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 7
+      },
+      {
+        "seq": 33,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "fim",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": {
+            "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva concluída com sucesso. Booking ID BK-0001. Preço total 135 EUR, menor preço observado entre as propostas: 135 EUR. Nenhum erro."
+          }
+        }
+      },
+      {
+        "seq": 34,
+        "tipo": "termination",
+        "agente": "coordenador",
+        "motivo": "concluido"
+      }
+    ],
+    "bitacora": [
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "hotel",
+              "data": "2026-09-12",
+              "origem": null,
+              "destino": null,
+              "cidade": "LIM",
+              "noites": 3,
+              "teto": 150.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 17,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Ordem",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 21,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "kind": "hotel",
+          "item_id": "HT-2",
+          "price_total": 135.0,
+          "date": "2026-09-12",
+          "evidencia": "e81ddbbb-47c6-457e-9029-b17a34312185",
+          "noites": 3
+        }
+      },
+      {
+        "seq": 22,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "proposta_id": "p-1e2506f4ded4043848c270d07431356dd-1",
+          "aprovado": true,
+          "motivo": "Hotel HT-2 encontrado em LIM com preço por noite de 45.0. Total para 3 noites = 135.0, dentro do teto de 150.0 e data coincide com o pedido."
+        }
+      },
+      {
+        "seq": 31,
+        "tipo": "handoff",
+        "de": "reservador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "e2506f4ded4043848c270d07431356dd",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, hotel HT-2, início em 2026-09-12, 3 noites, preço total 135 EUR, status confirmed."
+        }
+      }
+    ],
+    "injecoes_esperadas": []
+  }
+}

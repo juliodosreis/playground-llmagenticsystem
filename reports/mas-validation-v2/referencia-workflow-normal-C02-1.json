@@ -1,0 +1,1474 @@
+{
+  "caso": "C02",
+  "repeticao": 1,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "workflow",
+    "max_rodadas": 12,
+    "defeitos": [],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C02",
+    "status": "pass",
+    "checks": [
+      {
+        "expectativa": "estado:bookings:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R5",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R1",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R11",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R11",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R2",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R2",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R5",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R5",
+        "detalhe": ""
+      }
+    ]
+  },
+  "resultado": {
+    "prompt": "Sou u-42. Reserve o voo mais barato MAD-LIM em 2026-09-13 até 800 EUR. Em empate, escolha o menor id.",
+    "before": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "after": {
+      "bookings": [
+        {
+          "id": "BK-0001",
+          "user_id": "u-42",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "start_date": "2026-09-13",
+          "price": 760.0,
+          "status": "confirmed",
+          "nights": 1
+        }
+      ],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 1
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "trace": [
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "max_price": 1000000000.0
+        },
+        "result": "[{\"id\": \"FL-103\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"Air France\", \"seats\": 2}, {\"id\": \"FL-104\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"LATAM\", \"seats\": 3}]"
+      },
+      {
+        "name": "check_item",
+        "args": {
+          "kind": "flight",
+          "item_id": "FL-103"
+        },
+        "result": "{\"id\": \"FL-103\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"Air France\", \"seats\": 2}"
+      },
+      {
+        "name": "list_bookings",
+        "args": {
+          "user_id": "u-42"
+        },
+        "result": "[]"
+      },
+      {
+        "name": "create_booking",
+        "args": {
+          "user_id": "u-42",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "start_date": "2026-09-13",
+          "price": 760.0,
+          "nights": 1
+        },
+        "result": "{\"booking_id\": \"BK-0001\", \"status\": \"confirmed\"}"
+      },
+      {
+        "name": "get_booking",
+        "args": {
+          "booking_id": "BK-0001"
+        },
+        "result": "{\"id\": \"BK-0001\", \"user_id\": \"u-42\", \"kind\": \"flight\", \"item_id\": \"FL-103\", \"start_date\": \"2026-09-13\", \"price\": 760.0, \"status\": \"confirmed\", \"nights\": 1}"
+      }
+    ],
+    "final": "Reserva concluída com sucesso. Booking ID: BK-0001. Nenhum erro. Menor preço observado: 760 EUR.",
+    "values": {
+      "pedido_usuario": "Sou u-42. Reserve o voo mais barato MAD-LIM em 2026-09-13 até 800 EUR. Em empate, escolha o menor id.",
+      "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+      "bandejas": {
+        "coordenador": [
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "kind": "flight",
+              "item_id": "FL-103",
+              "price_total": 760.0,
+              "date": "2026-09-13",
+              "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+              "noites": 1
+            }
+          },
+          {
+            "tipo": "Veredito",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "aprovado": true,
+              "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+            }
+          },
+          {
+            "tipo": "Relatorio",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "booking_ids": [
+                "BK-0001"
+              ],
+              "erros": [],
+              "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+            }
+          }
+        ],
+        "pesquisador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-13",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 800.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          }
+        ],
+        "verificador": [
+          {
+            "tipo": "Pedido",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "user_id": "u-42",
+              "itens": [
+                {
+                  "kind": "flight",
+                  "data": "2026-09-13",
+                  "origem": "MAD",
+                  "destino": "LIM",
+                  "cidade": null,
+                  "noites": 1,
+                  "teto": 800.0
+                }
+              ],
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "kind": "flight",
+              "item_id": "FL-103",
+              "price_total": 760.0,
+              "date": "2026-09-13",
+              "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+              "noites": 1
+            }
+          }
+        ],
+        "reservador": [
+          {
+            "tipo": "Ordem",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "user_id": "u-42",
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          },
+          {
+            "tipo": "Proposta",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "kind": "flight",
+              "item_id": "FL-103",
+              "price_total": 760.0,
+              "date": "2026-09-13",
+              "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+              "noites": 1
+            }
+          },
+          {
+            "tipo": "Veredito",
+            "conteudo": {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "aprovado": true,
+              "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+            }
+          }
+        ]
+      },
+      "bitacora": [
+        {
+          "seq": 3,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "pesquisador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-13",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 800.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-13",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 800.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 4,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "verificador",
+          "mensagem_tipo": "Pedido",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-13",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 800.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-13",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 800.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 9,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "verificador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          }
+        },
+        {
+          "seq": 10,
+          "tipo": "handoff",
+          "de": "pesquisador",
+          "para": "coordenador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          }
+        },
+        {
+          "seq": 15,
+          "tipo": "handoff",
+          "de": "verificador",
+          "para": "coordenador",
+          "mensagem_tipo": "Veredito",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "aprovado": true,
+            "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "aprovado": true,
+            "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+          }
+        },
+        {
+          "seq": 18,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Ordem",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "user_id": "u-42",
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "user_id": "u-42",
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          }
+        },
+        {
+          "seq": 19,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Proposta",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "kind": "flight",
+            "item_id": "FL-103",
+            "price_total": 760.0,
+            "date": "2026-09-13",
+            "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+            "noites": 1
+          }
+        },
+        {
+          "seq": 20,
+          "tipo": "handoff",
+          "de": "coordenador",
+          "para": "reservador",
+          "mensagem_tipo": "Veredito",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "aprovado": true,
+            "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+            "aprovado": true,
+            "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+          }
+        },
+        {
+          "seq": 29,
+          "tipo": "handoff",
+          "de": "reservador",
+          "para": "coordenador",
+          "mensagem_tipo": "Relatorio",
+          "conteudo": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+          },
+          "entregue": true,
+          "recebido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+          }
+        }
+      ],
+      "rodada": 6,
+      "max_rodadas": 12,
+      "pesquisas": 1,
+      "motivo_terminacao": "concluido",
+      "final": "Reserva concluída com sucesso. Booking ID: BK-0001. Nenhum erro. Menor preço observado: 760 EUR.",
+      "relatorio": {
+        "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+        "booking_ids": [
+          "BK-0001"
+        ],
+        "erros": [],
+        "mensagem": "Reserva concluída com sucesso. Booking ID: BK-0001. Nenhum erro. Menor preço observado: 760 EUR."
+      },
+      "passos": 14,
+      "proximo": "__end__"
+    },
+    "error": null,
+    "seconds": 42.5,
+    "eventos": [
+      {
+        "seq": 1,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 1
+      },
+      {
+        "seq": 2,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "pesquisador",
+          "pedido": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-13",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 800.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 5,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 2
+      },
+      {
+        "seq": 6,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 7,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+        "resultado": "[{\"id\": \"FL-103\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"Air France\", \"seats\": 2}, {\"id\": \"FL-104\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"LATAM\", \"seats\": 3}]",
+        "executada": true
+      },
+      {
+        "seq": 8,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [
+            {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "kind": "flight",
+              "item_id": "FL-103",
+              "price_total": 760.0,
+              "date": "2026-09-13",
+              "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+              "noites": 1
+            }
+          ],
+          "motivo": ""
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 11,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 3
+      },
+      {
+        "seq": 12,
+        "tipo": "tool_call",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "eaa35150-0bd6-4a76-9fc1-f63f1b63b30a",
+        "argumentos": {
+          "kind": "flight",
+          "item_id": "FL-103"
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "tool_result",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "eaa35150-0bd6-4a76-9fc1-f63f1b63b30a",
+        "resultado": "{\"id\": \"FL-103\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-13\", \"price\": 760.0, \"airline\": \"Air France\", \"seats\": 2}",
+        "executada": true
+      },
+      {
+        "seq": 14,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "aprovado": true,
+              "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+            }
+          ]
+        }
+      },
+      {
+        "seq": 15,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        }
+      },
+      {
+        "seq": 16,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 4
+      },
+      {
+        "seq": 17,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "reservador",
+          "pedido": null,
+          "ordens": [
+            {
+              "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+              "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+              "user_id": "u-42",
+              "acao": "reservar",
+              "booking_id": null,
+              "listar_depois": false,
+              "cancelar_depois": false
+            }
+          ],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 18,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Ordem",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 19,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        }
+      },
+      {
+        "seq": 21,
+        "tipo": "agent_start",
+        "agente": "reservador",
+        "rodada": 5
+      },
+      {
+        "seq": 22,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "list_bookings",
+        "chamada_id": "cfd6f6d8-e034-4d86-a69e-7ffe568f090f",
+        "argumentos": {
+          "user_id": "u-42"
+        }
+      },
+      {
+        "seq": 23,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "list_bookings",
+        "chamada_id": "cfd6f6d8-e034-4d86-a69e-7ffe568f090f",
+        "resultado": "[]",
+        "executada": true
+      },
+      {
+        "seq": 24,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "create_booking",
+        "chamada_id": "9dee6806-5c53-48b7-b6ea-6ef675ac53f6",
+        "argumentos": {
+          "user_id": "u-42",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "start_date": "2026-09-13",
+          "price": 760.0,
+          "nights": 1
+        }
+      },
+      {
+        "seq": 25,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "create_booking",
+        "chamada_id": "9dee6806-5c53-48b7-b6ea-6ef675ac53f6",
+        "resultado": "{\"booking_id\": \"BK-0001\", \"status\": \"confirmed\"}",
+        "executada": true
+      },
+      {
+        "seq": 26,
+        "tipo": "tool_call",
+        "agente": "reservador",
+        "ferramenta": "get_booking",
+        "chamada_id": "63f7ff91-c9d4-43a6-9bb7-2a2799d141eb",
+        "argumentos": {
+          "booking_id": "BK-0001"
+        }
+      },
+      {
+        "seq": 27,
+        "tipo": "tool_result",
+        "agente": "reservador",
+        "ferramenta": "get_booking",
+        "chamada_id": "63f7ff91-c9d4-43a6-9bb7-2a2799d141eb",
+        "resultado": "{\"id\": \"BK-0001\", \"user_id\": \"u-42\", \"kind\": \"flight\", \"item_id\": \"FL-103\", \"start_date\": \"2026-09-13\", \"price\": 760.0, \"status\": \"confirmed\", \"nights\": 1}",
+        "executada": true
+      },
+      {
+        "seq": 28,
+        "tipo": "agent_end",
+        "agente": "reservador",
+        "saida": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+        }
+      },
+      {
+        "seq": 29,
+        "tipo": "handoff",
+        "de": "reservador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+        }
+      },
+      {
+        "seq": 30,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 6
+      },
+      {
+        "seq": 31,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "fim",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": {
+            "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+            "booking_ids": [
+              "BK-0001"
+            ],
+            "erros": [],
+            "mensagem": "Reserva concluída com sucesso. Booking ID: BK-0001. Nenhum erro. Menor preço observado: 760 EUR."
+          }
+        }
+      },
+      {
+        "seq": 32,
+        "tipo": "termination",
+        "agente": "coordenador",
+        "motivo": "concluido"
+      }
+    ],
+    "bitacora": [
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-13",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 800.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 15,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        }
+      },
+      {
+        "seq": 18,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Ordem",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "user_id": "u-42",
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 19,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "kind": "flight",
+          "item_id": "FL-103",
+          "price_total": 760.0,
+          "date": "2026-09-13",
+          "evidencia": "7cde455b-797f-43e2-8ead-f2536c8d5837",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "reservador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "proposta_id": "1a2b3c4d-5e6f-7a8b-9c0d-e1f2g3h4i5j6",
+          "aprovado": true,
+          "motivo": "A proposta está aprovada: voo FL-103 corresponde ao pedido (origem MAD, destino LIM, data 2026-09-13, noites 1) e o preço total 760.0 está dentro do teto de 800.0, com 2 assentos disponíveis."
+        }
+      },
+      {
+        "seq": 29,
+        "tipo": "handoff",
+        "de": "reservador",
+        "para": "coordenador",
+        "mensagem_tipo": "Relatorio",
+        "conteudo": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "3a30446eae7047a5a2f39bd4c9af5196",
+          "booking_ids": [
+            "BK-0001"
+          ],
+          "erros": [],
+          "mensagem": "Reserva criada e confirmada com sucesso. Dados da reserva: usuário u-42, voo FL-103, data 2026-09-13, preço total 760 EUR, status confirmed."
+        }
+      }
+    ],
+    "injecoes_esperadas": []
+  }
+}

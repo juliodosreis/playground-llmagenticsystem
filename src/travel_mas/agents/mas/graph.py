@@ -220,9 +220,10 @@ def build_graph(workspace=None, context=None, model=None):
     async def pesquisar(state):
         state["pesquisas"] += 1
         resultado = await chamar(state, "pesquisador", ResultadoPesquisa)
-        if not resultado.propostas:
-            if "D6" in workspace._ativadas:
-                return state, "verificador"
+        if not resultado.propostas and "D6" in workspace._ativadas:
+            return state, "verificador"
+        # O motivo também descreve itens sem opção em uma pesquisa parcialmente disponível.
+        if resultado.motivo or not resultado.propostas:
             enviar(
                 state,
                 "pesquisador",
@@ -233,6 +234,7 @@ def build_graph(workspace=None, context=None, model=None):
                     mensagem=resultado.motivo,
                 ),
             )
+        if not resultado.propostas:
             return state, "coordenador"
         for proposta in resultado.propostas:
             enviar(state, "pesquisador", "verificador", proposta)

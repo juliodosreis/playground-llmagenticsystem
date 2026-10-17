@@ -1,0 +1,2973 @@
+{
+  "caso": "C04",
+  "repeticao": 3,
+  "config": {
+    "provider": "ollama",
+    "model": "gpt-oss:120b",
+    "topologia": "supervisor",
+    "max_rodadas": 12,
+    "defeitos": [
+      "D6"
+    ],
+    "base_url": "https://ollama.com",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "max_tokens": 1200,
+    "max_steps": 12,
+    "recursion_limit": 50,
+    "request_timeout": 120.0,
+    "retry_attempts": 3
+  },
+  "avaliacao": {
+    "caso": "C04",
+    "status": "fail",
+    "checks": [
+      {
+        "expectativa": "ativação:D6",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "estado:bookings:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "proibição:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'create_booking'}"
+      },
+      {
+        "expectativa": "proibição:1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": "{'tipo': 'tool_call', 'ferramenta': 'cancel_booking'}"
+      },
+      {
+        "expectativa": "limite:0",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "2 <= 2"
+      },
+      {
+        "expectativa": "mensagem:0",
+        "status": "fail",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": "980"
+      },
+      {
+        "expectativa": "R1",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R1",
+        "detalhe": ""
+      },
+      {
+        "expectativa": "R10",
+        "status": "fail",
+        "regra_origem": "spec/mas.yaml#regras.R10",
+        "detalhe": "8 pesquisas: excedeu uma reproposta"
+      },
+      {
+        "expectativa": "R11",
+        "status": "fail",
+        "regra_origem": "spec/mas.yaml#regras.R11",
+        "detalhe": "GraphRecursionError: Recursion limit of 18 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT; 17 rodadas excedem o limite"
+      },
+      {
+        "expectativa": "R3",
+        "status": "pass",
+        "regra_origem": "spec/mas.yaml#regras.R3",
+        "detalhe": ""
+      }
+    ]
+  },
+  "resultado": {
+    "prompt": "Sou u-42. Reserve MAD-LIM em 2026-09-12 apenas se custar até 700 EUR. Se não couber, informe o menor preço encontrado.",
+    "before": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "after": {
+      "bookings": [],
+      "flights": [
+        {
+          "id": "FL-101",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 980.0,
+          "airline": "Iberia",
+          "seats": 4
+        },
+        {
+          "id": "FL-102",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "price": 1240.0,
+          "airline": "LATAM",
+          "seats": 9
+        },
+        {
+          "id": "FL-103",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "Air France",
+          "seats": 2
+        },
+        {
+          "id": "FL-104",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-13",
+          "price": 760.0,
+          "airline": "LATAM",
+          "seats": 3
+        },
+        {
+          "id": "FL-105",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 650.0,
+          "airline": "Iberia",
+          "seats": 0
+        },
+        {
+          "id": "FL-106",
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-15",
+          "price": 820.0,
+          "airline": "LATAM",
+          "seats": 5
+        },
+        {
+          "id": "FL-201",
+          "origin": "LIM",
+          "destination": "MAD",
+          "date": "2026-09-20",
+          "price": 890.0,
+          "airline": "Iberia",
+          "seats": 6
+        }
+      ]
+    },
+    "trace": [
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        },
+        "result": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]"
+      },
+      {
+        "name": "check_item",
+        "args": {
+          "kind": "flight",
+          "item_id": "FL-101"
+        },
+        "result": "{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}"
+      },
+      {
+        "name": "search_flights",
+        "args": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        },
+        "result": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]"
+      },
+      {
+        "name": "check_item",
+        "args": {
+          "kind": "flight",
+          "item_id": "FL-102"
+        },
+        "result": "{\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}"
+      }
+    ],
+    "final": "Execução interrompida: GraphRecursionError: Recursion limit of 18 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT",
+    "values": {},
+    "error": "GraphRecursionError: Recursion limit of 18 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT",
+    "seconds": 120.9,
+    "eventos": [
+      {
+        "seq": 1,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 1
+      },
+      {
+        "seq": 2,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "pesquisador",
+          "pedido": {
+            "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+            "user_id": "u-42",
+            "itens": [
+              {
+                "kind": "flight",
+                "data": "2026-09-12",
+                "origem": "MAD",
+                "destino": "LIM",
+                "cidade": null,
+                "noites": 1,
+                "teto": 700.0
+              }
+            ],
+            "acao": "reservar",
+            "booking_id": null,
+            "listar_depois": false,
+            "cancelar_depois": false
+          },
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 5,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 2
+      },
+      {
+        "seq": 6,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 7,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+        "resultado": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]",
+        "executada": true
+      },
+      {
+        "seq": 8,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "kind": "flight",
+              "item_id": "FL-101",
+              "price_total": 980.0,
+              "date": "2026-09-12",
+              "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+              "noites": 1
+            }
+          ],
+          "motivo": ""
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 11,
+        "tipo": "agent_start",
+        "agente": "coordenador",
+        "rodada": 3
+      },
+      {
+        "seq": 12,
+        "tipo": "agent_end",
+        "agente": "coordenador",
+        "saida": {
+          "proximo": "verificador",
+          "pedido": null,
+          "ordens": [],
+          "relatorio": null
+        }
+      },
+      {
+        "seq": 13,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 4
+      },
+      {
+        "seq": 14,
+        "tipo": "tool_call",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "c20fd9d8-61d3-4ff8-b142-d0af9366c87b",
+        "argumentos": {
+          "kind": "flight",
+          "item_id": "FL-101"
+        }
+      },
+      {
+        "seq": 15,
+        "tipo": "tool_result",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "c20fd9d8-61d3-4ff8-b142-d0af9366c87b",
+        "resultado": "{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}",
+        "executada": true
+      },
+      {
+        "seq": 16,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 17,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 18,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 19,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 21,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 5
+      },
+      {
+        "seq": 22,
+        "tipo": "tool_call",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+        "argumentos": {
+          "origin": "MAD",
+          "destination": "LIM",
+          "date": "2026-09-12",
+          "max_price": 1000000000.0
+        }
+      },
+      {
+        "seq": 23,
+        "tipo": "tool_result",
+        "agente": "pesquisador",
+        "ferramenta": "search_flights",
+        "chamada_id": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+        "resultado": "[{\"id\": \"FL-101\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 980.0, \"airline\": \"Iberia\", \"seats\": 4}, {\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}]",
+        "executada": true
+      },
+      {
+        "seq": 24,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "kind": "flight",
+              "item_id": "FL-102",
+              "price_total": 1240.0,
+              "date": "2026-09-12",
+              "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+              "noites": 1
+            }
+          ],
+          "motivo": ""
+        }
+      },
+      {
+        "seq": 25,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 26,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 27,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 6
+      },
+      {
+        "seq": 28,
+        "tipo": "tool_call",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "3e8f44f9-765d-49fe-ab3d-90152c188d9a",
+        "argumentos": {
+          "kind": "flight",
+          "item_id": "FL-102"
+        }
+      },
+      {
+        "seq": 29,
+        "tipo": "tool_result",
+        "agente": "verificador",
+        "ferramenta": "check_item",
+        "chamada_id": "3e8f44f9-765d-49fe-ab3d-90152c188d9a",
+        "resultado": "{\"id\": \"FL-102\", \"origin\": \"MAD\", \"destination\": \"LIM\", \"date\": \"2026-09-12\", \"price\": 1240.0, \"airline\": \"LATAM\", \"seats\": 9}",
+        "executada": true
+      },
+      {
+        "seq": 30,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 31,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 32,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 33,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 34,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 35,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 36,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 37,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 38,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 7
+      },
+      {
+        "seq": 39,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 40,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 8
+      },
+      {
+        "seq": 41,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 42,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 43,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 44,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 45,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 46,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 47,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 48,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 49,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 9
+      },
+      {
+        "seq": 50,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 51,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 10
+      },
+      {
+        "seq": 52,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 53,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 54,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 55,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 56,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 57,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 58,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 59,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 60,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 11
+      },
+      {
+        "seq": 61,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 62,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 12
+      },
+      {
+        "seq": 63,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 64,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 65,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 66,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 67,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 68,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 69,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 70,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 71,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 13
+      },
+      {
+        "seq": 72,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 73,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 14
+      },
+      {
+        "seq": 74,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 75,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 76,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 77,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 78,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 79,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 80,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 81,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 82,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 15
+      },
+      {
+        "seq": 83,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 84,
+        "tipo": "agent_start",
+        "agente": "verificador",
+        "rodada": 16
+      },
+      {
+        "seq": 85,
+        "tipo": "agent_end",
+        "agente": "verificador",
+        "saida": {
+          "vereditos": [
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            },
+            {
+              "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+              "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+              "aprovado": false,
+              "motivo": "preço acima do teto"
+            }
+          ]
+        }
+      },
+      {
+        "seq": 86,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 87,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 88,
+        "tipo": "injection_applied",
+        "id": "D6",
+        "classe": "defeito",
+        "aresta": "pesquisador->verificador"
+      },
+      {
+        "seq": 89,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 90,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 91,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 92,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 93,
+        "tipo": "agent_start",
+        "agente": "pesquisador",
+        "rodada": 17
+      },
+      {
+        "seq": 94,
+        "tipo": "agent_end",
+        "agente": "pesquisador",
+        "saida": {
+          "propostas": [],
+          "motivo": "Nenhum voo adicional encontrado; todas as opções disponíveis excedem o teto de preço."
+        }
+      },
+      {
+        "seq": 95,
+        "tipo": "error",
+        "erro": "GraphRecursionError: Recursion limit of 18 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT"
+      },
+      {
+        "seq": 96,
+        "tipo": "termination",
+        "agente": "harness",
+        "motivo": "error",
+        "erro": "GraphRecursionError: Recursion limit of 18 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT"
+      }
+    ],
+    "bitacora": [
+      {
+        "seq": 3,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 4,
+        "tipo": "handoff",
+        "de": "coordenador",
+        "para": "verificador",
+        "mensagem_tipo": "Pedido",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "user_id": "u-42",
+          "itens": [
+            {
+              "kind": "flight",
+              "data": "2026-09-12",
+              "origem": "MAD",
+              "destino": "LIM",
+              "cidade": null,
+              "noites": 1,
+              "teto": 700.0
+            }
+          ],
+          "acao": "reservar",
+          "booking_id": null,
+          "listar_depois": false,
+          "cancelar_depois": false
+        }
+      },
+      {
+        "seq": 9,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 10,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 17,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 19,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 20,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 25,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "verificador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 26,
+        "tipo": "handoff",
+        "de": "pesquisador",
+        "para": "coordenador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 31,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 32,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 34,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 35,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 36,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 37,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 42,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 43,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 45,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 46,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 47,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 48,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 53,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 54,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 56,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 57,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 58,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 59,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 64,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 65,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 67,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 68,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 69,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 70,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 75,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 76,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 78,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 79,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 80,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 81,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 86,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 87,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "coordenador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 89,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 90,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-1",
+          "kind": "flight",
+          "item_id": "FL-101",
+          "price_total": 980.0,
+          "date": "2026-09-12",
+          "evidencia": "b9ffc307-759a-4476-8930-d88bcf61ba77",
+          "noites": 1
+        }
+      },
+      {
+        "seq": 91,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Veredito",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "aprovado": false,
+          "motivo": "preço acima do teto"
+        }
+      },
+      {
+        "seq": 92,
+        "tipo": "handoff",
+        "de": "verificador",
+        "para": "pesquisador",
+        "mensagem_tipo": "Proposta",
+        "conteudo": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        },
+        "entregue": true,
+        "recebido": {
+          "tarefa_id": "84d9ad1d05ba43ddb23e200f91b129b7",
+          "proposta_id": "prop-84d9ad1d05ba43ddb23e200f91b129b7-2",
+          "kind": "flight",
+          "item_id": "FL-102",
+          "price_total": 1240.0,
+          "date": "2026-09-12",
+          "evidencia": "6ed7b5d8-ea29-41c9-801f-77e8ada80865",
+          "noites": 1
+        }
+      }
+    ],
+    "injecoes_esperadas": [
+      "D6"
+    ]
+  }
+}
