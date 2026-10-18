@@ -161,7 +161,7 @@ class Workspace:
     def record(self, name: str, args: Mapping[str, Any], result: str) -> None:
         """Registra no trace uma chamada que não passa por uma operação do domínio.
 
-        Útil para observações externas que não alteram o banco.
+        A chamada registrada não altera o banco.
         """
         with self._lock:
             self.trace.append(ToolCall(name, dict(args), result))

@@ -34,10 +34,10 @@ Os modelos padrão são `gpt-oss:120b` e `gemini-3.5-flash-lite`, respectivament
 
 `TRAVEL_TOPOLOGIA` escolhe `workflow` (padrão) ou `supervisor`. `--max-rodadas` limita as
 ativações dos agentes (12 por padrão) e reserva a última para o relatório do Coordenador.
-`--max-steps` limita as etapas de pensamento do laço ReAct por ativação (12 por padrão).
-A conversão para saída estruturada e os reintentos do provedor têm contadores próprios.
-Esse limite não é um teto de requisições à API. `Context` também declara temperatura,
-prazo por requisição e tentativas de erros do provedor, contando a primeira chamada.
+`--max-steps` limita as etapas de pensamento do laço ReAct por ativação (12 por padrão) e não
+conta requisições à API: a conversão para saída estruturada e os reintentos do provedor têm
+contadores próprios. `Context` também declara temperatura, prazo por requisição e tentativas de
+erros do provedor, contando a primeira chamada.
 
 | Comando | Saída |
 |---|---|
@@ -85,7 +85,8 @@ Todos os handoffs passam por `entregar(de, para, mensagem, ...)`, que valida o c
 registra um evento e entrega uma cópia serializada na bandeja do destinatário. `contracts.py`
 contém os cinco contratos públicos e os esquemas das respostas dos subgrafos.
 `Pedido` e `Ordem` incluem campos para listar/cancelar e para a sequência reservar–listar–cancelar.
-`ResultadoPesquisa` e `ResultadoVerificacao` permitem tratar pedidos com mais de um item.
+`ResultadoPesquisa` e `ResultadoVerificacao` levam listas de propostas e de vereditos, uma
+entrada por item do pedido.
 
 Um teste compara os nomes de [spec/mas.yaml](spec/mas.yaml) com o código.
 R1 (veredito correspondente), R6 (titularidade e cancelamento único) e R7 (duplicatas) são
@@ -112,7 +113,7 @@ disponíveis também quando a execução termina por limite de pesquisas ou de r
 | C2: histórico próprio | subgrafos com messages privados; nenhum messages no estado pai |
 | C3: permissões próprias | Toolbox.select distinto por papel |
 | C4: mensagens tipadas | Pedido, Proposta, Veredito, Ordem e Relatorio |
-| C5: interdependência | Reserva recebe a proposta pesquisada e o veredito antes de executar a Ordem |
+| C5: interdependência | Reservador recebe a proposta pesquisada e o veredito antes de executar a Ordem |
 | C6: autonomia | recusa/esclarecimento do Coordenador e rejeição do Verificador alteram o fluxo |
 | C7: visão parcial | cada ativação recebe sua bandeja; só o Coordenador recebe o texto do usuário |
 
@@ -121,7 +122,7 @@ A divisão de contexto e ferramentas é imposta pela montagem dos subgrafos. A a
 Testes com respostas scriptadas verificam a estrutura e os desvios de fluxo; não medem a taxa de
 acerto de um modelo real.
 
-A coordenação é centralizada. Os agentes não endereçam mensagens entre si: o grafo pai decide
+A coordenação é centralizada. Os agentes não endereçam mensagens entre si: o grafo pai faz
 cada entrega. Em `workflow`, a passagem da pesquisa à verificação é uma rota fixa; em
 `supervisor`, o Coordenador escolhe o próximo agente. Nas duas topologias, o grafo pai aplica em
 código o limite de novas pesquisas, o limite de rodadas e a seleção das mensagens que acompanham
@@ -129,9 +130,10 @@ uma `Ordem`.
 
 ## Topologias
 
-`workflow` encaminha propostas do Pesquisador diretamente ao Verificador. A primeira rejeição
-retorna ao Pesquisador; depois da segunda pesquisa, o resultado segue ao Coordenador. As rotas
-são declaradas no grafo pai e dependem da presença de propostas e dos vereditos recebidos.
+`workflow` encaminha propostas do Pesquisador ao Verificador, sem passar pelo Coordenador. A
+primeira rejeição retorna ao Pesquisador; depois da segunda pesquisa, o resultado segue ao
+Coordenador. As rotas são declaradas no grafo pai e dependem da presença de propostas e dos
+vereditos recebidos.
 
 `supervisor` devolve o controle ao Coordenador após a pesquisa e a verificação. O Coordenador
 preenche `Decisao` para escolher Pesquisador, Verificador, Reservador ou fim, e o nó retorna
@@ -204,12 +206,13 @@ conteúdo recebido e indicação de entrega. Cada intervenção emite `injection
 Falhas e seus contadores reiniciam a cada execução; o registro de falhas do Workspace permanece
 até o chamador substituí-lo. Falhas registradas que não aparecem na execução geram `no_activado`.
 Defeitos habilitados podem permanecer inativos em casos que não os exercitam, como C11; os testes
-alvo da matriz verificam explicitamente a ativação antes de declarar detecção.
+alvo da matriz verificam a ativação antes de declarar detecção.
 
 ## Defeitos semeados
 
 `--defeito` é repetível; `TRAVEL_DEFEITOS=D1,D3` configura os mesmos ids. O padrão não habilita
-nenhum. As intervenções estão no grafo e em `agents/mas/defects.py`, não em pedidos ao modelo.
+nenhum. As intervenções estão no grafo e em `agents/mas/defects.py`; nenhum defeito altera o
+prompt.
 
 | Id | Efeito |
 |---|---|
@@ -220,8 +223,8 @@ nenhum. As intervenções estão no grafo e em `agents/mas/defects.py`, não em 
 | D5 | Reservador recebe a proposta rejeitada anterior no lugar da proposta aprovada |
 | D6 | após rejeição, pesquisa e verificação ignoram os limites de rodadas e repropostas |
 
-D4 cobre tanto Pedido quanto Ordem para exercitar reservas e cancelamentos. O avaliador compara
-a identidade encaminhada com a solicitação do caso. D6 ainda fica sujeito ao watchdog externo do
+D4 atua no Pedido e na Ordem, que levam o `user_id` de reservas e cancelamentos. O avaliador
+compara a identidade encaminhada com a solicitação do caso. D6 fica sujeito ao watchdog externo do
 harness: a suíte limita o LangGraph a `min(recursion_limit, max_rodadas + 6)`. Uma interrupção pelo
 harness é falha de terminação, sem relatório de sucesso do Coordenador.
 
@@ -234,10 +237,10 @@ confere relações entre Ordem, Proposta, Veredito e a escrita observada, refer�
 orçamento, titularidade, duplicação, recuperação e terminação. Cada resultado traz `regra_origem`.
 Valores como `spec/mas.yaml#regras.R3` identificam o arquivo e o id lógico da regra no YAML.
 
-A evidência da proposta é o identificador da busca. Esse id aparece explicitamente no conteúdo
-de cada ToolMessage como `evidencia`, junto de `resultado`, pois nem todo transporte envia o
-metadado `tool_call_id` ao modelo. Os eventos guardam o resultado original da operação.
-O Pesquisador busca sem teto para mostrar opções acima do orçamento ao Verificador.
+A evidência da proposta é o identificador da busca. Esse id aparece no conteúdo de cada
+ToolMessage como `evidencia`, junto de `resultado`, além do metadado `tool_call_id`. Os eventos
+guardam o resultado original da operação. O Pesquisador busca sem teto de preço, e as opções
+acima do orçamento chegam ao Verificador.
 
 Os resultados possíveis são `pass`, `fail`, `no_evaluable` e `no_activado`. `pass^k` de um caso é
 1 somente quando todas as k execuções passam. Casos não avaliáveis ou com falhas não ativadas
@@ -245,16 +248,16 @@ ficam fora da média e aparecem contados separadamente. Uma execução sem erro 
 falhar no avaliador por violar uma expectativa. O comando `casos` devolve código 1 quando alguma
 execução não passa; `validar` também aponta defeitos não detectados ou controles com falha.
 
-C06 combina um voo disponível com um hotel inexistente e exige nenhuma escrita e um relatório
-que nomeie o hotel ausente e o preço do voo. C07 verifica três noites dentro do teto total;
+C06 combina um voo disponível com um hotel inexistente e não admite escrita; o relatório nomeia
+o hotel ausente e o preço do voo. C07 verifica três noites dentro do teto total;
 C07B usa um teto menor que o total mais barato para detectar confusão entre preço por noite e
 total. C12P exercita timeout persistente.
 C14 admite recusa ou consulta adicional, com reserva somente quando houver evidência válida.
 
 `validar` roda a referência k vezes em ambas as topologias, os alvos D1–D6 e controles C11.
 Cada execução é salva assim que termina. O resumo marca defeito detectado somente quando há
-ativação registrada e falha de uma regra pertinente ao defeito. Resultados abaixo de k/k são
-documentados com seus traces; a execução da matriz não presume estabilidade do LLM.
+ativação registrada e falha de uma regra pertinente ao defeito. Resultados abaixo de k/k ficam
+registrados nas traças de cada execução.
 
 ## Testes e Studio
 
@@ -314,6 +317,42 @@ e a detecção conta quando a falha cai em uma regra de `REGRAS_DETECCAO`. D1 é
 em C04, o Coordenador recusa a aprovação automática, e a execução passa em workflow e termina
 como `no_activado` em supervisor. D6 termina com `GraphRecursionError` do watchdog do harness nas
 duas topologias e é reprovado por R10 e R11.
+
+### Chamadas ao modelo
+
+As traças registram eventos e chamadas de ferramenta, e não as chamadas ao modelo. A contagem
+desta seção deriva dos eventos das 126 traças de `mas-validation-v3`.
+
+Cada ativação de um agente percorre `pensar`, `executar` e `concluir` (`agents/mas/agent.py`).
+`pensar` chama o modelo uma vez por rodada de ferramentas e uma vez para a resposta final, e
+`concluir` faz mais uma chamada para preencher o contrato por `function_calling`. Uma ativação
+sem ferramenta faz duas chamadas; uma ativação com `n` chamadas de ferramenta faz de três a
+`n + 2`, conforme o modelo agrupe as chamadas em uma rodada ou em rodadas separadas. Em
+`supervisor`, o Coordenador é ativado depois de cada agente para preencher `Decisao`. Em C01, a
+sequência de ativações, com as chamadas de ferramenta entre parênteses, foi:
+
+```
+workflow:
+  coordenador → pesquisador(1) → verificador(1) → coordenador → reservador(3) → coordenador
+supervisor:
+  coordenador → pesquisador(1) → coordenador → verificador(1) → coordenador → reservador(3)
+  → coordenador
+```
+
+A execução de C01 corresponde a 15–17 chamadas ao modelo em workflow e a 17–19 em supervisor.
+Por fase, as 126 execuções de v3 somam:
+
+| Fase | Execuções | Ativações | Chamadas de ferramenta | Chamadas ao modelo |
+|---|---|---|---|---|
+| referência | 96 | 500 | 349 | 1223–1349 |
+| defeitos-alvo | 18 | 135 | 64 | 323–334 |
+| controles C11 | 12 | 12 | 0 | 24 |
+| total | 126 | 647 | 413 | 1570–1707 |
+
+Na fase de referência, a média é de 4,9 ativações por execução em workflow e 5,5 em supervisor,
+e de 12,7 a 14,1 chamadas ao modelo por execução. Uma tanda de seis execuções de referência
+corresponde a 76–84 chamadas. A contagem não inclui as tentativas de `with_transient_retry` após
+erro do provedor nem as de `preencher` após saída inválida, que os eventos não registram.
 
 `reports/scripts/` lê as traças sem executar agentes: `resumo.py` imprime status e checks com
 falha e ignora `summary.json` e `manifest.json`, `eventos.py` imprime a sequência de handoffs e

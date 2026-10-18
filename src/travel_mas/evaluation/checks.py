@@ -138,7 +138,7 @@ def _normas(result, caso):
         if args.get("kind") == "hotel" and args.get("nights", 1) != caso.noites:
             falhar("R3", "duração do hotel difere do pedido")
 
-    # Cada proposta pública deve remeter a uma busca anterior que realmente retornou o item.
+    # Cada proposta pública deve remeter a uma busca anterior que retornou o item.
     for event in eventos:
         if event["tipo"] != "handoff" or event.get("mensagem_tipo") != "Proposta":
             continue
