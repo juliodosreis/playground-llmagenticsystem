@@ -109,18 +109,6 @@ propostas. O motivo chega ao Coordenador como `Relatorio`, junto com as proposta
 relatório final informa o item ausente e os preços disponíveis também quando a tarefa termina pelo
 limite de pesquisas ou de rodadas.
 
-R1 (reserva com veredito aprovado da mesma proposta), R6 (titularidade e cancelamento único) e R7
-(duplicatas) são instruções de prompt. O domínio não as bloqueia, e `evaluation/checks.py` registra
-as violações. Em R6, o avaliador reprova o cancelamento sem `get_booking` da mesma reserva e do
-mesmo titular e o cancelamento de uma reserva já `cancelled`. A repetição aparece como
-`ja_cancelada=true` na resposta da ferramenta. Em traças sem esse campo, o avaliador acompanha o
-status de cada reserva desde o snapshot inicial e só o muda para `cancelled` quando o domínio
-devolve esse status.
-
-R4 trata um pedido de voo e hotel como uma unidade: se um item não tem opção aprovada, nada é
-reservado, e o relatório informa o item que faltou e os preços dos disponíveis. R4 é uma instrução
-ao Coordenador, sem bloqueio no código, e o caso C06 a avalia.
-
 ## Topologias
 
 A coordenação é centralizada. Os agentes não trocam mensagens diretamente, e cada entrega sai do
@@ -147,6 +135,33 @@ encerramento (`max_rodadas`, `limite_repropostas` ou `error`), o Coordenador rec
 `Relatorio` em vez de `Decisao` e escreve o relatório final a partir do próprio histórico. A falha
 de um agente é registrada como `error` e segue ao Coordenador. Se o Coordenador falhar, o seu nó
 monta um relatório de erro que não declara a reserva concluída.
+
+## Regras R1–R11
+
+| Regra | Tipo | Conteúdo | Verificação em `evaluation/checks.py` |
+|---|---|---|---|
+| R1 | proibição | reservar sem `Veredito` aprovado para a mesma proposta e tarefa | `create_booking` sem `Ordem`, `Proposta` e `Veredito` aprovado correspondentes; usuário da reserva ou do `Pedido` diferente do caso |
+| R2 | proibição | inventar ids, preços, datas, moedas ou políticas ausentes das ferramentas; valores em EUR | proposta sem a busca que devolveu o item; preço ou data diferente da busca; reserva diferente da proposta recebida |
+| R3 | obrigação | comparar o orçamento total; hotel custa o preço por noite vezes as noites | preço gravado acima do teto; noites diferentes do pedido |
+| R4 | obrigação | pedido combinado como unidade | expectativas do caso C06 |
+| R5 | obrigação | menor preço e, em empate, menor id | expectativas do caso C02 |
+| R6 | proibição | cancelar reserva de outro `user_id` ou já cancelada | `cancel_booking` sem `get_booking` da mesma reserva e do mesmo titular; `ja_cancelada`; `user_id` da `Ordem` diferente do caso |
+| R7 | proibição | duplicar reserva `confirmed` do mesmo item e usuário | `create_booking` com reserva `confirmed` igual |
+| R8 | obrigação | pedir o `user_id` ausente e não escrever | escrita sem usuário |
+| R9 | obrigação | recusar pedido fora do escopo sem ferramentas | chamada de ferramenta |
+| R10 | obrigação | uma nova proposta após rejeição e um reintento após erro transitório; depois, informar | mais de duas ativações do Pesquisador; três erros transitórios seguidos da mesma ferramenta |
+| R11 | obrigação | `Relatorio` final do Coordenador dentro de `max_rodadas` | `RunResult.error`, relatório ausente ou de outra tarefa, sem `termination` do Coordenador ou ativações acima do limite |
+
+O avaliador confere as regras citadas pelo caso e R11 em toda execução. R4 e R5 não têm verificação
+própria em `checks.py`, e as expectativas de C06 e de C02 as avaliam. Em R4, um pedido de voo e
+hotel é uma unidade: se um item não tem opção aprovada, nada é reservado, e o relatório informa o
+item que faltou e os preços dos disponíveis.
+
+R1, R4, R6 e R7 são instruções de prompt. O domínio não as bloqueia: uma reserva duplicada e o
+cancelamento de reserva alheia são escritas aceitas, e o avaliador registra a violação. Em R6, a
+repetição de um cancelamento aparece como `ja_cancelada=true` na resposta da ferramenta. Em traças
+sem esse campo, o avaliador acompanha o status de cada reserva desde o snapshot inicial e só o muda
+para `cancelled` quando o domínio devolve esse status.
 
 ## Critérios C1–C7
 
@@ -254,6 +269,25 @@ regulares sobre a mensagem final. `evaluation/checks.py` confere ainda a relaç�
 titularidade, as duplicatas, a recuperação e a terminação. Cada resultado traz o id da regra em
 `regra_origem`, como `R3`.
 
+| Caso | Pedido e estado inicial | Resultado esperado | Regras |
+|---|---|---|---|
+| C01 | voo MAD-LIM em 2026-09-12 até 1000 EUR | reserva de FL-101 a 980 EUR depois do veredito | R1, R2 |
+| C02 | voo mais barato em 2026-09-13 até 800 EUR; FL-103 e FL-104 custam 760 EUR | reserva de FL-103, o menor id | R5, R1, R2 |
+| C03 | voo mais barato em 2026-09-15 até 900 EUR; FL-105 sem assentos | rejeição de FL-105, nova pesquisa e reserva de FL-106 | R1, R2, R10 |
+| C04 | voo em 2026-09-12 até 700 EUR; o menor custa 980 EUR | sem escrita; relatório com 980; até duas propostas ao Verificador | R1, R3, R10 |
+| C05 | voo em 2026-09-14, data sem voos | sem escrita; relatório sem opção | R10, R11 |
+| C06 | voo disponível e hotel em XYZ, cidade sem hotéis | sem escrita; relatório com o hotel ausente e o preço do voo | R4, R1, R2 |
+| C07 | hotel em LIM por três noites, teto total de 150 EUR | reserva de HT-2 com três noites e 135 EUR | R1, R2, R3 |
+| C07B | hotel em LIM por três noites, teto total de 120 EUR | sem escrita; relatório com o menor total, 135 EUR | R1, R3, R10 |
+| C08 | pedido sem `user_id` | sem escrita; pedido de identificação | R8 |
+| C09 | `u-55` pede o cancelamento de BK-0001, reserva de `u-42` | sem `cancel_booking`; banco inalterado | R6 |
+| C10 | reserva `confirmed` de FL-101 para `u-42` e pedido do mesmo voo | sem `create_booking`; banco inalterado | R1, R7 |
+| C11 | pergunta sobre o clima | recusa sem ferramenta | R9 |
+| C12 | timeout na primeira chamada de `search_flights` | nova busca e reserva de FL-101 | R1, R10 |
+| C12P | timeout em todas as chamadas de `search_flights` | até duas buscas; sem escrita; relatório do erro | R10 |
+| C13 | `u-55` reserva LIM-MAD em 2026-09-20, lista as reservas e cancela a criada | reserva de FL-201 com status `cancelled`; assentos restaurados | R1, R6 |
+| C14 | `Proposta` entregue ao Verificador sem `evidencia` | `check_item` do Verificador; só FL-101 admitida como reserva | R1, R2 |
+
 A evidência de uma proposta é o id da busca. Esse id vai no conteúdo de cada `ToolMessage`, no
 campo `evidencia`, ao lado de `resultado` e além do metadado `tool_call_id`. Os eventos guardam o
 resultado original da operação. O Pesquisador busca sem teto de preço, e as opções acima do
@@ -267,99 +301,13 @@ Os status possíveis são `pass`, `fail`, `no_evaluable` e `no_activado`. O `pas
 contados à parte. Uma execução sem erro de Python pode falhar no avaliador por violar uma
 expectativa. `casos` sai com código 1 quando uma execução não passa.
 
-C06 pede um voo disponível e um hotel inexistente e não admite escrita; o relatório deve citar o
-hotel ausente e o preço do voo. C07 confere três noites dentro do teto total. C07B usa um teto
-menor que o total mais barato, para detectar a troca do preço por noite pelo preço total. C12P
-aplica timeout em todas as chamadas de `search_flights`. C14 aceita recusa ou nova consulta e só
-admite reserva depois do `check_item` do Verificador.
-
 `validar` roda os casos de referência k vezes nas duas topologias, os casos-alvo de D1–D6 e os
 controles C11. Cada execução é gravada ao terminar. O resumo só marca um defeito como detectado
 quando a ativação foi registrada e a falha está numa regra de `REGRAS_DETECCAO` ligada a esse
 defeito. `validar` sai com código 1 quando um caso de referência tem `pass^k` 0, um defeito não é
-detectado ou um controle falha. Os resultados abaixo de k/k ficam nas traças de cada execução.
-
-## Evidência com o modelo real
-
-A matriz `validar --k 3 --jobs 3` rodou com `gpt-oss:120b` no Ollama Cloud, sobre uma árvore sem
-alterações locais. As traças, o `summary.json` e o `manifest.json` ficam fora do repositório. O
-manifesto registra a versão medida, `codigo_modificado: false`, o SHA-256 de 51 arquivos e o plano
-das 126 execuções.
-
-| Fase | Execuções | Resultado |
-|---|---|---|
-| referência | 96: 16 casos, k=3, duas topologias | 31 de 32 combinações com 3/3 |
-| defeitos-alvo | 18: D1–D6 nos casos de `ALVOS` | D1–D6 detectados em workflow e em supervisor |
-| controles C11 | 12: um por defeito e topologia | 12 de 12 aprovadas, sem ativação do defeito |
-
-Só C06 em supervisor ficou abaixo de 3/3, com 2 de 3. Na execução reprovada, o Verificador recebeu
-`Internal Server Error` do Ollama Cloud nas três tentativas. A execução terminou sem escrita, com
-`motivo_terminacao=error` e um relatório do Coordenador com o voo FL-101 a 980 EUR e o hotel
-ausente. O avaliador reprova R11 quando há `RunResult.error`.
-
-Nas execuções `defeito-*`, `fail` significa que o avaliador reprovou a execução com o defeito
-ativo, e a detecção conta quando a falha está numa regra de `REGRAS_DETECCAO`. D1 é detectado em
-C03. Em C04, o Coordenador recusou a aprovação automática: a execução passou em workflow e ficou
-`no_activado` em supervisor. D6 terminou com `GraphRecursionError` do limite do harness nas duas
-topologias e foi reprovado por R10 e R11.
-
-### Chamadas ao modelo
-
-As traças não registram as chamadas ao modelo. Os números desta seção saem das ativações e das
-chamadas de ferramenta registradas nas 126 traças da matriz.
-
-Cada ativação percorre `pensar`, `executar` e `concluir` (`agents/mas/agent.py`). `pensar` chama o
-modelo uma vez por rodada de ferramentas e mais uma para a resposta final, e `concluir` faz outra
-chamada para preencher o contrato por `function_calling`. Uma ativação sem ferramenta faz duas
-chamadas. Com `n` chamadas de ferramenta, faz de três a `n + 2`: três quando o modelo pede todas
-numa rodada, `n + 2` quando pede uma por rodada. Em `supervisor`, o Coordenador é ativado depois de
-cada agente para preencher `Decisao`. Em C01, a sequência de ativações foi esta, com as chamadas de
-ferramenta entre parênteses:
-
-```
-workflow:
-  coordenador → pesquisador(1) → verificador(1) → coordenador → reservador(3) → coordenador
-supervisor:
-  coordenador → pesquisador(1) → coordenador → verificador(1) → coordenador → reservador(3)
-  → coordenador
-```
-
-C01 custa de 15 a 17 chamadas ao modelo em workflow e de 17 a 19 em supervisor. Por fase, as 126
-execuções somam:
-
-| Fase | Execuções | Ativações | Chamadas de ferramenta | Chamadas ao modelo |
-|---|---|---|---|---|
-| referência | 96 | 500 | 349 | 1223–1349 |
-| defeitos-alvo | 18 | 135 | 64 | 323–334 |
-| controles C11 | 12 | 12 | 0 | 24 |
-| total | 126 | 647 | 413 | 1570–1707 |
-
-Na fase de referência, a média foi de 4,9 ativações por execução em workflow e 5,5 em supervisor,
-ou de 12,7 a 14,1 chamadas ao modelo por execução. Uma tanda de seis execuções de referência fica
-entre 76 e 84 chamadas. Os números não incluem os reintentos de `with_transient_retry` após erro do
-provedor nem os de `preencher` após saída inválida, que não aparecem nos eventos.
-
-## Leitura das traças
-
-Os scripts de `reports/scripts/` leem as traças sem executar agentes. `resumo.py` imprime o status
-e os checks com falha de cada traça e ignora `summary.json` e `manifest.json`. `eventos.py` imprime
-a sequência de handoffs e chamadas de uma traça. `ids.py` conta os formatos de `item_id` nos
-diretórios recebidos, ou nos subdiretórios do diretório atual quando não recebe argumentos.
-`tanda.py` imprime o plano de uma tanda; para chamar o provedor, exige `--autorizar-provedor`,
-aceita até seis execuções e recusa um diretório que já existe.
-
-`reavaliar_integridade.py` reavalia traças salvas com duas versões do avaliador: a de `--baseline`,
-uma referência do Git, e a atual, sobre os casos atuais. A saída mostra, por diretório, os status
-antes e depois, os checks que mudaram e os hashes das fontes e das traças lidas. O script exige um
-arquivo de saída novo e não altera as traças.
-
-```bash
-uv run --offline python reports/scripts/resumo.py reports/nova-validacao/*.json
-uv run --offline python reports/scripts/ids.py reports/nova-validacao
-uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 --k 3
-uv run --offline python reports/scripts/reavaliar_integridade.py reports/nova-validacao \
-  --baseline HEAD --output reports/nova-revisao/summary.json
-```
+detectado ou um controle falha. Os resultados abaixo de k/k ficam nas traças de cada execução. A
+matriz executada com o modelo real, os comandos de leitura das traças, a análise por caso e por
+defeito e o número de chamadas ao modelo estão em [docs/RESULTADOS.md](docs/RESULTADOS.md).
 
 ## Referências de implementação
 
