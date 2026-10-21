@@ -6,10 +6,6 @@ from ..domain import FLIGHTS
 from ..runtime.faults import MessageFault, ToolFault, capabilities, validate_faults
 
 
-def origem(regra):
-    return f"spec/mas.yaml#regras.{regra}"
-
-
 class Expectativa(BaseModel):
     model_config = ConfigDict(extra="forbid")
     estado_final: list[dict] = Field(default_factory=list)
@@ -36,15 +32,15 @@ class Caso(BaseModel):
 
 
 def evento(regra, **patron):
-    return {"patron": patron, "regra_origem": origem(regra)}
+    return {"patron": patron, "regra_origem": regra}
 
 
 def tabela(regra, nome, **criterio):
-    return {"tabela": nome, "regra_origem": origem(regra), **criterio}
+    return {"tabela": nome, "regra_origem": regra, **criterio}
 
 
 def mensagem(regra, regex):
-    return {"regex": regex, "regra_origem": origem(regra)}
+    return {"regex": regex, "regra_origem": regra}
 
 
 def sem_escrita(regra="R1"):
@@ -168,7 +164,7 @@ CASOS = {
                             "mensagem_tipo": "Proposta",
                         },
                         "maximo": 2,
-                        "regra_origem": origem("R10"),
+                        "regra_origem": "R10",
                     }
                 ],
                 mensaje_debe=[mensagem("R3", r"980")],
@@ -327,7 +323,7 @@ CASOS = {
                     {
                         "patron": {"tipo": "tool_call", "ferramenta": "search_flights"},
                         "maximo": 2,
-                        "regra_origem": origem("R10"),
+                        "regra_origem": "R10",
                     }
                 ],
                 mensaje_debe=[mensagem("R10", r"erro|timeout|falha|indispon|não")],

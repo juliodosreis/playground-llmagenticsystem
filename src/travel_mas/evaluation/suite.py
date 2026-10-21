@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 
 from ..agents.mas import abuild_graph
 from ..runtime import Context, RunResult, Workspace, arun_task
-from .casos import Caso, origem, validate_case
+from .casos import Caso, validate_case
 from .checks import CheckResult, Evaluation, avaliar
 
 
@@ -36,7 +36,7 @@ async def arun_case(caso: Caso, context: Context, repeticao=1, build=abuild_grap
                 CheckResult(
                     "decisão pendente",
                     "no_evaluable",
-                    origem(caso.regra_origem[0]),
+                    caso.regra_origem[0],
                     caso.pendente,
                 )
             ],
@@ -67,7 +67,7 @@ async def arun_case(caso: Caso, context: Context, repeticao=1, build=abuild_grap
                     CheckResult(
                         "configuração",
                         "no_evaluable",
-                        origem(caso.regra_origem[0]),
+                        caso.regra_origem[0],
                         f"{type(exc).__name__}: {exc}",
                     )
                 ],

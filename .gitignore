@@ -31,6 +31,10 @@ dist/
 notebooks/
 padrao/
 
+# Especificação do sistema sob teste e o teste que a compara com o código.
+spec/
+tests_mas/test_spec.py
+
 # Testes locais das versões anteriores; a suíte MAS fica em tests_mas/.
 tests/
 

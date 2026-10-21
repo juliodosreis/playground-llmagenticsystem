@@ -63,13 +63,13 @@ def main(argv=None):
         for rep in range(1, args.k + 1)
     ]
     arquivos = sorted(Path("src/travel_mas").rglob("*.py"))
-    arquivos += [Path(p) for p in ("spec/mas.yaml", "pyproject.toml", "uv.lock")]
+    arquivos += [Path(p) for p in ("pyproject.toml", "uv.lock")]
     manifest = {
         "data_utc": datetime.now(UTC).isoformat(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "codigo_modificado": bool(
             subprocess.check_output(
-                ["git", "diff", "HEAD", "--", "src", "spec", "pyproject.toml", "uv.lock"]
+                ["git", "diff", "HEAD", "--", "src", "pyproject.toml", "uv.lock"]
             )
         ),
         "arquivos": {str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in arquivos},

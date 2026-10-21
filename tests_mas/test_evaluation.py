@@ -2,16 +2,14 @@ import asyncio
 import json
 from copy import deepcopy
 from dataclasses import asdict
-from pathlib import Path
 
 import pytest
-import yaml
 
 from travel_mas import Context, RunResult, Workspace, build_graph, run_task
 from travel_mas.agents.mas.graph import AGENTES, entregar
 from travel_mas.cli import main
 from travel_mas.domain import TravelDB, operations
-from travel_mas.evaluation.casos import CASOS, Caso, Expectativa, evento, origem, validate_case
+from travel_mas.evaluation.casos import CASOS, Caso, Expectativa, evento, validate_case
 from travel_mas.evaluation.checks import avaliar
 from travel_mas.evaluation.suite import CaseRun, arun_case, summary
 from travel_mas.evaluation.validation import detectou, exigir_ativacao, reavaliar
@@ -81,7 +79,7 @@ def test_hitos_sao_subsequencia_e_proibicao_falha_com_um_evento():
 def test_injecao_nao_ativada_nunca_aprova():
     evaluation = avaliar(fabricado(), CASOS["C12"])
     assert evaluation.status == "no_activado"
-    assert all(c.regra_origem for c in evaluation.checks)
+    assert {c.regra_origem for c in evaluation.checks} <= {f"R{i}" for i in range(1, 12)}
 
 
 def test_pendente_e_capacidade_ausente_sao_nao_avaliaveis():
@@ -89,7 +87,7 @@ def test_pendente_e_capacidade_ausente_sao_nao_avaliaveis():
     unsupported = caso(hitos=[evento("R11", tipo="evento_inexistente")])
     assert avaliar(fabricado(), unsupported).status == "no_evaluable"
     unavailable = caso(
-        estado_final=[{"tabela": "hotels", "linhas": [], "regra_origem": origem("R2")}]
+        estado_final=[{"tabela": "hotels", "linhas": [], "regra_origem": "R2"}]
     )
     assert avaliar(fabricado(), unavailable).status == "no_evaluable"
 
@@ -99,7 +97,7 @@ def test_estado_nao_ignora_linhas_extras_nem_duplicatas():
     result.after["bookings"] = [{"id": "1", "item_id": "a"}, {"id": "2", "item_id": "a"}]
     expected = caso(
         estado_final=[
-            {"tabela": "bookings", "linhas": [{"item_id": "a"}], "regra_origem": origem("R7")}
+            {"tabela": "bookings", "linhas": [{"item_id": "a"}], "regra_origem": "R7"}
         ]
     )
     assert avaliar(result, expected).status == "fail"
@@ -226,16 +224,6 @@ def test_erro_do_provedor_nao_conta_como_deteccao_de_defeito():
     assert evaluation.status == "fail"
     run = CaseRun("C04", 1, {"topologia": "workflow", "defeitos": ["D1"]}, evaluation, result)
     assert not detectou(run, "D1")
-
-
-def test_manifesto_do_adaptador_nao_desalinha():
-    spec = yaml.safe_load(Path("spec/mas.yaml").read_text())
-    caps = capabilities()
-    assert spec["adaptador"]["defeitos"] == caps["defeitos"]
-    assert spec["adaptador"]["observacao"] == caps["eventos"]
-    assert spec["adaptador"]["falhas_ferramenta"] == caps["condicion_herramienta"]
-    assert spec["adaptador"]["falhas_mensagem"] == caps["condicion_transferencia"]
-    assert spec["terminacao"]["max_rodadas"] == Context().max_rodadas
 
 
 def test_cli_descobre_capacidades_e_recusa_caso_desconhecido_sem_llm(capsys):

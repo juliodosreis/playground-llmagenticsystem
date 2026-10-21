@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 
+from travel_mas.evaluation import casos
 from travel_mas.evaluation.casos import CASOS
 from travel_mas.evaluation.checks import avaliar
 from travel_mas.runtime import RunResult, ToolCall
@@ -27,12 +28,14 @@ def main(argv=None):
     fonte = subprocess.check_output(
         ["git", "show", f"{base}:src/travel_mas/evaluation/checks.py"], text=True
     )
+    # Um checks.py anterior à retirada de `origem()` importa a função de `casos`.
+    if not hasattr(casos, "origem"):
+        casos.origem = lambda regra: regra
     anterior = ModuleType("travel_mas.evaluation._checks_baseline")
     anterior.__package__ = "travel_mas.evaluation"
     sys.modules[anterior.__name__] = anterior
     exec(compile(fonte, f"{base}:checks.py", "exec"), anterior.__dict__)
     arquivos = sorted(Path("src/travel_mas").rglob("*.py"))
-    arquivos += [Path("spec/mas.yaml")]
     payload = {
         "tipo": "reavaliacao_offline",
         "escopo": "Oráculos sobre dados capturados; operações de domínio e grafo não executados.",

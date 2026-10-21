@@ -49,7 +49,7 @@ def _script(nome):
 def _traca(path, status, item_id):
     path.write_text(json.dumps({
         "avaliacao": {"status": status, "checks": [
-            {"expectativa": "R2", "status": status, "regra_origem": "spec/mas.yaml#regras.R2",
+            {"expectativa": "R2", "status": status, "regra_origem": "R2",
              "detalhe": "sem evidência" if status == "fail" else ""},
         ]},
         "resultado": {"eventos": [

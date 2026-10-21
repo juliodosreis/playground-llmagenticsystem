@@ -1,13 +1,10 @@
 """Contratos, isolamento, permissões e execução dos grafos sem provedor externo."""
 
 import asyncio
-import importlib
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
@@ -17,7 +14,6 @@ from pydantic import Field, ValidationError
 from travel_mas import Context, Workspace, build_graph, run_task
 from travel_mas.agents.mas import AGENTES, TOPOLOGIAS
 from travel_mas.agents.mas.contracts import (
-    TRANSFERENCIAS,
     Decisao,
     Ordem,
     Pedido,
@@ -401,20 +397,6 @@ def test_max_steps_interrompe_react_com_chamadas_pendentes():
     assert result.tool_names() == ["search_flights"]
     assert result.bookings() == [] and result.values["relatorio"]
     assert any(e["tipo"] == "error" and "max_steps" in e["erro"] for e in result.eventos)
-
-
-def test_spec_corresponde_aos_agentes_ferramentas_contratos_e_estado():
-    spec = yaml.safe_load(Path("spec/mas.yaml").read_text())
-    assert set(spec["agentes"]) == set(AGENTES)
-    toolbox = build_toolbox(Workspace())
-    assert set(spec["ferramentas"]) == set(toolbox.names)
-    assert set(spec["transferencias"]) == set(TRANSFERENCIAS)
-    assert set(spec["estado"]["pai"]) == set(MASState.__annotations__)
-    for nome in AGENTES:
-        module = importlib.import_module(f"travel_mas.agents.mas.{nome}.graph")
-        assert list(module.TOOL_NAMES) == spec["agentes"][nome]["ferramentas"]
-    assert {r["id"] for r in spec["regras"]} == {f"R{i}" for i in range(1, 12)}
-    assert all(r["origem"].startswith("spec/mas.yaml#") for r in spec["regras"])
 
 
 def test_check_item_e_total_de_hotel():

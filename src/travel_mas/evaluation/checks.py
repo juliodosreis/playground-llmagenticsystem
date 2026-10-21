@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 from ..runtime import RunResult
-from .casos import Caso, origem, validate_case
+from .casos import Caso, validate_case
 
 Status = Literal["pass", "fail", "no_evaluable", "no_activado"]
 
@@ -274,7 +274,7 @@ def _normas(result, caso):
         falhar("R11", f"{rodadas} rodadas excedem o limite")
     # Uma Proposta reenviada por várias arestas gera o mesmo achado uma vez só.
     return [
-        CheckResult(r, "fail" if erros else "pass", origem(r), "; ".join(dict.fromkeys(erros)))
+        CheckResult(r, "fail" if erros else "pass", r, "; ".join(dict.fromkeys(erros)))
         for r, erros in sorted(falhas.items())
         # R4 não tem verificação de norma própria; as expectativas do caso a verificam.
         if r != "R4"
@@ -287,7 +287,7 @@ def avaliar(result: RunResult, caso: Caso) -> Evaluation:
     except ValueError as exc:
         return Evaluation(
             caso.id,
-            [CheckResult("capabilities", "no_evaluable", origem(caso.regra_origem[0]), str(exc))],
+            [CheckResult("capabilities", "no_evaluable", caso.regra_origem[0], str(exc))],
         )
     checks = []
     ativadas = {e.get("id") for e in result.eventos if e["tipo"] == "injection_applied"}
@@ -299,13 +299,13 @@ def avaliar(result: RunResult, caso: Caso) -> Evaluation:
             CheckResult(
                 f"ativação:{identificador}",
                 "pass" if identificador in ativadas else "no_activado",
-                origem("R10"),
+                "R10",
             )
         )
     if caso.pendente:
         checks.append(
             CheckResult(
-                "decisão pendente", "no_evaluable", origem(caso.regra_origem[0]), caso.pendente
+                "decisão pendente", "no_evaluable", caso.regra_origem[0], caso.pendente
             )
         )
     for i, exp in enumerate(caso.expectativa.estado_final):

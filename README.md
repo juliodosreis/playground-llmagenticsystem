@@ -64,8 +64,8 @@ entrada é `pedido_usuario` (texto). A interface do Studio pode pedir `LANGSMITH
 
 ## Estrutura do pacote
 
-O código fica em `src/travel_mas/`. [spec/mas.yaml](spec/mas.yaml) descreve agentes, ferramentas,
-contratos, estado do grafo pai, regras R1–R11, recuperação, terminação e procedência.
+O código fica em `src/travel_mas/`. A tabela descreve cada subpacote e os módulos `scenarios.py` e
+`cli.py`.
 
 | Módulo | Conteúdo |
 |---|---|
@@ -247,12 +247,12 @@ e o Coordenador não chega a escrever um relatório.
 ## Casos e avaliação
 
 Cada caso em `evaluation/casos.py` tem a solicitação, o estado inicial, as falhas e as
-expectativas, e cada expectativa cita a sua regra em `spec/mas.yaml`. Os oráculos comparam o estado
-final, a ordem dos marcos (`hitos`), as proibições, os limites de ocorrências e expressões
+expectativas, e cada expectativa cita a sua regra de origem, de R1 a R11. Os oráculos comparam o
+estado final, a ordem dos marcos (`hitos`), as proibições, os limites de ocorrências e expressões
 regulares sobre a mensagem final. `evaluation/checks.py` confere ainda a relação entre `Ordem`,
 `Proposta`, `Veredito` e a escrita no banco, as referências de evidência, o orçamento, a
-titularidade, as duplicatas, a recuperação e a terminação. Cada resultado traz `regra_origem`, como
-`spec/mas.yaml#regras.R3`, com o arquivo e o id da regra.
+titularidade, as duplicatas, a recuperação e a terminação. Cada resultado traz o id da regra em
+`regra_origem`, como `R3`.
 
 A evidência de uma proposta é o id da busca. Esse id vai no conteúdo de cada `ToolMessage`, no
 campo `evidencia`, ao lado de `resultado` e além do metadado `tool_call_id`. Os eventos guardam o
@@ -283,8 +283,8 @@ detectado ou um controle falha. Os resultados abaixo de k/k ficam nas traças de
 
 A matriz `validar --k 3 --jobs 3` rodou com `gpt-oss:120b` no Ollama Cloud, sobre uma árvore sem
 alterações locais. As traças, o `summary.json` e o `manifest.json` ficam fora do repositório. O
-manifesto registra a versão medida, `codigo_modificado: false`, o SHA-256 de 51 arquivos (`src/`,
-`spec/mas.yaml`, `pyproject.toml`, `uv.lock`) e o plano das 126 execuções.
+manifesto registra a versão medida, `codigo_modificado: false`, o SHA-256 de 51 arquivos e o plano
+das 126 execuções.
 
 | Fase | Execuções | Resultado |
 |---|---|---|
