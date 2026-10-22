@@ -1,11 +1,12 @@
-"""Agente de reservas de viagem em LangGraph.
+"""Sistema multiagente de reservas de viagem em LangGraph.
 
 Camadas do pacote:
 
-    domain/     catálogo, banco e regras de reserva, sem LangChain
-    runtime/    configuração, modelo, workspace e harness
-    tools/      as ferramentas ligadas a um workspace, agrupadas por efeito
-    agents/     um pacote por agente: prompt, ferramentas, estado e grafo
+    domain/      catálogo, banco e operações de reserva, sem LangChain
+    runtime/     configuração, modelo, workspace, harness, falhas e saída estruturada
+    tools/       as ferramentas ligadas a um workspace, agrupadas por efeito
+    agents/mas/  contratos, os quatro agentes, o grafo pai e os defeitos semeados
+    evaluation/  casos, oráculos, suíte pass^k, matriz de validação e comparação
 
 Uso:
 
@@ -16,20 +17,33 @@ Uso:
     result = run_task(agent, workspace, "Quero voar de MAD para LIM em 2026-09-12.")
 """
 
-from .agents.travel import TravelState, build_agent_tools, build_graph, make_graph
+from .agents.mas import build_graph, make_graph
+from .agents.mas.graph import MASState
 from .domain import diff_state
-from .runtime import Context, RunResult, ToolCall, Workspace, arun_task, run_task
+from .runtime import (
+    Context,
+    MessageFault,
+    RunResult,
+    ToolCall,
+    ToolFault,
+    Workspace,
+    arun_task,
+    capabilities,
+    run_task,
+)
 from .tools import Toolbox, build_toolbox
 
 __all__ = [
     "Context",
+    "MessageFault",
+    "ToolFault",
+    "capabilities",
     "RunResult",
     "ToolCall",
     "Toolbox",
-    "TravelState",
+    "MASState",
     "Workspace",
     "arun_task",
-    "build_agent_tools",
     "build_graph",
     "build_toolbox",
     "diff_state",

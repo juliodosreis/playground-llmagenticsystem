@@ -1,6 +1,7 @@
 """Ferramentas de leitura do catálogo.
 
-As duas consultam `flights` e `hotels` e não alteram o estado.
+`search_flights` e `search_hotels` consultam `flights` e `hotels`; `check_item` lê o estado atual
+de um voo ou hotel pelo id. Nenhuma das três altera o estado.
 """
 
 from __future__ import annotations
@@ -42,4 +43,9 @@ def build_catalog_tools(workspace: Workspace) -> list[BaseTool]:
             max_price_per_night=max_price_per_night,
         )
 
-    return [search_flights, search_hotels]
+    @tool
+    def check_item(kind: str, item_id: str) -> str:
+        """Consulta preço, data e assentos atuais de flight/hotel, ou devolve not_found."""
+        return workspace.call(operations.check_item, kind=kind, item_id=item_id)
+
+    return [search_flights, search_hotels, check_item]

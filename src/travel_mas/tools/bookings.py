@@ -21,9 +21,11 @@ def build_booking_tools(workspace: Workspace) -> list[BaseTool]:
         item_id: str,
         start_date: str,
         price: float,
+        nights: int = 1,
     ) -> str:
         """Cria uma reserva REAL no banco de dados. kind é 'flight' ou 'hotel'.
 
+        nights é a duração do hotel; o banco calcula preço por noite vezes nights.
         Devolve o booking_id.
         """
         return workspace.call(
@@ -33,6 +35,7 @@ def build_booking_tools(workspace: Workspace) -> list[BaseTool]:
             item_id=item_id,
             start_date=start_date,
             price=price,
+            nights=nights,
         )
 
     @tool

@@ -1,8 +1,9 @@
-"""Comparação de configurações sobre os cenários do pacote.
+"""Avaliação do sistema multiagente e comparação de configurações.
 
-Roda os mesmos cenários por várias configurações, cada uma com modelo, estratégia, fonte das
-ferramentas e procedimento, e reduz cada execução a tempo, número de chamadas de ferramenta,
-número de chamadas ao modelo e hash do estado final do banco. Nenhum agente importa este pacote.
+`casos`, `checks`, `suite` e `validation` avaliam os casos C01–C14, C07B e C12P, calculam
+`pass^k` e montam a matriz de referência, defeitos e controles. `compare` roda os cenários por
+modelo e topologia e reduz cada execução a tempo, número de chamadas de ferramenta, número de
+chamadas ao modelo e hash do estado final do banco. Nenhum agente importa este pacote.
 """
 
 from .compare import (

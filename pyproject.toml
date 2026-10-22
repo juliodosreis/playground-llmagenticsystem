@@ -1,6 +1,6 @@
 [project]
 name = "travel-mas"
-version = "1.0"
+version = "2.0"
 description = "Playground do caso de reservas de viagem do curso de agentes com LLMs, em LangGraph"
 readme = "README.md"
 requires-python = ">=3.11,<4.0"
@@ -10,7 +10,6 @@ dependencies = [
     "langgraph>=1.0",
     "langchain-ollama>=1.0",
     "python-dotenv>=1.0",
-    "mcp>=1.29,<2",
     "pyyaml>=6.0",
 ]
 
@@ -36,13 +35,13 @@ packages = ["src/travel_mas"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-testpaths = ["tests"]
+testpaths = ["tests_mas"]
 addopts = "-q"
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests_mas"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

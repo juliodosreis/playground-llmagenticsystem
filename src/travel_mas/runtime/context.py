@@ -36,27 +36,17 @@ class Context:
     modelo do Gemini. Um identificador do Ollama passado ao provedor Google chega a ele como está.
     """
 
-    strategy: str = field(default_factory=lambda: _env("TRAVEL_STRATEGY", "react"))
-    """Topologia do grafo do agente: `react` ou `plan-execute`.
+    topologia: str = field(default_factory=lambda: _env("TRAVEL_TOPOLOGIA", "workflow"))
+    """Coordenação: workflow (rotas fixas) ou supervisor (rotas do Coordenador)."""
 
-    O agente valida o nome na montagem do grafo, e a lista das estratégias fica no agente.
-    """
+    max_rodadas: int = 12
+    """Ativações de agentes, reservando a última para o relatório do Coordenador."""
 
-    tool_source: str = field(default_factory=lambda: _env("TRAVEL_TOOLS", "local"))
-    """Origem das ferramentas do agente: `local` ou `mcp`.
-
-    `local` chama as funções no processo. `mcp` chama as mesmas funções por um servidor MCP,
-    conectado por canais em memória. O agente valida o nome na montagem do grafo, e a lista das
-    fontes fica em `tools.TOOL_SOURCES`.
-    """
-
-    procedure: str = field(default_factory=lambda: _env("TRAVEL_PROCEDURE", "prompt"))
-    """Origem do procedimento do agente: `prompt` ou `skills`.
-
-    `prompt` escreve o procedimento no prompt de sistema. `skills` escreve ali o nome e a
-    descrição de cada skill, e o modelo lê o corpo pela ferramenta `read_skill`. O agente valida o
-    nome na montagem do grafo, e a lista fica em `runtime.skills.PROCEDURES`.
-    """
+    defeitos: tuple[str, ...] = field(
+        default_factory=lambda: tuple(
+            d.strip() for d in _env("TRAVEL_DEFEITOS", "").split(",") if d.strip()
+        )
+    )
 
     base_url: str = field(default_factory=lambda: _env("OLLAMA_BASE_URL", "https://ollama.com"))
     """Endpoint do Ollama. O padrão é o Ollama Cloud, que exige `OLLAMA_API_KEY`."""
@@ -94,3 +84,12 @@ class Context:
         """Preenche o modelo com o padrão do provedor quando nenhum foi declarado."""
         if not self.model:
             self.model = DEFAULT_MODELS.get(self.provider, "")
+        if self.topologia not in ("workflow", "supervisor"):
+            raise ValueError(f"topologia desconhecida: {self.topologia!r}")
+        if self.max_rodadas < 2 or self.max_steps < 1:
+            raise ValueError("max_rodadas deve ser >= 2 e max_steps >= 1")
+        from .faults import DEFEITOS
+
+        if set(self.defeitos) - set(DEFEITOS):
+            raise ValueError(f"defeitos desconhecidos: {self.defeitos}")
+        self.defeitos = tuple(sorted(set(self.defeitos)))

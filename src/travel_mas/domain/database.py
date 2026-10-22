@@ -13,9 +13,11 @@ import hashlib
 import json
 import sqlite3
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
-from .catalog import FLIGHTS, HOTELS, MUTABLE_TABLES, SCHEMA
+from .catalog import FLIGHTS, HOTELS, MUTABLE_TABLES, SCHEMA, Flight, Hotel
 
 # Estado mutável em forma canônica: nome da tabela -> linhas ordenadas por id.
 Snapshot = dict[str, list[dict[str, Any]]]
@@ -28,14 +30,55 @@ class TravelDB:
     `check_same_thread=False` e toda escrita passa por um `RLock`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, estado_inicial: dict | None = None) -> None:
         self._conn = sqlite3.connect(":memory:", check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._lock = threading.RLock()
+        self._transaction_depth = 0
         self._conn.executescript(SCHEMA)
         self._conn.executemany("INSERT INTO flights VALUES (?,?,?,?,?,?,?)", FLIGHTS)
         self._conn.executemany("INSERT INTO hotels  VALUES (?,?,?,?,?)", HOTELS)
         self._conn.commit()
+        if estado_inicial is not None:
+            self._load(estado_inicial)
+
+    def _load(self, estado: dict) -> None:
+        """Substitui tabelas explicitadas; nomes e colunas são de uma lista fixa."""
+        colunas = {
+            "flights": Flight._fields,
+            "hotels": Hotel._fields,
+            "bookings": (
+                "id",
+                "user_id",
+                "kind",
+                "item_id",
+                "start_date",
+                "price",
+                "status",
+                "nights",
+            ),
+        }
+        if set(estado) - colunas.keys():
+            self.close()
+            raise ValueError(f"tabelas desconhecidas: {sorted(set(estado) - colunas.keys())}")
+        try:
+            with self._conn:
+                for table, rows in estado.items():
+                    fields = colunas[table]
+                    self._conn.execute(f"DELETE FROM {table}")
+                    for row in rows:
+                        row = dict(row)
+                        if table == "bookings":
+                            row.setdefault("nights", 1)
+                        if set(row) != set(fields):
+                            raise ValueError(f"colunas inválidas em {table}: {sorted(row)}")
+                        marks = ",".join("?" for _ in fields)
+                        self._conn.execute(
+                            f"INSERT INTO {table} VALUES ({marks})", tuple(row[c] for c in fields)
+                        )
+        except Exception:
+            self.close()
+            raise
 
     @property
     def lock(self) -> threading.RLock:
@@ -52,7 +95,24 @@ class TravelDB:
     def execute(self, sql: str, params: tuple = ()) -> None:
         with self._lock:
             self._conn.execute(sql, params)
-            self._conn.commit()
+            if self._transaction_depth == 0:
+                self._conn.commit()
+
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Agrupa escritas sob o mesmo lock e desfaz o grupo em caso de exceção."""
+        with self._lock:
+            nome = f"travel_tx_{self._transaction_depth}"
+            self._conn.execute(f"SAVEPOINT {nome}")
+            self._transaction_depth += 1
+            try:
+                yield
+            except BaseException:
+                self._conn.execute(f"ROLLBACK TO SAVEPOINT {nome}")
+                raise
+            finally:
+                self._transaction_depth -= 1
+                self._conn.execute(f"RELEASE SAVEPOINT {nome}")
 
     def snapshot(self) -> Snapshot:
         """Estado mutável em ordem determinística."""

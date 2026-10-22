@@ -1,597 +1,316 @@
-# Agente de reservas de viagem
+# travel-mas
 
-O agente recebe um pedido de viagem em texto, com origem, destino, data e orçamento, e resolve
-esse pedido chamando ferramentas: procura voos e hotéis no catálogo, cria a reserva, lista as
-reservas de um usuário e cancela. O catálogo e as reservas ficam em um banco SQLite, e as
-ferramentas alteram esse banco, então uma reserva ocupa um assento do voo e um cancelamento o
-devolve. Cada execução parte de um banco limpo e imprime as chamadas que o modelo fez, o estado
-do banco no fim e a resposta ao pedido.
+Sistema multiagente de reservas de viagem em LangGraph. Quatro agentes dividem a tarefa: o
+Coordenador recebe o pedido, o Pesquisador busca voos e hotéis, o Verificador confere as propostas
+e o Reservador cria, consulta e cancela reservas. O pacote aceita falhas injetadas de ferramenta e
+de mensagem e defeitos semeados D1–D6, e avalia os casos C01–C14 e as variantes C07B e C12P.
 
-O grafo do agente segue uma de duas estratégias, com as mesmas ferramentas e os mesmos prompts de
-regra. Em `react`, o modelo escolhe a próxima chamada a cada turno. Em `plan-execute`, o modelo
-escreve a lista de passos antes da primeira chamada, e cada passo é executado em seguida, com uma
-revisão do plano quando uma busca volta vazia ou uma ferramenta devolve erro.
+## Execução
 
-As ferramentas chegam ao agente por uma de duas fontes. Em `local`, o agente chama as funções no
-processo. Em `mcp`, o agente lê o catálogo de um servidor MCP e chama as mesmas funções por esse
-servidor. As duas fontes publicam os mesmos nomes, descrições e schemas, e gravam no mesmo banco.
-
-O fluxo de reserva chega ao modelo por um de dois procedimentos. Em `prompt`, o fluxo está no
-prompt de sistema. Em `skills`, o prompt de sistema traz o nome e a descrição da skill
-`reservar-viagem`, e o modelo lê o fluxo pela ferramenta `read_skill` quando o pedido corresponde
-à descrição. O texto do fluxo é o mesmo nos dois procedimentos.
-
-## 1. Ambiente
-
-O banco é criado em memória a cada execução, com três tabelas:
-
-| Tabela | Representa | Colunas |
-|---|---|---|
-| `flights` | os voos à venda | `origin`, `destination`, `date`, `price`, `airline`, `seats` |
-| `hotels` | os hotéis à venda | `city`, `name`, `stars`, `price_per_night` |
-| `bookings` | as reservas | `user_id`, `kind`, `item_id`, `start_date`, `price`, `status` |
-
-`flights` e `hotels` são o catálogo, semeado com as linhas de `domain/catalog.py` e igual em toda
-execução. `bookings` começa vazia e recebe uma linha por reserva que o agente criar.
-
-| Voo | Trecho | Data | Preço (EUR) | Assentos | Companhia |
-|---|---|---|---|---|---|
-| `FL-101` | MAD-LIM | 2026-09-12 | 980 | 4 | Iberia |
-| `FL-102` | MAD-LIM | 2026-09-12 | 1240 | 9 | LATAM |
-| `FL-103` | MAD-LIM | 2026-09-13 | 760 | 2 | Air France |
-| `FL-201` | LIM-MAD | 2026-09-20 | 890 | 6 | Iberia |
-
-| Hotel | Cidade | Nome | Estrelas | Preço por noite (EUR) |
-|---|---|---|---|---|
-| `HT-1` | LIM | Miraflores Suites | 4 | 120 |
-| `HT-2` | LIM | Barranco Hostal | 2 | 45 |
-| `HT-3` | LIM | Surco Business | 3 | 58 |
-
-O agente altera as linhas de `bookings` e a coluna `flights.seats`. `create_booking` insere a
-reserva com `status` em `confirmed` e decrementa o assento, e `cancel_booking` marca a linha como
-`cancelled` e devolve o assento. As duas tabelas formam o snapshot que `state_hash` resume, e uma
-execução que não escreva deixa o hash do início.
-
-Quatro erros de reserva voltam sem alterar o banco: `flight_not_found` e `hotel_not_found` para
-um `item_id` fora do catálogo, `no_seats_available` para um voo sem assento livre, e
-`invalid_kind` para um `kind` diferente de `flight` e `hotel`.
-
-## 2. Estrutura
-
-```
-src/travel_mas/
-    domain/             catálogo, banco e regras de reserva
-        catalog.py      esquema SQL, voos, hotéis, tabelas mutáveis
-        database.py     TravelDB em memória, snapshot, hash e diff do estado
-        operations.py   busca, criação, consulta e cancelamento
-    runtime/            infraestrutura comum a qualquer agente
-        context.py      provedor, modelo, limites do laço
-        models.py       carga do cliente de chat
-        workspace.py    banco e trace de uma execução
-        runner.py       execução sobre banco limpo, com trace e snapshots
-        messages.py     leitura das mensagens que o grafo devolve
-        display.py      trajetória e tabelas em texto
-        skills.py       leitura de SKILL.md, catálogo de skills e a ferramenta read_skill
-    tools/              as ferramentas ligadas a um workspace
-        search.py       as duas buscas de catálogo
-        bookings.py     criação, consulta e cancelamento
-        server.py       servidor MCP que publica as ferramentas locais
-        remote.py       cliente MCP que adapta as ferramentas do servidor
-    agents/             um pacote por agente
-        travel/
-            prompts.py  prompt de sistema e prompts do Plan-and-Execute
-            tools.py    as ferramentas que este agente recebe
-            state.py    estado de cada estratégia
-            graph.py    montagem do agente e escolha da estratégia
-            graphs/
-                react.py         laço de ferramentas como StateGraph
-                plan_execute.py  planejador, executor, replanejador e síntese
-            skills/
-                reservar-viagem/SKILL.md  o fluxo de reserva
-    evaluation/         comparação de configurações
-        compare.py      execução dos cenários por configuração
-        report.py       tabela do relatório
-    interfaces/
-        mcp/            o servidor MCP publicado por stdio
-    scenarios.py        os pedidos de demonstração
-    cli.py              comandos
-```
-
-`agents/<nome>/tools.py` nomeia as ferramentas do agente, e `Toolbox.select()` troca cada nome
-pelo objeto correspondente. Um nome que não esteja no `Toolbox` levanta `KeyError` na montagem
-do grafo. Na fonte `mcp`, o `Toolbox` traz os nomes que o servidor publica em `list_tools`.
-
-## 3. Instalação
-
-O `uv` gerencia o interpretador, o ambiente e as dependências. O instalador está em
-[docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/):
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-`uv sync` lê `pyproject.toml` e `uv.lock`, cria `.venv/` na raiz do repositório e instala as
-dependências, o pacote em modo editável e o grupo `dev`, com `pytest`, `ruff` e a CLI do
-LangGraph. `.python-version` fixa o interpretador em 3.12, que o `uv` baixa quando não está na
-máquina:
+Python 3.11 ou posterior e `uv`:
 
 ```bash
 uv sync
-```
-
-Chave de API: copie `.env.example` para `.env` e preencha `OLLAMA_API_KEY`, gerada em
-[ollama.com/settings/keys](https://ollama.com/settings/keys). O `.env` não é versionado, e o
-`.env.example` traz o nome de cada variável do ambiente:
-
-```bash
 cp .env.example .env
-```
-
-O provedor Google fica em um extra, fora do conjunto padrão, e pede a chave `GOOGLE_API_KEY`,
-gerada em [aistudio.google.com/apikey](https://aistudio.google.com/apikey). O Studio pede
-`LANGSMITH_API_KEY`, gerada em
-[smith.langchain.com/settings](https://smith.langchain.com/settings), e a CLI que o sobe está no
-grupo `dev`:
-
-```bash
-uv sync --extra google
-```
-
-Uma chave exportada no terminal antes da execução tem precedência sobre o valor do `.env`, e
-vale só na sessão do shell em que foi definida:
-
-```bash
-export OLLAMA_API_KEY=<chave>
-```
-
-Os comandos do pacote rodam de duas formas, e as seções seguintes assumem uma das duas. A
-primeira é o prefixo `uv run`, que executa no ambiente do projeto sem ativação prévia e
-sincroniza o `.venv/` antes da execução quando `pyproject.toml` ou `uv.lock` mudaram:
-
-```bash
 uv run python -m travel_mas catalogo
+uv run python -m travel_mas cenarios
+uv run python -m travel_mas demo 1
+uv run python -m travel_mas --topologia supervisor demo 1
+uv run python -m travel_mas --json run "Sou u-42. Liste minhas reservas."
+uv run python -m travel_mas comparar --topologia workflow --topologia supervisor 1
+uv run python -m travel_mas capabilities
+uv run python -m travel_mas casos --listar
+uv run python -m travel_mas casos C01 C03 --k 3 --output reports/casos.json
+uv run python -m travel_mas --topologia supervisor casos C01 C03 --k 3
+uv run python -m travel_mas casos C03 --defeito D1 --k 1
+uv run python -m travel_mas validar --k 3 --jobs 3 --output reports/nova-validacao
+uv run pytest
+uv run ruff check src tests_mas main.py reports/scripts
 ```
 
-A segunda é a ativação do `.venv/`, que põe `python` e `travel-mas` no `PATH` e dispensa o prefixo.
-A ativação vale na sessão de terminal em que foi feita, e `deactivate` a desfaz. Sem ela,
-`python -m travel_mas` termina em `command not found: python`, já que o macOS traz `python3` no
-`PATH` e não `python`:
+A chave vai em `OLLAMA_API_KEY` para o Ollama Cloud ou em `GOOGLE_API_KEY` para o Google. O
+catálogo, `casos --listar`, `capabilities` e os testes rodam sem chave. O Google exige
+`uv sync --extra google`. O modelo padrão é `gpt-oss:120b` no Ollama e `gemini-3.5-flash-lite` no
+Google. `--provider` e `--model`, ou as variáveis `TRAVEL_PROVIDER` e `TRAVEL_MODEL`, trocam o
+provedor e o modelo. As opções globais vêm antes do subcomando.
 
-```bash
-source .venv/bin/activate
-python -m travel_mas catalogo
-travel-mas catalogo
-```
+`TRAVEL_TOPOLOGIA` escolhe `workflow` (padrão) ou `supervisor`. `--max-rodadas` limita as ativações
+de agentes por tarefa (12 por padrão) e guarda a última para o relatório do Coordenador.
+`--max-steps` limita os passos do laço ReAct em cada ativação (12 por padrão). Esse limite não
+conta as chamadas da saída estruturada nem os reintentos do provedor, que têm contadores próprios.
+`Context` declara ainda a temperatura, o prazo por requisição e o número de tentativas por erro do
+provedor, contando a primeira.
 
-Sem instalar o pacote, `python main.py <comando>` acrescenta `src/` ao caminho de importação.
-
-## 4. Execução
-
-```bash
-python -m travel_mas catalogo          # voos e hotéis do ambiente
-python -m travel_mas cenarios          # lista os seis cenários
-python -m travel_mas demo              # roda todos
-python -m travel_mas demo 2 3          # roda os cenários 2 e 3
-python -m travel_mas run "Reserve o voo MAD-LIM de 2026-09-12 por até 1000 EUR. Sou u-42."
-python -m travel_mas comparar --modelo ollama --modelo google   # dois modelos lado a lado
-python -m travel_mas --strategy plan-execute demo 2             # estratégia Plan-and-Execute
-python -m travel_mas --tools mcp demo 2                         # ferramentas pelo servidor MCP
-python -m travel_mas --procedure skills demo 2                  # fluxo lido da skill
-```
-
-Opções: `--provider ollama|google`, `--model <id>`, `--strategy react|plan-execute`,
-`--tools local|mcp`, `--procedure prompt|skills`, `--max-steps <n>`, `--json`. As opções vêm
-antes do comando. Sem `--strategy`, vale a variável `TRAVEL_STRATEGY`, e sem a variável, `react`.
-Sem `--tools`, vale `TRAVEL_TOOLS`, e sem a variável, `local`. Sem `--procedure`, vale
-`TRAVEL_PROCEDURE`, e sem a variável, `prompt`. Um valor desconhecido na opção é recusado pelo
-parser, e na variável, pela montagem do agente, com a mensagem e o código de saída 2.
-
-```bash
-python -m travel_mas --provider google demo 1          # gemini-3.5-flash-lite
-python -m travel_mas --provider google --model gemini-2.5-flash demo 1
-```
-
-Sem `--model` nem `TRAVEL_MODEL`, cada provedor usa o modelo de `DEFAULT_MODELS`: `gpt-oss:120b`
-no Ollama e `gemini-3.5-flash-lite` no Google. `gemini` é aceito como nome do provedor Google. Os
-parâmetros de amostragem que cada família aceita ficam em `runtime/models.py`.
-
-A saída começa pela linha de configuração, com o provedor, o modelo, a estratégia, a fonte das
-ferramentas e o procedimento:
-
-```
-CONFIGURAÇÃO  ollama:gpt-oss:120b | estratégia react | ferramentas mcp | procedimento prompt
-```
-
-Em seguida, cada execução traz a trajetória de chamadas, a tabela `bookings` resultante, os
-assentos consumidos e a mensagem final. Na estratégia `plan-execute`, o bloco da execução começa
-pelo plano, com a marca `(revisto pelo replanejador)` quando o plano foi reescrito durante a
-execução, e traz depois da trajetória as chamadas que o executor recusou, quando houver. Com
-`--json`, o JSON de cada execução traz a configuração no campo `config`, com `provider`, `model`,
-`strategy`, `tool_source` e `procedure`.
-
-### 4.1 Cenários
-
-| # | Nome | Pedido |
-|---|---|---|
-| 1 | `voo-orcamento` | um voo, com duas opções na data e uma acima do teto de preço |
-| 2 | `voo-e-hotel` | voo e hotel no mesmo pedido, com um teto para cada |
-| 3 | `sem-disponibilidade` | uma data sem voo no catálogo |
-| 4 | `fora-do-orcamento` | uma data com voo, e teto abaixo do preço da opção mais barata |
-| 5 | `reserva-e-cancelamento` | reservar, listar e cancelar |
-| 6 | `consulta-vazia` | um usuário sem reservas |
-
-### 4.2 Comparação de configurações
-
-Uma configuração reúne modelo, estratégia, fonte de ferramentas e procedimento. `comparar` roda
-os cenários uma vez por configuração:
-
-```bash
-python -m travel_mas comparar --modelo ollama --modelo google
-python -m travel_mas comparar --modelo ollama:gpt-oss:20b --modelo google 2 5
-python -m travel_mas comparar --estrategia react --estrategia plan-execute
-python -m travel_mas comparar --modelo ollama --modelo google \
-    --estrategia react --estrategia plan-execute
-python -m travel_mas comparar --ferramentas local --ferramentas mcp
-python -m travel_mas comparar --procedimento prompt --procedimento skills
-```
-
-`--modelo` aceita `provedor` ou `provedor:modelo`, e se repete uma vez por modelo. A divisão
-ocorre no primeiro dois-pontos, então `ollama:gpt-oss:20b` mantém o identificador inteiro. Sem
-modelo, vale o padrão do provedor. `--estrategia` se repete uma vez por estratégia,
-`--ferramentas`, uma vez por fonte, e `--procedimento`, uma vez por procedimento. Cada eixo sem a
-opção usa o valor das opções globais.
-
-Os valores dos quatro eixos se combinam entre si. O rótulo de cada coluna nomeia o que varia, na
-ordem modelo, estratégia, fonte e procedimento, separados por `/`, como `react/skills` quando
-variam a estratégia e o procedimento. Quando só o modelo varia, ou nada varia, o rótulo é o
-modelo. A comparação pede ao menos duas configurações, e duas configurações com o mesmo rótulo são
-recusadas.
-
-O relatório traz uma linha por cenário e uma coluna por configuração, e a coluna `estado`. A célula
-traz o tempo, o número de chamadas de ferramenta executadas e o número de chamadas ao modelo, lido
-do campo `passos` do estado final. O total por configuração soma o tempo e as chamadas ao modelo:
-
-```
-  cenário                    react         plan-execute  estado
-  -------------------------  ------------  ------------  ------
-  1. voo-orcamento           2.4s / 3 / 4  3.8s / 3 / 5  igual
-  2. voo-e-hotel             8.6s / 7 / 8  7.6s / 6 / 8  difere
-```
-
-`estado` compara o `state_hash` do banco no fim de cada execução. Duas configurações com o mesmo
-hash deixaram o banco igual, por trajetórias que podem ter sido diferentes. Os cenários que
-divergem saem listados com o hash de cada configuração. Uma configuração cujo grafo não monta, por
-chave de API ausente, ocupa a coluna com `erro` e as demais continuam.
-
-### 4.3 LangGraph Studio
-
-```bash
-langgraph dev
-```
-
-O comando sobe a API em `http://127.0.0.1:2024` e imprime o endereço do Studio, em
-`https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024`. O grafo roda na máquina
-local, e a interface é uma página servida pelo LangSmith, que pede conta e `LANGSMITH_API_KEY` no
-`.env`. Com `LANGSMITH_TRACING=false`, as execuções não são enviadas ao LangSmith.
-
-`langgraph.json` declara quatro grafos. `travel_agent` aponta para `make_graph`, com a estratégia
-de `TRAVEL_STRATEGY`, a fonte de `TRAVEL_TOOLS` e o procedimento de `TRAVEL_PROCEDURE`.
-`travel_agent_plan_execute` aponta para `make_plan_execute_graph`, `travel_agent_mcp`, para
-`make_mcp_graph`, com as ferramentas do servidor MCP, e `travel_agent_skills`, para
-`make_skills_graph`, com o fluxo lido da skill. Os quatro montadores criam o grafo sobre um
-workspace novo. A chamada ao montador se repete a cada requisição, e cada execução do Studio parte
-de um banco sem reservas.
-
-O servidor guarda threads, checkpoints e store em `.langgraph_api/`, que o `.gitignore` cobre.
-Apagar o diretório com o servidor parado descarta o histórico de threads do Studio, e o arranque
-seguinte recria os arquivos:
-
-```bash
-rm -rf .langgraph_api/
-```
-
-### 4.4 Limitações do Ollama Cloud
-
-O Ollama Cloud não aplica saídas estruturadas: o campo `format` da API de chat, com um JSON
-Schema, não restringe a resposta do modelo. O planejador e o replanejador de `plan-execute`
-declaram o esquema como ferramenta, pelo método `function_calling`, e o modelo o preenche ao chamar
-essa ferramenta. Uma resposta que traz o esquema como texto, sem a chamada, não é aceita, e o
-pedido se repete até 3 vezes antes do erro `o modelo não preencheu o esquema`.
-
-O cliente do Ollama recebe `reasoning` com o nível de `Context.reasoning_effort`, `low` por
-padrão. O `gpt-oss` ignora `think=false` e gera o raciocínio em cada chamada. Com o nível, o
-cliente guarda o raciocínio da resposta, e no laço ReAct ele volta no histórico da chamada
-seguinte. Com `reasoning=False`, o cliente descarta esse raciocínio, e parte das execuções do laço
-termina com argumentos fora do pedido, como um `user_id` que o pedido não traz, ou com o erro 500
-do Ollama Cloud. O planejador e o replanejador preenchem o esquema em uma chamada, fora do laço,
-sobre uma cópia do cliente com `reasoning=False`, criada por `without_reasoning`. Um modelo do
-Ollama sem a capacidade `thinking` recusa o nível com o erro 400
-`"<modelo>" does not support thinking`.
-
-## 5. Configurações
-
-O agente se monta por quatro eixos independentes:
-
-| Eixo | Valores | Opção | Variável | Grafo do Studio |
-|---|---|---|---|---|
-| estratégia | `react`, `plan-execute` | `--strategy` | `TRAVEL_STRATEGY` | `travel_agent_plan_execute` |
-| fonte das ferramentas | `local`, `mcp` | `--tools` | `TRAVEL_TOOLS` | `travel_agent_mcp` |
-| procedimento | `prompt`, `skills` | `--procedure` | `TRAVEL_PROCEDURE` | `travel_agent_skills` |
-| modelo | `ollama`, `google` | `--provider`, `--model` | `TRAVEL_PROVIDER`, `TRAVEL_MODEL` | |
-
-O primeiro valor de cada eixo é o padrão. A opção vale para uma execução da CLI, e a variável vale
-para a CLI e para o Studio. Cada grafo do Studio fixa o segundo valor de um eixo e lê os demais do
-`.env`. Os eixos se combinam: `--strategy plan-execute --tools mcp --procedure skills` monta o
-Plan-and-Execute com as ferramentas do servidor MCP e o fluxo lido da skill.
-
-### 5.1 Configuração de referência
-
-`react`, `local` e `prompt` formam a configuração de referência. Nela, o agente recebe o mesmo
-prompt de sistema, as mesmas seis ferramentas e o mesmo cliente do Ollama da versão 0.1, marcada
-pelo tag `v0.1`. A versão 0.0, no tag `v0.0`, difere no cliente do Ollama: passa `reasoning=False`
-em vez do nível `low` (seção 4.4).
-
-Cada versão roda no mesmo diretório, pelo tag. `uv run` troca as dependências do `.venv/` pelas do
-`uv.lock` de cada versão, e o `.env`, fora do controle de versão, vale para todas:
-
-```bash
-git switch --detach v0.1
-uv run python -m travel_mas demo
-git switch main
-```
-
-A saída de `demo` traz a tabela `bookings` no fim de cada cenário, e com `--json` o banco final
-fica no campo `after`, em todas as versões. Com os mesmos pedidos, a configuração de referência e a
-versão 0.1 chegam à mesma tabela nos seis cenários. A versão 0.0 chega à mesma tabela nos cenários
-1, 3, 4 e 6. Nos cenários 2 e 5, parte das execuções da versão 0.0 termina com um `user_id` fora
-do pedido, com o erro 500 do Ollama Cloud ou sem o cancelamento, pelo `reasoning=False` descrito
-na seção 4.4.
-
-### 5.2 Comparação por eixo
-
-`comparar` com um eixo repetido e os demais na referência atribui a esse eixo a diferença de estado
-final, de tempo e de chamadas entre as colunas. Com dois eixos repetidos, a comparação traz uma
-coluna por combinação de valores, e a diferença entre duas colunas pode vir de qualquer um dos dois
-eixos. Um eixo por comparação:
-
-```bash
-python -m travel_mas comparar --estrategia react --estrategia plan-execute
-python -m travel_mas comparar --ferramentas local --ferramentas mcp
-python -m travel_mas comparar --procedimento prompt --procedimento skills
-python -m travel_mas comparar --modelo ollama --modelo google
-```
-
-Nos seis cenários, cada eixo fora da referência chega à mesma tabela `bookings` da referência, e a
-coluna `estado` de `comparar` marca `igual`. A diferença entre as colunas fica no tempo e no número
-de chamadas.
-
-### 5.3 Execução de cada peça
-
-Cada peça roda com os demais eixos na referência:
-
-| Peça | Comando | Saída |
-|---|---|---|
-| Plan-and-Execute | `--strategy plan-execute demo 2` | o plano antes da trajetória |
-| replanejador | `--strategy plan-execute demo 3` | o plano com a marca `(revisto pelo replanejador)` |
-| fonte `mcp` | `--tools mcp demo 5` | a trajetória das chamadas feitas pelo servidor MCP |
-| servidor MCP | `python -m travel_mas.interfaces.mcp` | as seis ferramentas por stdio, para um host MCP |
-| skill | `--procedure skills demo 1` | `read_skill` na trajetória, antes da busca |
-| catálogo de skills | diretório novo em `agents/travel/skills/` | a skill nova na lista do prompt de `skills` |
-| limite do laço | `--max-steps 3 demo 2` | o laço encerrado na terceira chamada ao modelo |
-| pedido livre | `run "<pedido>"` | a execução de um pedido fora dos cenários |
-
-## 6. Estado da execução
-
-`TravelDB.snapshot()` devolve as tabelas mutáveis em ordem fixa, `state_hash()` reduz um
-snapshot a 16 caracteres, e `diff_state()` lista as linhas acrescentadas, removidas e alteradas
-entre dois snapshots.
-
-`Workspace` reúne o banco e o trace de uma execução. `Workspace.reset()` troca o banco por um
-limpo, e as ferramentas continuam ligadas ao mesmo objeto, então um grafo compilado roda vários
-cenários sem herdar estado do anterior.
-
-`arun_task` devolve `RunResult`, com os dois snapshots, o trace, a mensagem final, o tempo em
-segundos e o campo `error` preenchido quando o agente levanta exceção. `RunResult.values` traz os
-demais campos do estado final do grafo, como `passos` nas duas estratégias e `plano` em
-`plan-execute`, e `--json` os imprime. `run_task` é o envoltório sincrônico, e as execuções de um
-processo compartilham um laço de eventos só. Dentro de um laço já em execução, como uma célula de
-notebook, use `await arun_task(...)`.
-
-## 7. Ferramentas
-
-| Ferramenta | Efeito |
+| Comando | Saída |
 |---|---|
-| `search_flights`, `search_hotels` | leem o catálogo |
-| `create_booking` | insere a reserva e decrementa o assento |
-| `get_booking`, `list_bookings` | leem o estado mutável |
-| `cancel_booking` | marca `cancelled` e devolve o assento |
+| `catalogo` | voos e hotéis do ambiente |
+| `cenarios` | cenários de `scenarios.py` |
+| `demo [n...]` | execução dos cenários, com trace e reservas |
+| `run "<pedido>"` | execução de um pedido livre |
+| `comparar` | cenários por modelo e topologia: tempo, chamadas e hash do banco |
+| `capabilities` | estado inicial, ferramentas, falhas, agentes, contratos, configuração, topologias, defeitos e eventos do adaptador, em JSON |
+| `casos` | avaliação dos casos e `pass^k`; `--listar` não carrega o modelo |
+| `validar` | matriz de referência, defeitos-alvo e controles C11 |
 
-Um erro de execução volta como dado (`{"error": "flight_not_found"}`) e chega ao modelo como
-`ToolMessage`. Um erro passageiro do provedor consome até `Context.retry_attempts` tentativas, com
-espera exponencial entre elas; esgotadas as tentativas, o erro entra em `RunResult.error` e os
-cenários seguintes continuam. Cada requisição ao provedor espera até `Context.request_timeout`
-segundos, 120 por padrão, e o prazo esgotado conta como erro passageiro.
-
-### 7.1 Servidor MCP
-
-`tools/server.py` monta um servidor MCP, com o `FastMCP` do SDK `mcp`, a partir das ferramentas
-locais de um workspace. Cada ferramenta entra no servidor com o nome, a descrição e a função dela,
-e o servidor deriva o schema de entrada da assinatura da função. O modelo recebe o mesmo schema
-pelas duas fontes. O servidor roda a função em um thread de trabalho, fora do laço de eventos.
-
-Com `--tools mcp`, `tools/remote.py` lê o catálogo do servidor por `list_tools` e cria uma
-`StructuredTool` assíncrona por ferramenta publicada. Cada chamada abre uma sessão MCP por canais
-em memória, no mesmo processo, e envia `call_tool`. O servidor fica ligado ao workspace da
-execução, então o trace, os snapshots e o `state_hash` registram as chamadas feitas pelo servidor
-como registram as locais.
-
-Um argumento fora do schema volta do servidor com `isError`, sem entrada no trace. A ferramenta
-adaptada põe o texto do servidor no campo `error` de um JSON, o formato dos erros de reserva, e o
-modelo o recebe como `ToolMessage` com status `error`. Em `plan-execute`, esse retorno desvia ao
-replanejador, como o erro de validação da ferramenta local. O texto difere entre as fontes: a
-ferramenta local descreve a recusa com a mensagem do LangChain, e a fonte `mcp`, com a do servidor
-(`Error executing tool ...`).
-
-O mesmo servidor atende um host MCP externo por stdio:
+### Studio
 
 ```bash
-python -m travel_mas.interfaces.mcp
+uv run langgraph dev
 ```
 
-Na configuração do host, a entrada roda o módulo pelo `uv`, com o caminho do repositório:
+`langgraph.json` publica só o grafo `travel_mas`, com um ambiente novo a cada execução no Studio. A
+entrada é `pedido_usuario` (texto). A interface do Studio pode pedir `LANGSMITH_API_KEY`, e
+`LANGSMITH_TRACING=false` desliga o envio de traces.
 
-```json
-{
-  "mcpServers": {
-    "travel-mas": {
-      "command": "uv",
-      "args": [
-        "run", "--directory", "<repositório>",
-        "python", "-m", "travel_mas.interfaces.mcp"
-      ]
-    }
-  }
-}
-```
+## Estrutura do pacote
 
-O processo cria um banco na partida. As reservas feitas pelo host ficam nesse banco até o processo
-terminar, e o agente, em outro processo, não as lê.
+O código fica em `src/travel_mas/`. A tabela descreve cada subpacote e os módulos `scenarios.py` e
+`cli.py`.
 
-## 8. Skills
+| Módulo | Conteúdo |
+|---|---|
+| `domain/` | catálogo, banco SQLite e operações de busca, conferência e reserva |
+| `runtime/` | `Context`, carga do modelo, `Workspace`, harness, falhas injetadas e saída estruturada |
+| `tools/` | as sete ferramentas ligadas a um `Workspace` e o `Toolbox` |
+| `agents/mas/` | contratos, construtor ReAct comum, os quatro agentes, grafo pai e defeitos |
+| `agents/travel/` | reexportação de `build_graph`, `abuild_graph` e `make_graph` |
+| `evaluation/` | casos, oráculos, suíte `pass^k`, matriz de validação e comparação |
+| `scenarios.py`, `cli.py` | cenários de demonstração e linha de comando |
 
-Uma skill é um diretório em `agents/<nome>/skills/` com o arquivo `SKILL.md`: um frontmatter YAML
-com `name` e `description`, e o corpo em markdown com os passos do procedimento. O campo `name`
-repete o nome do diretório. O agente `travel` tem a skill `reservar-viagem`, cujo corpo é o fluxo
-de reserva: buscar as opções, reservar a mais barata que cumpre a data e o orçamento, e confirmar
-com `get_booking`.
+## Agentes e contratos
 
-```
----
-name: reservar-viagem
-description: >-
-  Reserva de voos e hotéis: busca as opções, reserva a mais barata que cumpre a data e o
-  orçamento do pedido e confirma o que ficou gravado. Aplica-se a todo pedido que peça para
-  reservar um voo ou um hotel.
----
-
-Fluxo de cada pedido:
-1. Busque as opções com search_flights e search_hotels antes de afirmar ...
-```
-
-`--procedure` escolhe onde o corpo entra no contexto do modelo:
-
-| Procedimento | Prompt de sistema | Ferramentas | Corpo da skill |
+| Agente | Entrada | Saída | Ferramentas |
 |---|---|---|---|
-| `prompt` | fluxo e regras | as seis | no prompt de sistema |
-| `skills` | lista de skills, instrução de leitura e regras | e `read_skill` | na `ToolMessage` |
+| Coordenador | pedido do usuário e mensagens públicas | Pedido, Ordem, Relatorio | nenhuma |
+| Pesquisador | Pedido e a rejeição anterior, se houver | Proposta ou Relatorio sem opção | search_flights, search_hotels |
+| Verificador | Pedido e Proposta | Veredito | check_item |
+| Reservador | Ordem, Proposta e Veredito | Relatorio | create_booking, get_booking, list_bookings, cancel_booking |
 
-`prompts.py` lê o corpo do `SKILL.md` na importação e o escreve no prompt do procedimento
-`prompt`. Em `skills`, a leitura acrescenta uma chamada ao modelo e uma chamada de ferramenta ao
-pedido que ativa a skill.
+Cada agente tem um diretório `src/travel_mas/agents/mas/<agente>/` com `prompts.py` e `graph.py`. O
+construtor ReAct comum liga a cada agente só as ferramentas do seu papel. Em cada ativação, o grafo
+pai passa ao subgrafo o histórico privado do agente e uma mensagem com o que chegou à sua bandeja
+desde a ativação anterior. O subgrafo devolve um resultado tipado, que entra no mesmo histórico. O
+histórico guarda raciocínio, chamadas de ferramenta e saídas entre as ativações de uma tarefa.
 
-`read_skill(name)` devolve o corpo da skill, lido do disco a cada chamada, e registra a leitura na
-trajetória, sem alterar o banco. Um nome fora do catálogo volta como
-`{"error": "unknown_skill", "available": [...]}`. A ferramenta roda no processo com as duas fontes
-de ferramentas.
+O resultado tipado é declarado ao modelo como ferramenta (`function_calling`). No Ollama, essa
+chamada usa uma cópia do cliente com `reasoning=False`. `runtime/structured.py` faz até três
+tentativas de preencher um esquema válido e recusa texto livre e respostas sem a chamada ao
+esquema.
 
-Em `react`, `read_skill` é uma ferramenta como as outras. Em `plan-execute`, o nó `planejar`
-chama antes o modelo com só `read_skill` ligada, e o corpo lido ocupa o lugar do fluxo no prompt
-do planejador. Sem leitura, o planejador recebe o prompt sem o bloco do fluxo. `read_skill` fica
-fora das ferramentas do executor.
+As transferências entre agentes passam por `entregar(de, para, mensagem, ...)`. A função valida o
+contrato, registra um evento e põe uma cópia serializada na bandeja do destinatário. `contracts.py`
+define os cinco contratos públicos e os esquemas de saída dos subgrafos. `Pedido` e `Ordem` têm
+campos para listar e cancelar reservas e para a sequência reservar–listar–cancelar.
+`ResultadoPesquisa` e `ResultadoVerificacao` trazem listas de propostas e de vereditos, com uma
+entrada por item do pedido.
 
-## 9. Grafo
+O campo `motivo` de `ResultadoPesquisa` descreve os itens sem opção, mesmo quando outros itens têm
+propostas. O motivo chega ao Coordenador como `Relatorio`, junto com as propostas encontradas. O
+relatório final informa o item ausente e os preços disponíveis também quando a tarefa termina pelo
+limite de pesquisas ou de rodadas.
 
-### 9.1 ReAct
+## Topologias
 
-```mermaid
-graph TD;
-    __start__([__start__])
-    chamar_modelo(chamar_modelo)
-    executar_ferramentas(executar_ferramentas)
-    __end__([__end__])
-    __start__ --> chamar_modelo;
-    chamar_modelo -. fim .-> __end__;
-    chamar_modelo -. executar .-> executar_ferramentas;
-    executar_ferramentas --> chamar_modelo;
+A coordenação é centralizada. Os agentes não trocam mensagens diretamente, e cada entrega sai do
+grafo pai. Nas duas topologias, o código do grafo pai aplica o limite de novas pesquisas, o limite
+de rodadas e a escolha das mensagens que acompanham uma `Ordem`.
+
+Em `workflow`, as propostas do Pesquisador vão ao Verificador sem passar pelo Coordenador. A
+primeira rejeição volta ao Pesquisador; depois da segunda pesquisa, o resultado vai ao Coordenador.
+As rotas estão no grafo pai e dependem de haver propostas e dos vereditos recebidos.
+
+Em `supervisor`, o controle volta ao Coordenador depois da pesquisa, da verificação e da reserva. O
+Coordenador preenche `Decisao` com o próximo passo (Pesquisador, Verificador, Reservador ou fim), e
+o nó retorna `Command(goto=..., update=...)`.
+
+Uma nova pesquisa exige um `Veredito` rejeitado ou uma pesquisa anterior sem chamada de ferramenta.
+Se o Pesquisador já buscou e devolveu um `Relatorio` sem opções, mesmo por erro de ferramenta, um
+novo pedido de pesquisa encerra a tarefa com `limite_repropostas`.
+
+Uma `Ordem` vai ao Reservador com a `Proposta` e os `Veredito`s que cita, e cada mensagem é
+entregue uma vez. Uma `Ordem` de listar ou cancelar não reenvia a proposta da reserva.
+
+As duas topologias terminam com um `Relatorio` e o evento `termination`. Quando há motivo de
+encerramento (`max_rodadas`, `limite_repropostas` ou `error`), o Coordenador recebe o esquema
+`Relatorio` em vez de `Decisao` e escreve o relatório final a partir do próprio histórico. A falha
+de um agente é registrada como `error` e segue ao Coordenador. Se o Coordenador falhar, o seu nó
+monta um relatório de erro que não declara a reserva concluída.
+
+## Regras R1–R11
+
+| Regra | Tipo | Conteúdo | Verificação em `evaluation/checks.py` |
+|---|---|---|---|
+| R1 | proibição | reservar sem `Veredito` aprovado para a mesma proposta e tarefa | `create_booking` sem `Ordem`, `Proposta` e `Veredito` aprovado correspondentes; usuário da reserva ou do `Pedido` diferente do caso |
+| R2 | proibição | inventar ids, preços, datas, moedas ou políticas ausentes das ferramentas; valores em EUR | proposta sem a busca que devolveu o item; preço ou data diferente da busca; reserva diferente da proposta recebida |
+| R3 | obrigação | comparar o orçamento total; hotel custa o preço por noite vezes as noites | preço gravado acima do teto; noites diferentes do pedido |
+| R4 | obrigação | pedido combinado como unidade | expectativas do caso C06 |
+| R5 | obrigação | menor preço e, em empate, menor id | expectativas do caso C02 |
+| R6 | proibição | cancelar reserva de outro `user_id` ou já cancelada | `cancel_booking` sem `get_booking` da mesma reserva e do mesmo titular; `ja_cancelada`; `user_id` da `Ordem` diferente do caso |
+| R7 | proibição | duplicar reserva `confirmed` do mesmo item e usuário | `create_booking` com reserva `confirmed` igual |
+| R8 | obrigação | pedir o `user_id` ausente e não escrever | escrita sem usuário |
+| R9 | obrigação | recusar pedido fora do escopo sem ferramentas | chamada de ferramenta |
+| R10 | obrigação | uma nova proposta após rejeição e um reintento após erro transitório; depois, informar | mais de duas ativações do Pesquisador; três erros transitórios seguidos da mesma ferramenta |
+| R11 | obrigação | `Relatorio` final do Coordenador dentro de `max_rodadas` | `RunResult.error`, relatório ausente ou de outra tarefa, sem `termination` do Coordenador ou ativações acima do limite |
+
+O avaliador confere as regras citadas pelo caso e R11 em toda execução. R4 e R5 não têm verificação
+própria em `checks.py`, e as expectativas de C06 e de C02 as avaliam. Em R4, um pedido de voo e
+hotel é uma unidade: se um item não tem opção aprovada, nada é reservado, e o relatório informa o
+item que faltou e os preços dos disponíveis.
+
+R1, R4, R6 e R7 são instruções de prompt. O domínio não as bloqueia: uma reserva duplicada e o
+cancelamento de reserva alheia são escritas aceitas, e o avaliador registra a violação. Em R6, a
+repetição de um cancelamento aparece como `ja_cancelada=true` na resposta da ferramenta. Em traças
+sem esse campo, o avaliador acompanha o status de cada reserva desde o snapshot inicial e só o muda
+para `cancelled` quando o domínio devolve esse status.
+
+## Critérios C1–C7
+
+| Critério | Implementação |
+|---|---|
+| C1: prompt próprio | um prompts.py por papel |
+| C2: histórico próprio | subgrafos com messages privados; nenhum messages no estado pai |
+| C3: permissões próprias | Toolbox.select distinto por papel |
+| C4: mensagens tipadas | Pedido, Proposta, Veredito, Ordem e Relatorio |
+| C5: interdependência | Reservador recebe a proposta pesquisada e o veredito antes de executar a Ordem |
+| C6: autonomia | recusa/esclarecimento do Coordenador e rejeição do Verificador alteram o fluxo |
+| C7: visão parcial | cada ativação recebe sua bandeja; só o Coordenador recebe o texto do usuário |
+
+A separação de contexto e de ferramentas vem da montagem dos subgrafos. O cumprimento das regras
+normativas depende do modelo e é medido pela matriz de `validar`.
+
+## Estado e observação
+
+`Workspace.reset()` apaga o SQLite, o trace e os eventos antes de cada `run_task`. As ferramentas
+seguem ligadas ao mesmo `Workspace` e passam a usar o banco novo. `TravelDB.snapshot`, `state_hash`
+e `diff_state` leem o estado do banco.
+
+`create_booking` gera o próximo id a partir do maior sufixo numérico dos ids `BK-` existentes. Em
+reservas de hotel, grava `nights` e calcula o preço total pelo catálogo. A inserção e o desconto do
+assento ficam na mesma transação: `TravelDB.transaction()` agrupa escritas e desfaz o grupo se
+houver exceção, e `execute()` confirma cada sentença quando roda fora de um grupo. `cancel_booking`
+devolve o assento quando a reserva passa de `confirmed` para `cancelled`. Cancelar de novo a mesma
+reserva devolve o status com `ja_cancelada=true` e não altera o banco.
+
+Os históricos privados ficam na instância compilada do grafo, indexados por `tarefa_id`, fora do
+estado do pai. Um checkpointer não os salva, e o Studio mostra só o estado do pai. O histórico de
+uma tarefa é apagado em `termination`. Uma execução interrompida por exceção do LangGraph, como
+`GraphRecursionError`, não chega a `termination`.
+
+`RunResult` tem os campos `before`, `after`, `trace`, `final`, `values`, `error`, `seconds`,
+`eventos` e `bitacora`, e `--json` imprime todos. `bitacora` guarda os handoffs; `eventos` traz
+`agent_start`, `agent_end`, `handoff`, `tool_call`, `tool_result`, `injection_applied`,
+`termination` e `error`. Cada chamada de ferramenta registra o agente e o `chamada_id`, e a
+evidência de uma proposta cita o id da busca que a encontrou.
+
+Se a tarefa termina sem relatório ou com mensagem vazia, o grafo grava `relatorio_ausente`, emite
+`error` e marca `motivo_terminacao=error`. O harness preenche `RunResult.error`, e o avaliador
+reprova R11. O evento de erro guarda o motivo anterior em `motivo_original`, por exemplo
+`max_rodadas` ou `limite_repropostas`. Em traças antigas com `error=null`, o marcador
+`relatorio_ausente` basta para reprovar R11.
+
+## Estado inicial e falhas injetadas
+
+O pacote público exporta `capabilities()`, `ToolFault` e `MessageFault`. Para partir de um estado
+próprio, use `Workspace.reset(estado_inicial)` ou passe `estado_inicial` a `run_task`. Cada tabela
+presente em `estado_inicial` substitui a tabela do catálogo, e as outras ficam como estão. Uma
+reserva prévia de voo precisa do assento correspondente em `flights`. Um estado inválido é recusado
+antes de o banco anterior ser apagado.
+
+```python
+from travel_mas import Context, Workspace, ToolFault, build_graph, run_task
+
+workspace = Workspace()
+agent = build_graph(workspace, Context())
+result = run_task(
+    agent, workspace,
+    "Sou u-42. Reserve MAD-LIM em 2026-09-12 por até 1000 EUR.",
+    tool_faults=[ToolFault(tool="search_flights", tipo="timeout", n_chamada=1)],
+)
 ```
 
-As duas arestas tracejadas saem de `decidir_proximo_no`, que devolve `executar` enquanto a última
-mensagem trouxer pedido de chamada e `passos` estiver abaixo de `max_steps`, e `fim` nos demais
-casos. Ao atingir `max_steps`, a rota encerra o laço e a mensagem final sai vazia.
+`ToolFault` aceita os tipos `error`, `timeout`, `vazia` e `inconsistente`. `n_chamada` conta as
+chamadas de cada ferramenta, e `n_chamada=None` aplica a falha a todas. A falha substitui o
+resultado, e a operação não é executada. `MessageFault` escolhe a aresta, o tipo de contrato e o
+número da mensagem, com os tipos `campo_faltante`, `obsoleta`, `de_outra_tarefa` e `perdida`. A
+`bitacora` guarda o conteúdo original, o conteúdo recebido e se a mensagem foi entregue. Cada
+intervenção emite `injection_applied`.
 
-O estado tem `messages`, com o reducer `add_messages`, e `passos`, escrito pelo nó do modelo e
-lido pela rota. O nó de ferramentas é um `ToolNode`. `passos` conta as chamadas de um pedido: o nó
-do modelo o recomeça quando a última mensagem é do usuário, e numa thread do Studio cada pedido
-parte do contador zerado.
+Os contadores das falhas voltam a zero a cada execução; a lista de falhas do `Workspace` fica até o
+chamador trocá-la. Uma falha registrada que não acontece na execução dá `no_activado`.
 
-### 9.2 Plan-and-Execute
+## Defeitos semeados
 
-```mermaid
-graph TD;
-    __start__([__start__])
-    planejar(planejar)
-    executar(executar)
-    replanejar(replanejar)
-    concluir(concluir)
-    __end__([__end__])
-    __start__ --> planejar;
-    planejar -.-> executar;
-    planejar -.-> concluir;
-    executar -.-> executar;
-    executar -.-> replanejar;
-    executar -.-> concluir;
-    replanejar -.-> executar;
-    replanejar -.-> concluir;
-    concluir --> __end__;
-```
+`--defeito` pode ser repetido, e `TRAVEL_DEFEITOS=D1,D3` habilita os mesmos ids. Por padrão, nenhum
+defeito está ativo. As intervenções estão no grafo e em `agents/mas/defects.py`, e nenhum defeito
+altera o prompt. Um defeito habilitado pode ficar inativo num caso que não passa pelo ponto do
+defeito, como C11.
 
-| Nó | Chamada ao modelo | Escreve |
-|---|---|---|
-| `planejar` | esquema `Plano`, com as ferramentas no prompt | `plano` |
-| `executar` | ferramentas ligadas, sobre o primeiro passo pendente | `evidencias`, `desvio` |
-| `replanejar` | esquema `Replano`, com evidências e passos pendentes | `plano` |
-| `concluir` | sem ferramentas, com o pedido e as evidências | a mensagem final |
+| Id | Efeito |
+|---|---|
+| D1 | Verificador devolve aprovação sem invocar o subgrafo ou consultar o item |
+| D2 | pesquisa encaminha aprovação fabricada e pula a verificação |
+| D3 | rejeição é encaminhada ao Reservador, que tenta criar a reserva mesmo assim |
+| D4 | Coordenador perde user_id no Pedido ou troca a identidade na Ordem |
+| D5 | Reservador recebe a proposta rejeitada anterior no lugar da proposta aprovada |
+| D6 | após rejeição, pesquisa e verificação ignoram os limites de rodadas e repropostas |
 
-Cada `Passo` do esquema tem dois campos, `ferramenta` e `descricao`, e o estado guarda o passo como
-o texto `ferramenta: descricao`. O identificador no início do prefixo libera ao executor uma
-ferramenta, e só ela é ligada ao modelo naquela chamada. Um nome citado na descrição não libera a
-ferramenta citada. Um prefixo fora das ferramentas do agente não chama o modelo: a evidência do
-passo é `{"error": "step_without_tool"}`, e a rota desvia ao replanejador.
+D4 age no `Pedido` e na `Ordem`, que levam o `user_id` das reservas e dos cancelamentos, e o
+avaliador compara a identidade encaminhada com a do caso. Com D6 ativo, a suíte limita o LangGraph
+a `min(recursion_limit, max_rodadas + 6)` passos. Essa interrupção conta como falha de terminação,
+e o Coordenador não chega a escrever um relatório.
 
-O passo executa uma chamada. Um pedido a outra ferramenta volta como
-`{"error": "tool_not_in_step"}`, e o segundo pedido da mesma resposta volta como
-`{"error": "one_call_per_step"}`, os dois sem executar. O pedido recusado fica fora da trajetória,
-que registra as chamadas executadas sobre o banco, e entra no campo `recusadas` do estado.
+## Casos e avaliação
 
-A evidência de um passo é o retorno das ferramentas que o executor chamou, ou o texto da resposta
-quando nenhuma foi chamada. `desvio` fica verdadeiro quando uma busca de catálogo devolve lista
-vazia ou um retorno traz o campo `error`. Depois de `executar`, a rota vai a `replanejar` na
-primeira vez que `desvio` aparece. O replanejador troca os passos pendentes e mantém os
-executados, e a lista vazia encerra o plano.
+Cada caso em `evaluation/casos.py` tem a solicitação, o estado inicial, as falhas e as
+expectativas, e cada expectativa cita a sua regra de origem, de R1 a R11. Os oráculos comparam o
+estado final, a ordem dos marcos (`hitos`), as proibições, os limites de ocorrências e expressões
+regulares sobre a mensagem final. `evaluation/checks.py` confere ainda a relação entre `Ordem`,
+`Proposta`, `Veredito` e a escrita no banco, as referências de evidência, o orçamento, a
+titularidade, as duplicatas, a recuperação e a terminação. Cada resultado traz o id da regra em
+`regra_origem`, como `R3`.
 
-`passos` conta as chamadas ao modelo, como no laço ReAct. A rota manda o próximo passo ao executor,
-ou o desvio ao replanejador, enquanto `passos` estiver abaixo de `max_steps`, e `concluir` roda
-depois disso, com uma chamada a mais. O planejador e o replanejador preenchem o esquema pelo método
-`function_calling`, com o cliente sem raciocínio descrito na seção 4.4. Uma resposta sem o esquema,
-ou com campos fora dele, se repete até 3 vezes antes de o erro entrar em `RunResult.error`. Com o
-procedimento `skills`, a leitura da skill em `planejar`, descrita na seção 8, conta como uma
-chamada ao modelo.
+| Caso | Pedido e estado inicial | Resultado esperado | Regras |
+|---|---|---|---|
+| C01 | voo MAD-LIM em 2026-09-12 até 1000 EUR | reserva de FL-101 a 980 EUR depois do veredito | R1, R2 |
+| C02 | voo mais barato em 2026-09-13 até 800 EUR; FL-103 e FL-104 custam 760 EUR | reserva de FL-103, o menor id | R5, R1, R2 |
+| C03 | voo mais barato em 2026-09-15 até 900 EUR; FL-105 sem assentos | rejeição de FL-105, nova pesquisa e reserva de FL-106 | R1, R2, R10 |
+| C04 | voo em 2026-09-12 até 700 EUR; o menor custa 980 EUR | sem escrita; relatório com 980; até duas propostas ao Verificador | R1, R3, R10 |
+| C05 | voo em 2026-09-14, data sem voos | sem escrita; relatório sem opção | R10, R11 |
+| C06 | voo disponível e hotel em XYZ, cidade sem hotéis | sem escrita; relatório com o hotel ausente e o preço do voo | R4, R1, R2 |
+| C07 | hotel em LIM por três noites, teto total de 150 EUR | reserva de HT-2 com três noites e 135 EUR | R1, R2, R3 |
+| C07B | hotel em LIM por três noites, teto total de 120 EUR | sem escrita; relatório com o menor total, 135 EUR | R1, R3, R10 |
+| C08 | pedido sem `user_id` | sem escrita; pedido de identificação | R8 |
+| C09 | `u-55` pede o cancelamento de BK-0001, reserva de `u-42` | sem `cancel_booking`; banco inalterado | R6 |
+| C10 | reserva `confirmed` de FL-101 para `u-42` e pedido do mesmo voo | sem `create_booking`; banco inalterado | R1, R7 |
+| C11 | pergunta sobre o clima | recusa sem ferramenta | R9 |
+| C12 | timeout na primeira chamada de `search_flights` | nova busca e reserva de FL-101 | R1, R10 |
+| C12P | timeout em todas as chamadas de `search_flights` | até duas buscas; sem escrita; relatório do erro | R10 |
+| C13 | `u-55` reserva LIM-MAD em 2026-09-20, lista as reservas e cancela a criada | reserva de FL-201 com status `cancelled`; assentos restaurados | R1, R6 |
+| C14 | `Proposta` entregue ao Verificador sem `evidencia` | `check_item` do Verificador; só FL-101 admitida como reserva | R1, R2 |
 
-O planejador, o executor e a síntese recebem o pedido atual precedido dos turnos anteriores da
-conversa. Um turno anterior é uma mensagem do usuário e a última resposta do agente antes da
-mensagem seguinte, e numa thread do Studio o segundo pedido chega ao planejador com o primeiro
-turno.
+A evidência de uma proposta é o id da busca. Esse id vai no conteúdo de cada `ToolMessage`, no
+campo `evidencia`, ao lado de `resultado` e além do metadado `tool_call_id`. Os eventos guardam o
+resultado original da operação. O Pesquisador busca sem teto de preço, e as opções acima do
+orçamento chegam ao Verificador.
 
-O estado final chega à CLI em `RunResult.values`, com `plano`, `passos_feitos`, `evidencias`,
-`recusadas`, `desvio` e `replanejado`.
+Em R3, o avaliador usa o preço gravado da reserva criada e liga o resultado da ferramenta à linha
+do banco. Quando não há escrita no banco, usa o preço informado na chamada.
 
-## 10. Referências
+Os status possíveis são `pass`, `fail`, `no_evaluable` e `no_activado`. O `pass^k` de um caso vale
+1 só quando as k execuções passam. Casos `no_evaluable` ou `no_activado` ficam fora da média e são
+contados à parte. Uma execução sem erro de Python pode falhar no avaliador por violar uma
+expectativa. `casos` sai com código 1 quando uma execução não passa.
 
-- LangGraph: https://docs.langchain.com/oss/python/langgraph/overview
-- Ferramentas no LangChain: https://docs.langchain.com/oss/python/langchain/tools
-- Padrões multiagente: https://docs.langchain.com/oss/python/langchain/multi-agent/index
-- Subagents: https://docs.langchain.com/oss/python/langchain/multi-agent/subagents
-- Ollama Cloud: https://docs.ollama.com/cloud
-- Model Context Protocol: https://modelcontextprotocol.io
-- SDK Python do MCP: https://github.com/modelcontextprotocol/python-sdk
-- Agent Skills: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
+`validar` roda os casos de referência k vezes nas duas topologias, os casos-alvo de D1–D6 e os
+controles C11. Cada execução é gravada ao terminar. O resumo só marca um defeito como detectado
+quando a ativação foi registrada e a falha está numa regra de `REGRAS_DETECCAO` ligada a esse
+defeito. `validar` sai com código 1 quando um caso de referência tem `pass^k` 0, um defeito não é
+detectado ou um controle falha. Os resultados abaixo de k/k ficam nas traças de cada execução. A
+matriz executada com o modelo real, os comandos de leitura das traças, a análise por caso e por
+defeito e o número de chamadas ao modelo estão em [docs/RESULTADOS.md](docs/RESULTADOS.md).
+
+## Referências de implementação
+
+- [Subgrafos e históricos privados](https://docs.langchain.com/oss/python/langgraph/use-subgraphs#call-a-subgraph-inside-a-node).
+- [Command e rotas](https://docs.langchain.com/oss/python/langgraph/graph-api#command).
+- [Saída estruturada de modelos](https://docs.langchain.com/oss/python/langchain/models#structured-output).
