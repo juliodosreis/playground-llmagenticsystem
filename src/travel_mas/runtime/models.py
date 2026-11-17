@@ -1,7 +1,7 @@
 """Carga do cliente de chat a partir do `Context`.
 
-`load_chat_model` instancia o cliente do provedor declarado no `Context`. Os dois provedores expõem
-a mesma interface de chat do LangChain.
+`load_chat_model` instancia o cliente do provedor declarado no `Context`: Ollama, Google ou Groq.
+Os três clientes expõem a mesma interface de chat do LangChain.
 """
 
 from __future__ import annotations
@@ -28,6 +28,11 @@ def _is_gemini_3_or_later(model: str) -> bool:
     return "gemini-3" in model
 
 
+def _groq_raciocina(model: str) -> bool:
+    """Modelos do Groq que aceitam `reasoning_effort`."""
+    return "gpt-oss" in model or "qwen3" in model
+
+
 def load_chat_model(context: Context) -> BaseChatModel:
     """Instancia o cliente do provedor declarado no contexto.
 
@@ -40,8 +45,14 @@ def load_chat_model(context: Context) -> BaseChatModel:
     chamada seguinte do laço de ferramentas. Um modelo do Ollama sem a capacidade `thinking` recusa
     o nível com `400 "<modelo>" does not support thinking`.
 
-    O cliente do Google vem do extra `google`. Sem o extra, o provedor Google levanta
-    `RuntimeError` com o comando de instalação.
+    O cliente do Google vem do extra `google`, e o do Groq, do extra `groq`. Sem o extra, o
+    provedor levanta `RuntimeError` com o comando de instalação.
+
+    No Groq, `reasoning_effort` recebe o nível de `Context.reasoning_effort` nos modelos
+    `gpt-oss` e `qwen3`, e o raciocínio volta em `additional_kwargs["reasoning_content"]`. Os
+    outros modelos do Groq recusam o parâmetro com 400 e não o recebem. O SDK do Groq reintenta
+    erros de conexão, 429 e 5xx `Context.retry_attempts - 1` vezes e espera o tempo de
+    `retry-after` antes de reintentar um 429.
     """
     if context.provider == "ollama":
         from langchain_ollama import ChatOllama
@@ -98,7 +109,34 @@ def load_chat_model(context: Context) -> BaseChatModel:
             **amostragem,
         )
 
-    raise ValueError(f"provedor desconhecido: {context.provider!r}. Use 'ollama' ou 'google'.")
+    if context.provider == "groq":
+        key = os.environ.get("GROQ_API_KEY")
+        if not key:
+            raise RuntimeError(
+                "GROQ_API_KEY não encontrada. Gere uma chave em https://console.groq.com/keys e "
+                "defina a variável no arquivo .env ou no ambiente."
+            )
+        try:
+            from langchain_groq import ChatGroq
+        except ImportError as exc:
+            raise RuntimeError(
+                "O provedor Groq pede o extra groq. Instale-o com uv sync --extra groq."
+            ) from exc
+
+        esforco = context.reasoning_effort if _groq_raciocina(context.model) else None
+        return ChatGroq(
+            model=context.model,
+            api_key=key,
+            temperature=context.temperature,
+            max_tokens=context.max_tokens,
+            reasoning_effort=esforco,
+            timeout=context.request_timeout,
+            max_retries=context.retry_attempts - 1,
+        )
+
+    raise ValueError(
+        f"provedor desconhecido: {context.provider!r}. Use 'ollama', 'google' ou 'groq'."
+    )
 
 
 def without_reasoning(model: BaseChatModel) -> BaseChatModel:
@@ -142,6 +180,27 @@ def transient_errors() -> tuple[type[Exception], ...]:
     except ImportError:
         pass
     return tuple(tipos) or (Exception,)
+
+
+def schema_rejection(exc: Exception) -> str | None:
+    """Motivo da recusa quando o provedor rejeitou a chamada de ferramenta pelo esquema.
+
+    O Groq valida os argumentos de uma chamada de ferramenta contra o esquema JSON antes de
+    devolvê-la e responde 400 com `code=tool_use_failed` quando a validação falha, por exemplo com
+    `null` em um campo de lista. O campo `message` do corpo traz o motivo e a geração recusada.
+    Para outros erros, devolve `None`.
+    """
+    try:
+        from groq import BadRequestError
+    except ImportError:
+        return None
+    if not isinstance(exc, BadRequestError):
+        return None
+    corpo = exc.body if isinstance(exc.body, dict) else {}
+    erro = corpo.get("error", corpo)
+    if not isinstance(erro, dict) or erro.get("code") != "tool_use_failed":
+        return None
+    return str(erro.get("message") or exc)
 
 
 def with_transient_retry(runnable: Runnable, attempts: int = 3) -> Runnable:

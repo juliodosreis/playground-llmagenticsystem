@@ -18,6 +18,7 @@ DEFAULT_MODELS = {
     "ollama": "gpt-oss:120b",
     "google": "gemini-3.5-flash-lite",
     "gemini": "gemini-3.5-flash-lite",
+    "groq": "openai/gpt-oss-120b",
 }
 """Modelo de cada provedor, usado quando `TRAVEL_MODEL` não está definida."""
 
@@ -27,7 +28,7 @@ class Context:
     """Parâmetros de uma execução do agente."""
 
     provider: str = field(default_factory=lambda: _env("TRAVEL_PROVIDER", "ollama"))
-    """Provedor do modelo: `ollama` ou `google`, que também atende por `gemini`."""
+    """Provedor do modelo: `ollama`, `groq` ou `google`, que também atende por `gemini`."""
 
     model: str = field(default_factory=lambda: _env("TRAVEL_MODEL", ""))
     """Identificador do modelo no provedor escolhido.
@@ -57,9 +58,10 @@ class Context:
     reasoning_effort: str = "low"
     """Nível de raciocínio do modelo: `low`, `medium` ou `high`.
 
-    O Ollama o recebe como `reasoning` do `ChatOllama`, e o `gpt-oss` aceita esses três níveis. A
-    família Gemini 3 o recebe como `reasoning_effort`, que o cliente do Google aceita também pelo
-    nome `thinking_level`. No Ollama, os tokens do raciocínio contam em `max_tokens`.
+    O Ollama o recebe como `reasoning` do `ChatOllama`, e o `gpt-oss` aceita esses três níveis. O
+    Groq e a família Gemini 3 o recebem como `reasoning_effort`, que o cliente do Google aceita
+    também pelo nome `thinking_level`. No Ollama e no Groq, os tokens do raciocínio contam em
+    `max_tokens`.
     """
 
     max_tokens: int = 1200

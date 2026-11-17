@@ -349,7 +349,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--provider", help="ollama, google ou gemini")
+    parser.add_argument("--provider", help="ollama, groq, google ou gemini")
     parser.add_argument("--model", help="identificador do modelo; vazio usa o padrão do provedor")
     parser.add_argument("--topologia", choices=list(TOPOLOGIAS), help="coordenação do MAS")
     parser.add_argument("--max-rodadas", type=int, help="máximo de ativações de agentes")

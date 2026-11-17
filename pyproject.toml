@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 google = ["langchain-google-genai>=4.0"]
+groq = ["langchain-groq>=1.0"]
 
 [project.scripts]
 travel-mas = "travel_mas.cli:main"

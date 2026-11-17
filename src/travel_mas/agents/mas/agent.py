@@ -4,13 +4,20 @@ import json
 from typing import Annotated, TypedDict
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AnyMessage, SystemMessage, ToolMessage
+from langchain_core.messages import (
+    AIMessage,
+    AnyMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 from langchain_core.tools import BaseTool
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel
 
 from ...runtime import Context, with_transient_retry
+from ...runtime.models import schema_rejection
 from ...runtime.structured import estruturado, preencher
 from ...runtime.workspace import chamada_atual
 
@@ -35,7 +42,21 @@ def build_agent(
     por_nome = {tool.name: tool for tool in tools}
 
     async def pensar(state: AgentState):
-        resposta = await ligado.ainvoke([SystemMessage(prompt), *state["messages"]])
+        mensagens = [SystemMessage(prompt), *state["messages"]]
+        for tentativa in range(context.retry_attempts):
+            try:
+                resposta = await ligado.ainvoke(mensagens)
+                break
+            except Exception as exc:
+                # O Groq recusa no servidor a chamada de ferramenta fora do esquema. O motivo vai
+                # só na chamada repetida, como o erro de ferramenta que outros provedores devolvem.
+                motivo = schema_rejection(exc)
+                if motivo is None or tentativa == context.retry_attempts - 1:
+                    raise
+                mensagens = [
+                    *mensagens,
+                    HumanMessage(f"A chamada de ferramenta foi recusada: {motivo}. Corrija-a."),
+                ]
         return {"messages": [resposta], "passos": state.get("passos", 0) + 1}
 
     async def executar(state: AgentState):

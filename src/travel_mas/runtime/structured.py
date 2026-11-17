@@ -10,7 +10,7 @@ from langchain_core.messages import AnyMessage, HumanMessage
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel, ValidationError
 
-from .models import with_transient_retry, without_reasoning
+from .models import schema_rejection, with_transient_retry, without_reasoning
 
 TENTATIVAS_ESQUEMA = 3
 Mensagem = TypeVar("Mensagem", bound=BaseModel)
@@ -27,7 +27,11 @@ async def preencher(
     mensagens: Sequence[AnyMessage],
     esquema: type[Mensagem],
 ) -> Mensagem:
-    """Recusa texto livre, campos inválidos e respostas sem chamada ao esquema."""
+    """Recusa texto livre, campos inválidos e respostas sem chamada ao esquema.
+
+    Um esquema recusado pelo provedor (`tool_use_failed` no Groq) conta como uma tentativa, e a
+    mensagem do erro volta ao modelo como as demais recusas.
+    """
     historico = [
         *mensagens,
         HumanMessage(
@@ -46,6 +50,11 @@ async def preencher(
             erro = "a resposta não incluiu a chamada ao esquema"
         except (OutputParserException, ValidationError) as exc:
             erro = str(exc)
+        except Exception as exc:
+            # O Groq recusa no servidor a chamada que não cumpre o esquema; conta como tentativa.
+            erro = schema_rejection(exc)
+            if erro is None:
+                raise
         historico.append(
             HumanMessage(
                 f"A saída anterior foi recusada: {erro}. Corrija e chame {esquema.__name__}."
