@@ -59,6 +59,11 @@ class Workspace:
             novo = TravelDB(estado_inicial)
             self.db.close()
             self.db = novo
+            self.reset_registros()
+
+    def reset_registros(self) -> None:
+        """Descarta trace, eventos e contadores de injeção e mantém o banco."""
+        with self._lock:
             self.trace = []
             self.eventos = []
             self._tool_counts = {}
