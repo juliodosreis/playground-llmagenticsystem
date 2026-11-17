@@ -9,5 +9,10 @@ def sem_rede(monkeypatch):
     def bloquear(_):
         raise AssertionError("teste tentou carregar um provedor externo")
 
-    monkeypatch.setattr("travel_mas.agents.mas.graph.load_chat_model", bloquear)
+    for modulo in (
+        "travel_mas.agents.mas.graph",
+        "travel_mas.interfaces.a2a.servidor",
+        "travel_mas.interfaces.a2a.agente_cliente",
+    ):
+        monkeypatch.setattr(f"{modulo}.load_chat_model", bloquear)
     monkeypatch.setattr("travel_mas.cli.load_dotenv", lambda *args: None)

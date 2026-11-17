@@ -3,7 +3,9 @@
 Este documento reúne a matriz `validar` executada com o modelo `gpt-oss:120b` no Ollama Cloud, os
 comandos que a produzem e leem e a análise dos casos e dos defeitos. O sistema, os casos e as
 regras R1–R11 estão descritos no [README](../README.md). As traças, o `summary.json` e o
-`manifest.json` ficam fora do repositório, e as tabelas abaixo saem deles.
+`manifest.json` ficam fora do repositório, e as tabelas abaixo saem deles. A seção
+[Transporte A2A com Groq](#transporte-a2a-com-groq) registra as execuções do adaptador A2A com
+`openai/gpt-oss-120b` no Groq, fora da matriz.
 
 ## Medição
 
@@ -240,3 +242,69 @@ uv run --offline python reports/scripts/tanda.py reports/nova-tanda --casos C06 
 uv run --offline python reports/scripts/reavaliar_integridade.py reports/nova-validacao \
   --baseline HEAD --output reports/nova-revisao/summary.json
 ```
+
+## Transporte A2A com Groq
+
+Em 2026-11-17, o adaptador `travel_mas_a2a` rodou no `langgraph dev` (`langgraph-api` 0.14.0) com
+`TRAVEL_PROVIDER=groq` e o modelo `openai/gpt-oss-120b`, topologia `workflow`. As execuções não
+seguem o formato de `validar`: não há manifesto nem avaliação pelos oráculos. A tabela registra a
+saída do comando `a2a` e as respostas HTTP do Groq no log do servidor.
+
+```bash
+uv sync --extra groq
+uv run --extra groq langgraph dev
+uv run --extra groq python -m travel_mas a2a demo --trafego
+uv run --extra groq python -m travel_mas --provider groq a2a agente \
+  "Oi! Sou o usuário u-77. Preciso ir de Lima (LIM) para Madri (MAD) no dia 2026-09-20 \
+  e posso gastar até 900 EUR. Pode reservar?"
+```
+
+O servidor lê o `.env` declarado em `langgraph.json`, e um valor do `.env` substitui a variável de
+mesmo nome do processo. Com `TRAVEL_PROVIDER=ollama` no `.env`, o servidor foi iniciado com uma
+cópia de `langgraph.json` cujo campo `env` contém só `{"TRAVEL_PROVIDER": "groq"}`, e as chaves
+vieram do ambiente do processo.
+
+| Execução | Tasks | Resultado | Groq: 200 / 400 / 429 | Duração |
+|---|---|---|---|---|
+| `a2a demo` | 2 no mesmo `contextId` | task 1: FL-101, 980 EUR, `BK-0001`; task 2: `BK-0001` listada e cancelada; `concluido` nas duas | 23 / 1 / 25 | 248 s |
+| `a2a agente` | 1 | FL-201, 890 EUR, `BK-0001`, `concluido`; o agente cliente fez uma chamada A2A e citou o id e o preço | 12 / 2 / 8 | 104 s |
+
+Uma segunda rodada, depois das correções da revisão (`pensar` com repetição da chamada recusada,
+busca do assistant com `created_by=system` e `blocking: true`), deu este resultado:
+
+| Execução | Resultado | Groq: 200 / 400 / 429 | Duração |
+|---|---|---|---|
+| `a2a demo` | task 1: FL-101, 980 EUR, `BK-0001`, `concluido`; task 2: `relatorio_ausente`, `motivo_terminacao=error`, código de saída 1 | 30 / 4 / 32, com o agente | 186 s |
+| `a2a agente` | FL-201, 890 EUR, `BK-0001`, `concluido` | incluído na linha anterior | 173 s |
+
+Na task 2, o Coordenador encerrou com `Decisao(proximo="fim")` sem relatório ou com mensagem vazia,
+e o grafo gravou `relatorio_ausente` (R11). O log do servidor não registra 400 durante essa task:
+os quatro 400 caíram na task 1 e no agente cliente e terminaram em resposta aceita. As traças do
+MAS ficam na memória do servidor, e o log não mostra se o cancelamento de `BK-0001` foi executado.
+
+As contagens de 200, 400 e 429 são do servidor. O agente cliente fez mais duas chamadas ao modelo
+no processo da CLI: a chamada da ferramenta A2A e a resposta ao usuário.
+
+O 429 é o limite de tokens por minuto da conta do Groq. O SDK do Groq esperou e reintentou cada
+429, e nenhuma chamada esgotou as tentativas. O 400 é `tool_use_failed`: o Groq valida os
+argumentos de uma chamada de ferramenta contra o esquema JSON e recusa a chamada que não o cumpre.
+Antes da correção em `runtime/structured.py`, uma consulta de reservas terminou com
+`motivo_terminacao=error` porque o modelo preencheu `"erros": null` no `Relatorio`:
+
+```
+BadRequestError: Error code: 400 - {'error': {'message': 'Tool call validation failed: tool call
+validation failed: parameters for tool Relatorio did not match schema: errors: [`/erros`: expected
+array, but got null]', 'type': 'invalid_request_error', 'code': 'tool_use_failed', ...}}
+```
+
+`preencher` conta essa recusa como uma das três tentativas e devolve o motivo ao modelo, como faz
+com um campo inválido recusado pelo Pydantic. As três recusas de 400 das execuções da tabela
+terminaram em contrato preenchido. Depois dessas execuções, `pensar` passou a repetir do mesmo modo
+uma chamada às ferramentas de domínio recusada pelo Groq; antes, a recusa terminava a execução com
+erro.
+
+Na primeira execução da demo, as duas tasks terminaram em `failed` com `BlockingError`: o adaptador
+criava o SQLite do ambiente dentro do laço de eventos, e o `langgraph dev` recusa I/O bloqueante
+no laço. O `Workspace` passou a ser criado em um thread. Na segunda, com o Ollama Cloud, as tasks
+terminaram em `completed` com `motivo_terminacao=error` e o erro `402` da conta sem crédito no
+texto e em `relatorio.json`.

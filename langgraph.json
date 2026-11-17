@@ -1,5 +1,11 @@
 {
   "dependencies": ["."],
-  "graphs": {"travel_mas": "travel_mas.agents.mas.graph:make_graph"},
+  "graphs": {
+    "travel_mas": "travel_mas.agents.mas.graph:make_graph",
+    "travel_mas_a2a": {
+      "path": "travel_mas.interfaces.a2a.servidor:make_graph",
+      "description": "Sistema multiagente de reservas de viagem (voos e hotéis): busca, verifica, reserva, lista e cancela reservas a partir de um pedido em português com o id do usuário, origem, destino, datas e orçamento em EUR. Responde com o relatório final em texto e em relatorio.json."
+    }
+  },
   "env": ".env"
 }

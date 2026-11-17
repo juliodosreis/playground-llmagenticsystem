@@ -1,4 +1,7 @@
-"""CLI do sistema multiagente: catálogo, cenários, execução e comparação de topologias."""
+"""CLI do sistema multiagente.
+
+Catálogo, cenários, execução, comparação de topologias, casos, matriz e cliente A2A.
+"""
 
 from __future__ import annotations
 
@@ -29,6 +32,7 @@ from .runtime import (
     Workspace,
     format_rows,
     format_trace,
+    last_text,
     run_task,
 )
 from .runtime.faults import DEFEITOS, capabilities
@@ -254,13 +258,98 @@ def command_cases(args):
     return int(any(r.avaliacao.status != "pass" for r in runs))
 
 
+def print_troca(direcao: str, rota: str, corpo: Any) -> None:
+    """Observador do cliente A2A: imprime cada corpo JSON enviado e recebido."""
+    print(f"\n{direcao} {rota}")
+    print(json.dumps(corpo, ensure_ascii=False, indent=2))
+
+
+def print_card(card: dict) -> None:
+    interface = (card.get("supportedInterfaces") or [{}])[0]
+    print("AGENT CARD")
+    print(f"  nome        {card.get('name')}")
+    print(f"  descrição   {card.get('description')}")
+    print(f"  endpoint    {card.get('url')}")
+    print(f"  protocolo   {interface.get('protocolBinding')} {interface.get('protocolVersion')}")
+    print(f"  entrada     {', '.join(card.get('defaultInputModes', []))}")
+    print(f"  saída       {', '.join(card.get('defaultOutputModes', []))}")
+    for skill in card.get("skills", []):
+        print(f"  skill       {skill.get('id')}: {skill.get('name')}")
+
+
+def print_resposta_a2a(titulo: str, pedido: str, resposta) -> None:
+    print(f"\n{'=' * 78}\n{titulo}\n{'=' * 78}")
+    print(f"PEDIDO\n  {pedido}\n")
+    print(f"TASK       {resposta.task_id}")
+    print(f"CONTEXTO   {resposta.context_id}")
+    print(f"ESTADO     {resposta.estado}")
+    print(f"\nTEXTO\n  {resposta.texto or '(vazio)'}")
+    if resposta.relatorio is not None:
+        print("\nRELATORIO.JSON")
+        print(json.dumps(resposta.relatorio, ensure_ascii=False, indent=2))
+
+
+def falha_a2a(resposta) -> bool:
+    """Task que não terminou em `completed` ou MAS que terminou com `motivo_terminacao=error`."""
+    motivo = (resposta.relatorio or {}).get("motivo_terminacao")
+    return resposta.estado != "completed" or motivo == "error"
+
+
+def command_a2a(args: argparse.Namespace) -> int:
+    import httpx
+
+    from .interfaces.a2a import ClienteA2A, build_agente_cliente
+
+    observador = print_troca if args.trafego else None
+    try:
+        with ClienteA2A(args.url, args.grafo, observador=observador) as cliente:
+            if args.acao == "card":
+                print_card(cliente.card())
+                return 0
+            if args.acao == "enviar":
+                resposta = cliente.enviar(args.texto, args.contexto)
+                print_resposta_a2a("MESSAGE/SEND", args.texto, resposta)
+                return int(falha_a2a(resposta))
+            if args.acao == "demo":
+                print_card(cliente.card())
+                pedido = SCENARIOS["1"].prompt
+                primeira = cliente.enviar(pedido)
+                print_resposta_a2a("TASK 1: contexto novo", pedido, primeira)
+                reservas = (primeira.relatorio or {}).get("booking_ids") or []
+                if reservas:
+                    seguinte = (
+                        f"Sou o usuário u-42. Liste as minhas reservas e cancele a reserva "
+                        f"{reservas[0]}."
+                    )
+                else:
+                    seguinte = "Sou o usuário u-42. Quais reservas eu tenho no sistema?"
+                segunda = cliente.enviar(seguinte, primeira.context_id)
+                print_resposta_a2a("TASK 2: mesmo contextId", seguinte, segunda)
+                return int(falha_a2a(primeira) or falha_a2a(segunda))
+            print_config(args.context)
+            agente = build_agente_cliente(cliente, args.context)
+            print_card(cliente.card())
+            final = agente.invoke({"messages": [{"role": "user", "content": args.texto}]})
+            print(f"\n{'=' * 78}\nAGENTE CLIENTE\n{'=' * 78}")
+            for mensagem in final["messages"][1:]:
+                for chamada in getattr(mensagem, "tool_calls", None) or []:
+                    print(f"\nCHAMADA {chamada['name']}\n  {chamada['args'].get('pedido')}")
+                if mensagem.type == "tool":
+                    print(f"\nRESULTADO A2A\n  {mensagem.content}")
+            print(f"\nRESPOSTA AO USUÁRIO\n  {last_text(final['messages']) or '(vazia)'}")
+            return 0
+    except httpx.HTTPError as exc:
+        print(f"falha HTTP com {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="travel_mas",
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--provider", help="ollama, google ou gemini")
+    parser.add_argument("--provider", help="ollama, groq, google ou gemini")
     parser.add_argument("--model", help="identificador do modelo; vazio usa o padrão do provedor")
     parser.add_argument("--topologia", choices=list(TOPOLOGIAS), help="coordenação do MAS")
     parser.add_argument("--max-rodadas", type=int, help="máximo de ativações de agentes")
@@ -321,6 +410,29 @@ def build_parser() -> argparse.ArgumentParser:
     validar_parser.add_argument("--jobs", type=int, default=3)
     validar_parser.add_argument("--output", default="reports/mas-validation")
     validar_parser.set_defaults(func=command_validate)
+
+    comum_a2a = argparse.ArgumentParser(add_help=False)
+    comum_a2a.add_argument("--url", default="http://127.0.0.1:2024", help="URL do Agent Server")
+    comum_a2a.add_argument(
+        "--grafo", default="travel_mas_a2a", help="graph_id do adaptador em langgraph.json"
+    )
+    comum_a2a.add_argument(
+        "--trafego", action="store_true", help="imprime os corpos JSON enviados e recebidos"
+    )
+    a2a = sub.add_parser("a2a", help="cliente A2A do MAS servido por `langgraph dev`")
+    acoes = a2a.add_subparsers(dest="acao", required=True)
+    acoes.add_parser("card", parents=[comum_a2a], help="lê o agent card")
+    enviar = acoes.add_parser("enviar", parents=[comum_a2a], help="envia um pedido (message/send)")
+    enviar.add_argument("texto")
+    enviar.add_argument("--contexto", help="contextId de uma task anterior")
+    acoes.add_parser(
+        "demo", parents=[comum_a2a], help="card e duas tasks no mesmo contexto (reserva e consulta)"
+    )
+    agente = acoes.add_parser(
+        "agente", parents=[comum_a2a], help="agente cliente que delega o pedido por A2A"
+    )
+    agente.add_argument("texto")
+    a2a.set_defaults(func=command_a2a)
 
     return parser
 

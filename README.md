@@ -24,15 +24,24 @@ uv run python -m travel_mas casos C01 C03 --k 3 --output reports/casos.json
 uv run python -m travel_mas --topologia supervisor casos C01 C03 --k 3
 uv run python -m travel_mas casos C03 --defeito D1 --k 1
 uv run python -m travel_mas validar --k 3 --jobs 3 --output reports/nova-validacao
+uv run python -m travel_mas a2a demo
+uv run python -m travel_mas a2a agente "Sou u-42. Quero voar de MAD para LIM em 2026-09-12."
 uv run pytest
 uv run ruff check src tests_mas main.py reports/scripts
 ```
 
-A chave vai em `OLLAMA_API_KEY` para o Ollama Cloud ou em `GOOGLE_API_KEY` para o Google. O
-catálogo, `casos --listar`, `capabilities` e os testes rodam sem chave. O Google exige
-`uv sync --extra google`. O modelo padrão é `gpt-oss:120b` no Ollama e `gemini-3.5-flash-lite` no
-Google. `--provider` e `--model`, ou as variáveis `TRAVEL_PROVIDER` e `TRAVEL_MODEL`, trocam o
-provedor e o modelo. As opções globais vêm antes do subcomando.
+A chave vai em `OLLAMA_API_KEY` para o Ollama Cloud, em `GROQ_API_KEY` para o Groq ou em
+`GOOGLE_API_KEY` para o Google. O catálogo, `casos --listar`, `capabilities` e os testes rodam sem
+chave. O Groq exige `uv sync --extra groq`, e o Google, `uv sync --extra google`. O modelo padrão é
+`gpt-oss:120b` no Ollama, `openai/gpt-oss-120b` no Groq e `gemini-3.5-flash-lite` no Google.
+`--provider` e `--model`, ou as variáveis `TRAVEL_PROVIDER` e `TRAVEL_MODEL`, trocam o provedor e
+o modelo. As opções globais vêm antes do subcomando. Os comandos `a2a` pedem o servidor
+`langgraph dev` em execução, descrito em [Transporte A2A](#transporte-a2a).
+
+No Groq, `Context.reasoning_effort` vai só aos modelos `gpt-oss` e `qwen3`. O SDK do Groq
+reintenta os 429 com a espera de `retry-after`. O Groq recusa com 400 `tool_use_failed` uma
+chamada de ferramenta fora do esquema; o laço ReAct e `preencher` repetem a chamada com o motivo
+da recusa.
 
 `TRAVEL_TOPOLOGIA` escolhe `workflow` (padrão) ou `supervisor`. `--max-rodadas` limita as ativações
 de agentes por tarefa (12 por padrão) e guarda a última para o relatório do Coordenador.
@@ -51,6 +60,7 @@ provedor, contando a primeira.
 | `capabilities` | estado inicial, ferramentas, falhas, agentes, contratos, configuração, topologias, defeitos e eventos do adaptador, em JSON |
 | `casos` | avaliação dos casos e `pass^k`; `--listar` não carrega o modelo |
 | `validar` | matriz de referência, defeitos-alvo e controles C11 |
+| `a2a card\|enviar\|demo\|agente` | cliente A2A do grafo `travel_mas_a2a` servido por `langgraph dev` |
 
 ### Studio
 
@@ -58,8 +68,9 @@ provedor, contando a primeira.
 uv run langgraph dev
 ```
 
-`langgraph.json` publica só o grafo `travel_mas`, com um ambiente novo a cada execução no Studio. A
-entrada é `pedido_usuario` (texto). A interface do Studio pode pedir `LANGSMITH_API_KEY`, e
+`langgraph.json` publica dois grafos. `travel_mas` recebe `pedido_usuario` (texto) e cria um
+ambiente novo a cada execução no Studio. `travel_mas_a2a` é o adaptador A2A descrito em
+[Transporte A2A](#transporte-a2a). A interface do Studio pode pedir `LANGSMITH_API_KEY`, e
 `LANGSMITH_TRACING=false` desliga o envio de traces.
 
 ## Estrutura do pacote
@@ -75,6 +86,7 @@ O código fica em `src/travel_mas/`. A tabela descreve cada subpacote e os módu
 | `agents/mas/` | contratos, construtor ReAct comum, os quatro agentes, grafo pai e defeitos |
 | `agents/travel/` | reexportação de `build_graph`, `abuild_graph` e `make_graph` |
 | `evaluation/` | casos, oráculos, suíte `pass^k`, matriz de validação e comparação |
+| `interfaces/a2a/` | grafo adaptador para o endpoint A2A, cliente JSON-RPC e agente cliente |
 | `scenarios.py`, `cli.py` | cenários de demonstração e linha de comando |
 
 ## Agentes e contratos
@@ -309,8 +321,70 @@ detectado ou um controle falha. Os resultados abaixo de k/k ficam nas traças de
 matriz executada com o modelo real, os comandos de leitura das traças, a análise por caso e por
 defeito e o número de chamadas ao modelo estão em [docs/RESULTADOS.md](docs/RESULTADOS.md).
 
+## Transporte A2A
+
+O protocolo A2A (Agent2Agent) define como um agente lê a descrição de outro e lhe envia tarefas por
+HTTP, em JSON-RPC 2.0. O comando `a2a` monta dois agentes em processos separados, como se fossem
+de sistemas distintos:
+
+| Papel | Processo | Provedor e modelo |
+|---|---|---|
+| agente remoto | `langgraph dev` serve o MAS como grafo `travel_mas_a2a` | `.env` declarado em `langgraph.json` |
+| agente cliente | `python -m travel_mas a2a` | opções globais da CLI ou `.env` |
+
+O cliente não executa o MAS: recebe dele só o agent card e as respostas das tasks. Por isso o
+servidor tem a configuração própria, lida do `.env` de `langgraph.json`, e um valor desse `.env`
+substitui a variável de mesmo nome do terminal. O provedor do MAS servido se troca em
+`TRAVEL_PROVIDER` no `.env`. Com o Groq, o `.env` leva `GROQ_API_KEY` e `TRAVEL_PROVIDER=groq`.
+
+Em um terminal, o servidor:
+
+```bash
+uv sync --extra groq
+uv run langgraph dev --no-browser
+```
+
+Em outro terminal, o cliente:
+
+```bash
+uv run python -m travel_mas a2a card
+uv run python -m travel_mas a2a enviar "Sou u-31. Quais reservas eu tenho?" --trafego
+uv run python -m travel_mas a2a demo --trafego
+uv run python -m travel_mas a2a agente "Sou u-42. Reserve MAD-LIM em 2026-09-12, até 1000 EUR."
+```
+
+| Ação | Execução |
+|---|---|
+| `card` | imprime o agent card |
+| `enviar "<pedido>" [--contexto ID]` | uma task; `--contexto` reutiliza um `contextId` anterior |
+| `demo` | agent card, a reserva do cenário 1 em um contexto novo e, no mesmo contexto, a listagem e o cancelamento da reserva criada |
+| `agente "<pedido>"` | agente cliente que delega o pedido ao MAS por A2A |
+
+`--trafego` imprime os corpos JSON enviados e recebidos, e `--url` muda o endereço do servidor
+(`http://127.0.0.1:2024` por padrão). O cliente espera cada task por até 900 s.
+
+Cada ação passa pelas três rotas do servidor:
+
+| Rota | Função |
+|---|---|
+| `POST /assistants/search` | devolve o `assistant_id` (UUID) do grafo, que o endpoint A2A exige no lugar do `graph_id` |
+| `GET /.well-known/agent-card.json?assistant_id=...` | agent card: nome, descrição de `langgraph.json`, skills e URL |
+| `POST /a2a/{assistant_id}`, método `message/send` | envia a mensagem e devolve a task terminada, com `contextId`, estado e artifacts |
+
+A resposta traz a mensagem do `Relatorio` em texto e o relatório inteiro em `relatorio.json`. Uma
+mensagem sem `contextId` abre um contexto novo, e repetir o `contextId` devolvido abre outra task
+no mesmo contexto. O servidor guarda um banco por contexto, na memória do processo: a reserva da
+primeira task aparece na segunda. O MAS lê só a última mensagem, então cada pedido repete o id do
+usuário e cita a reserva pelo id.
+
+O agente cliente, em `interfaces/a2a/agente_cliente.py`, é um `create_agent` com uma ferramenta
+montada a partir do agent card. O modelo do cliente chama a ferramenta com o pedido, e a ferramenta
+o envia ao MAS por `message/send`.
+
 ## Referências de implementação
 
 - [Subgrafos e históricos privados](https://docs.langchain.com/oss/python/langgraph/use-subgraphs#call-a-subgraph-inside-a-node).
 - [Command e rotas](https://docs.langchain.com/oss/python/langgraph/graph-api#command).
 - [Saída estruturada de modelos](https://docs.langchain.com/oss/python/langchain/models#structured-output).
+- [Endpoint A2A do Agent Server](https://docs.langchain.com/langsmith/server-a2a).
+- [Protocolo A2A](https://a2a-protocol.org/latest/).
